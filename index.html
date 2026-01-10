@@ -1,28 +1,71 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
+  <title>基準点探索ログ</title>
+  <meta name="robots" content="noindex,nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <!-- 検索非表示 -->
-  <meta name="robots" content="noindex, nofollow">
-
-  <!-- PWA -->
-  <link rel="manifest" href="manifest.json">
-  <title>基準点探索</title>
 </head>
+
 <body>
+  <h1>基準点探索ログ（テスト）</h1>
 
-  <h1>基準点探索アプリ</h1>
+  <section>
+    <h2>基準点一覧</h2>
+    <ul id="pointList"></ul>
+  </section>
 
-  <!-- 画面は後で -->
+  <section>
+    <h2>選択中の基準点</h2>
+    <div id="selectedPoint">未選択</div>
 
-  <!-- JS読み込み順が重要 -->
+    <button id="openMapBtn" disabled>
+      地理院地図を開く
+    </button>
+  </section>
+
   <script src="js/db.js"></script>
   <script src="js/points.js"></script>
   <script src="js/visits.js"></script>
   <script src="js/photos.js"></script>
-  <script src="js/ui.js"></script>
+  <script src="js/seed.js"></script>
 
+  <script>
+    let currentPoint = null;
+
+    async function renderPointList() {
+      const list = document.getElementById("pointList");
+      list.innerHTML = "";
+
+      const points = await getAllPoints();
+      for (const p of points) {
+        const li = document.createElement("li");
+        li.textContent = `${p.name}（${p.type}）`;
+        li.onclick = () => selectPoint(p);
+        list.appendChild(li);
+      }
+    }
+
+    function selectPoint(point) {
+      currentPoint = point;
+      document.getElementById("selectedPoint").textContent =
+        `${point.name} / ${point.pref}${point.city}`;
+
+      document.getElementById("openMapBtn").disabled = false;
+    }
+
+    document.getElementById("openMapBtn").onclick = () => {
+      if (!currentPoint) return;
+      const url =
+        `https://maps.gsi.go.jp/#16/${currentPoint.lat}/${currentPoint.lon}/`;
+      window.open(url, "_blank");
+    };
+
+    // 起動処理
+    openDB().then(async () => {
+      await seedPointsIfEmpty();
+      await renderPointList();
+    });
+  </script>
 </body>
 </html>
