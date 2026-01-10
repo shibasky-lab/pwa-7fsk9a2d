@@ -8,43 +8,37 @@ if (!window.__DB_INITIALIZED__) {
 }
 
 
+// ===== DB 定数（グローバル） =====
+const DB_NAME = "benchmark_db";
+const DB_VERSION = 1;
+
+// ===== DBオープン =====
 function openDB() {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-    request.onupgradeneeded = (event) => {
-      const db = event.target.result;
+    request.onupgradeneeded = e => {
+      const db = e.target.result;
 
-      // ===== points =====
       if (!db.objectStoreNames.contains("points")) {
         const store = db.createObjectStore("points", {
-          keyPath: "code" // 基準点コード
+          keyPath: "point_code"
         });
-
-        store.createIndex("name", "name", { unique: false });
-        store.createIndex("type", "type", { unique: false });
+        store.createIndex("point_name", "point_name", { unique: false });
         store.createIndex("prefecture", "prefecture", { unique: false });
+        store.createIndex("point_type", "point_type", { unique: false });
       }
 
-      // ===== visits =====
       if (!db.objectStoreNames.contains("visits")) {
-        const store = db.createObjectStore("visits", {
-          keyPath: "code" // 1点1履歴
+        db.createObjectStore("visits", {
+          keyPath: "point_code"
         });
-
-        store.createIndex("date", "date", { unique: false });
-        store.createIndex("found", "found", { unique: false });
       }
 
-      // ===== photos =====
       if (!db.objectStoreNames.contains("photos")) {
-        const store = db.createObjectStore("photos", {
-          keyPath: "id",
-          autoIncrement: true
+        db.createObjectStore("photos", {
+          keyPath: ["point_code", "kind"]
         });
-
-        store.createIndex("code", "code", { unique: false });
-        store.createIndex("type", "type", { unique: false }); // c / f
       }
     };
 
@@ -53,9 +47,11 @@ function openDB() {
   });
 }
 
+
 function getStore(name, mode = "readonly") {
   const db = indexedDB.open(DB_NAME);
   const tx = db.result.transaction(name, mode);
   return tx.objectStore(name);
 }
+
 
