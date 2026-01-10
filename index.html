@@ -92,28 +92,6 @@
 
   <button onclick="showView('menu-view')">戻る</button>
 </section>
-<!-- 確認-->
-<script src="js/db.js"></script>
-<script>
-(async () => {
-  const db = await openDB();
-  const tx = db.transaction("points", "readonly");
-  const store = tx.objectStore("points");
-
-  let count = 0;
-  store.openCursor().onsuccess = e => {
-    const cursor = e.target.result;
-    if (cursor) {
-      count++;
-      cursor.continue();
-    } else {
-      console.log("基準点件数:", count);
-      alert(`基準点 ${count} 件`);
-    }
-  };
-})();
-</script>
-
 
 <script>
   const PAGE_SIZE = 20;
@@ -256,5 +234,6 @@
 
 </body>
 </html>
+
 
 
