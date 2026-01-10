@@ -63,7 +63,7 @@ async function getPointsByType(type) {
 async function getPointsByPref(pref) {
   const database = await openDB();
   const store = getStore('points');
-  const index = store.index('pref');
+  const index = store.index('prefecture');
 
   return new Promise((resolve, reject) => {
     const req = index.getAll(pref);

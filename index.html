@@ -43,11 +43,11 @@
 
   <fieldset>
     <legend>点種別</legend>
-    <label><input type="checkbox" class="search-type" value="電子基準点" checked> 電子基準点</label>
-    <label><input type="checkbox" class="search-type" value="一等三角点" checked> 一等三角点</label>
-    <label><input type="checkbox" class="search-type" value="二等三角点" checked> 二等三角点</label>
-    <label><input type="checkbox" class="search-type" value="三等三角点" checked> 三等三角点</label>
-    <label><input type="checkbox" class="search-type" value="四等三角点" checked> 四等三角点</label>
+    <label style="white-space: nowrap;"><input type="checkbox" class="search-type" value="電子基準点" checked> 電子基準点</label>
+    <label style="white-space: nowrap;"><input type="checkbox" class="search-type" value="一等三角点" checked> 一等三角点</label>
+    <label style="white-space: nowrap;"><input type="checkbox" class="search-type" value="二等三角点" checked> 二等三角点</label>
+    <label style="white-space: nowrap;"><input type="checkbox" class="search-type" value="三等三角点" checked> 三等三角点</label>
+    <label style="white-space: nowrap;"><input type="checkbox" class="search-type" value="四等三角点" checked> 四等三角点</label>
   </fieldset>
 
   <div>
@@ -68,10 +68,10 @@
 
   <!-- 検索結果 -->
   <div style="margin-top:1em; overflow-x:auto;">
-    <table border="1" width="100%">
+    <table border="1" width="100%" style="text-align:center;">
       <thead>
         <tr>
-          <th>点種別</th>
+          <th>点種</th>
           <th>点名</th>
           <th>基準点コード</th>
           <th>都道府県</th>
@@ -98,30 +98,55 @@
   let currentPage = 0;
   let searchResults = [];
 
-  function runDummySearch() {
-    // ダミーデータ生成（100件）
+  function runSearch() {
+    const name = document.getElementById("search-name").value.trim();
+    const prefecture = document.getElementById("search-prefecture").value;
+
+    const types = Array.from(document.querySelectorAll(".search-type:checked"))
+      .map(cb => cb.value);
+
     searchResults = [];
-    for (let i = 1; i <= 100; i++) {
-      searchResults.push({
-        type: "二等三角点",
-        name: "基準点" + i,
-        code: "P" + String(i).padStart(5, "0"),
-        prefecture: "北海道"
-      });
-    }
     currentPage = 0;
-    renderPage();
-  }
 
-  function shortType(type) {
-    if (type === "電子基準点") return "電子";
-    if (type === "一等三角点") return "一等";
-    if (type === "二等三角点") return "二等";
-    if (type === "三等三角点") return "三等";
-    if (type === "四等三角点") return "四等";
-    return type;
-  }
+    const request = indexedDB.open("benchmarkDB");
 
+    request.onsuccess = (event) => {
+      const db = event.target.result;
+      const tx = db.transaction("points", "readonly");
+      const store = tx.objectStore("points");
+
+      store.openCursor().onsuccess = (e) => {
+        const cursor = e.target.result;
+        if (!cursor) {
+          renderPage();
+          return;
+        }
+
+        const p = cursor.value;
+
+        // 点名（部分一致）
+        if (name && !p.name.includes(name)) {
+          cursor.continue();
+          return;
+        }
+
+        // 点種別
+        if (!types.includes(p.type)) {
+          cursor.continue();
+          return;
+        }
+
+        // 都道府県
+        if (prefecture && p.prefecture !== prefecture) {
+          cursor.continue();
+          return;
+        }
+
+        searchResults.push(p);
+        cursor.continue();
+      };
+    };
+  }
 
   function renderPage() {
     const tbody = document.getElementById("results-body");
@@ -133,7 +158,6 @@
 
     pageItems.forEach(p => {
       const tr = document.createElement("tr");
-
       tr.innerHTML = `
         <td>${shortType(p.type)}</td>
         <td>${p.name}</td>
@@ -141,13 +165,12 @@
         <td>${p.prefecture}</td>
         <td><button onclick="openDetail('${p.code}')">詳細</button></td>
       `;
-
       tbody.appendChild(tr);
     });
 
     const totalPages = Math.ceil(searchResults.length / PAGE_SIZE);
     document.getElementById("page-info").textContent =
-      `${currentPage + 1} / ${totalPages}`;
+      totalPages === 0 ? "0 / 0" : `${currentPage + 1} / ${totalPages}`;
   }
 
   function nextPage() {
@@ -166,11 +189,21 @@
   }
 
   function openDetail(code) {
-    // 今はコード確認だけ
     console.log("詳細表示:", code);
+    // 次のSTEPで実装
     showView("detail-view");
   }
+
+  function shortType(type) {
+    if (type === "電子基準点") return "電子";
+    if (type === "一等三角点") return "一等";
+    if (type === "二等三角点") return "二等";
+    if (type === "三等三角点") return "三等";
+    if (type === "四等三角点") return "四等";
+    return type;
+  }
 </script>
+
 
 <!-- ================= 詳細画面 ================= -->
 <section id="detail-view" class="view hidden">

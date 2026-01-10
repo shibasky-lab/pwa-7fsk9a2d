@@ -1,70 +1,55 @@
 // js/db.js
 
-const DB_NAME = 'benchmarkDB';
+const DB_NAME = "benchmarkDB";
 const DB_VERSION = 1;
 
-let db = null;
-
-/**
- * DBオープン
- */
 function openDB() {
   return new Promise((resolve, reject) => {
-    if (db) {
-      resolve(db);
-      return;
-    }
-
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
     request.onupgradeneeded = (event) => {
-      const database = event.target.result;
+      const db = event.target.result;
 
-      // === 基準点マスタ ===
-      if (!database.objectStoreNames.contains('points')) {
-        const store = database.createObjectStore('points', {
-          keyPath: 'code'
+      // ===== points =====
+      if (!db.objectStoreNames.contains("points")) {
+        const store = db.createObjectStore("points", {
+          keyPath: "code" // 基準点コード
         });
 
-        store.createIndex('type', 'type', { unique: false });
-        store.createIndex('pref', 'pref', { unique: false });
-        store.createIndex('city', 'city', { unique: false });
+        store.createIndex("name", "name", { unique: false });
+        store.createIndex("type", "type", { unique: false });
+        store.createIndex("prefecture", "prefecture", { unique: false });
       }
 
-      // === 探索履歴（1点1回） ===
-      if (!database.objectStoreNames.contains('visits')) {
-        database.createObjectStore('visits', {
-          keyPath: 'code'
+      // ===== visits =====
+      if (!db.objectStoreNames.contains("visits")) {
+        const store = db.createObjectStore("visits", {
+          keyPath: "code" // 1点1履歴
         });
+
+        store.createIndex("date", "date", { unique: false });
+        store.createIndex("found", "found", { unique: false });
       }
 
-      // === 写真 ===
-      if (!database.objectStoreNames.contains('photos')) {
-        const store = database.createObjectStore('photos', {
-          keyPath: 'id',
+      // ===== photos =====
+      if (!db.objectStoreNames.contains("photos")) {
+        const store = db.createObjectStore("photos", {
+          keyPath: "id",
           autoIncrement: true
         });
 
-        store.createIndex('code', 'code', { unique: false });
-        store.createIndex('kind', 'kind', { unique: false });
+        store.createIndex("code", "code", { unique: false });
+        store.createIndex("type", "type", { unique: false }); // c / f
       }
     };
 
-    request.onsuccess = (event) => {
-      db = event.target.result;
-      resolve(db);
-    };
-
-    request.onerror = (event) => {
-      reject(event.target.error);
-    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
   });
 }
 
-/**
- * ObjectStore取得
- */
-function getStore(storeName, mode = 'readonly') {
-  const tx = db.transaction(storeName, mode);
-  return tx.objectStore(storeName);
+function getStore(name, mode = "readonly") {
+  const db = indexedDB.open(DB_NAME);
+  const tx = db.result.transaction(name, mode);
+  return tx.objectStore(name);
 }
