@@ -30,11 +30,50 @@
 </section>
 
 <!-- ================= 基準点検索画面 ================= -->
+<!-- ================= 基準点検索画面 ================= -->
 <section id="search-view" class="view hidden">
   <h2>基準点検索</h2>
 
-  <!-- 後で検索UIを入れる -->
-  <p>※ 検索UIは次のステップで作成</p>
+  <!-- 点名 -->
+  <div>
+    <label>
+      点名<br>
+      <input type="text" id="search-name" placeholder="例：〇〇山">
+    </label>
+  </div>
+
+  <!-- 点種別 -->
+  <fieldset>
+    <legend>点種別</legend>
+    <label><input type="checkbox" class="search-type" value="電子基準点" checked> 電子基準点</label><br>
+    <label><input type="checkbox" class="search-type" value="一等三角点" checked> 一等三角点</label><br>
+    <label><input type="checkbox" class="search-type" value="二等三角点" checked> 二等三角点</label><br>
+    <label><input type="checkbox" class="search-type" value="三等三角点" checked> 三等三角点</label><br>
+    <label><input type="checkbox" class="search-type" value="四等三角点" checked> 四等三角点</label>
+  </fieldset>
+
+  <!-- 都道府県 -->
+  <div>
+    <label>
+      都道府県<br>
+      <select id="search-prefecture">
+        <option value="">すべて</option>
+        <option value="北海道">北海道</option>
+        <option value="青森県">青森県</option>
+        <option value="岩手県">岩手県</option>
+        <option value="宮城県">宮城県</option>
+        <!-- ※ あとで自動生成してもOK -->
+      </select>
+    </label>
+  </div>
+
+  <!-- 検索 -->
+  <div style="margin-top: 1em;">
+    <button id="search-button">検索</button>
+  </div>
+
+  <!-- 検索結果 -->
+  <ul id="search-results"></ul>
 
   <button onclick="showView('menu-view')">戻る</button>
 </section>
@@ -68,3 +107,4 @@
 
 </body>
 </html>
+
