@@ -30,11 +30,10 @@
 </section>
 
 <!-- ================= 基準点検索画面 ================= -->
-<!-- ================= 基準点検索画面 ================= -->
 <section id="search-view" class="view hidden">
   <h2>基準点検索</h2>
 
-  <!-- 点名 -->
+  <!-- 検索条件 -->
   <div>
     <label>
       点名<br>
@@ -42,17 +41,15 @@
     </label>
   </div>
 
-  <!-- 点種別 -->
   <fieldset>
     <legend>点種別</legend>
-    <label><input type="checkbox" class="search-type" value="電子基準点" checked> 電子基準点</label><br>
-    <label><input type="checkbox" class="search-type" value="一等三角点" checked> 一等三角点</label><br>
-    <label><input type="checkbox" class="search-type" value="二等三角点" checked> 二等三角点</label><br>
-    <label><input type="checkbox" class="search-type" value="三等三角点" checked> 三等三角点</label><br>
+    <label><input type="checkbox" class="search-type" value="電子基準点" checked> 電子基準点</label>
+    <label><input type="checkbox" class="search-type" value="一等三角点" checked> 一等三角点</label>
+    <label><input type="checkbox" class="search-type" value="二等三角点" checked> 二等三角点</label>
+    <label><input type="checkbox" class="search-type" value="三等三角点" checked> 三等三角点</label>
     <label><input type="checkbox" class="search-type" value="四等三角点" checked> 四等三角点</label>
   </fieldset>
 
-  <!-- 都道府県 -->
   <div>
     <label>
       都道府県<br>
@@ -61,22 +58,109 @@
         <option value="北海道">北海道</option>
         <option value="青森県">青森県</option>
         <option value="岩手県">岩手県</option>
-        <option value="宮城県">宮城県</option>
-        <!-- ※ あとで自動生成してもOK -->
       </select>
     </label>
   </div>
 
-  <!-- 検索 -->
   <div style="margin-top: 1em;">
-    <button id="search-button">検索</button>
+    <button onclick="runDummySearch()">検索</button>
   </div>
 
   <!-- 検索結果 -->
-  <ul id="search-results"></ul>
+  <div style="margin-top:1em; overflow-x:auto;">
+    <table border="1" width="100%">
+      <thead>
+        <tr>
+          <th>点種別</th>
+          <th>点名</th>
+          <th>基準点コード</th>
+          <th>都道府県</th>
+          <th>詳細</th>
+        </tr>
+      </thead>
+      <tbody id="results-body">
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ページング -->
+  <div style="margin-top:0.5em;">
+    <button onclick="prevPage()">前の20件</button>
+    <span id="page-info">0 / 0</span>
+    <button onclick="nextPage()">次の20件</button>
+  </div>
 
   <button onclick="showView('menu-view')">戻る</button>
 </section>
+
+<script>
+  const PAGE_SIZE = 20;
+  let currentPage = 0;
+  let searchResults = [];
+
+  function runDummySearch() {
+    // ダミーデータ生成（100件）
+    searchResults = [];
+    for (let i = 1; i <= 100; i++) {
+      searchResults.push({
+        type: "二等三角点",
+        name: "基準点" + i,
+        code: "P" + String(i).padStart(5, "0"),
+        prefecture: "北海道"
+      });
+    }
+    currentPage = 0;
+    renderPage();
+  }
+
+  function renderPage() {
+    const tbody = document.getElementById("results-body");
+    tbody.innerHTML = "";
+
+    const start = currentPage * PAGE_SIZE;
+    const end = start + PAGE_SIZE;
+    const pageItems = searchResults.slice(start, end);
+
+    pageItems.forEach(p => {
+      const tr = document.createElement("tr");
+
+      tr.innerHTML = `
+        <td>${p.type}</td>
+        <td>${p.name}</td>
+        <td>${p.code}</td>
+        <td>${p.prefecture}</td>
+        <td><button onclick="openDetail('${p.code}')">詳細</button></td>
+      `;
+
+      tbody.appendChild(tr);
+    });
+
+    const totalPages = Math.ceil(searchResults.length / PAGE_SIZE);
+    document.getElementById("page-info").textContent =
+      `${currentPage + 1} / ${totalPages}`;
+  }
+
+  function nextPage() {
+    const totalPages = Math.ceil(searchResults.length / PAGE_SIZE);
+    if (currentPage < totalPages - 1) {
+      currentPage++;
+      renderPage();
+    }
+  }
+
+  function prevPage() {
+    if (currentPage > 0) {
+      currentPage--;
+      renderPage();
+    }
+  }
+
+  function openDetail(code) {
+    // 今はコード確認だけ
+    console.log("詳細表示:", code);
+    showView("detail-view");
+  }
+</script>
 
 <!-- ================= 詳細画面 ================= -->
 <section id="detail-view" class="view hidden">
@@ -107,4 +191,5 @@
 
 </body>
 </html>
+
 
