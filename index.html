@@ -1,71 +1,70 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>基準点探索ログ</title>
-  <meta name="robots" content="noindex,nofollow">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- 検索除外 -->
+  <meta name="robots" content="noindex, nofollow">
+
+  <title>基準点探索PWA</title>
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="css/style.css">
+
+  <script defer src="js/db.js"></script>
+  <script defer src="js/points.js"></script>
+  <script defer src="js/visits.js"></script>
+  <script defer src="js/photos.js"></script>
 </head>
 
 <body>
-  <h1>基準点探索ログ（テスト）</h1>
 
-  <section>
-    <h2>基準点一覧</h2>
-    <ul id="pointList"></ul>
-  </section>
+<!-- ================= メニュー画面 ================= -->
+<section id="menu-view" class="view">
+  <h1>基準点探索</h1>
 
-  <section>
-    <h2>選択中の基準点</h2>
-    <div id="selectedPoint">未選択</div>
+  <button onclick="showView('search-view')">基準点検索</button>
+  <button disabled>探索履歴閲覧（準備中）</button>
+  <button disabled>データ表示（準備中）</button>
+</section>
 
-    <button id="openMapBtn" disabled>
-      地理院地図を開く
-    </button>
-  </section>
+<!-- ================= 基準点検索画面 ================= -->
+<section id="search-view" class="view hidden">
+  <h2>基準点検索</h2>
 
-  <script src="js/db.js"></script>
-  <script src="js/points.js"></script>
-  <script src="js/visits.js"></script>
-  <script src="js/photos.js"></script>
-  <script src="js/seed.js"></script>
+  <!-- 後で検索UIを入れる -->
+  <p>※ 検索UIは次のステップで作成</p>
 
-  <script>
-    let currentPoint = null;
+  <button onclick="showView('menu-view')">戻る</button>
+</section>
 
-    async function renderPointList() {
-      const list = document.getElementById("pointList");
-      list.innerHTML = "";
+<!-- ================= 詳細画面 ================= -->
+<section id="detail-view" class="view hidden">
+  <h2>基準点詳細</h2>
 
-      const points = await getAllPoints();
-      for (const p of points) {
-        const li = document.createElement("li");
-        li.textContent = `${p.name}（${p.type}）`;
-        li.onclick = () => selectPoint(p);
-        list.appendChild(li);
-      }
-    }
+  <p>※ 詳細情報は後で実装</p>
 
-    function selectPoint(point) {
-      currentPoint = point;
-      document.getElementById("selectedPoint").textContent =
-        `${point.name} / ${point.pref}${point.city}`;
+  <button onclick="showView('search-view')">戻る</button>
+</section>
 
-      document.getElementById("openMapBtn").disabled = false;
-    }
+<!-- ================= 探索履歴入力画面 ================= -->
+<section id="visit-form-view" class="view hidden">
+  <h2>探索履歴入力</h2>
 
-    document.getElementById("openMapBtn").onclick = () => {
-      if (!currentPoint) return;
-      const url =
-        `https://maps.gsi.go.jp/#16/${currentPoint.lat}/${currentPoint.lon}/`;
-      window.open(url, "_blank");
-    };
+  <p>※ 履歴入力フォームは後で実装</p>
 
-    // 起動処理
-    openDB().then(async () => {
-      await seedPointsIfEmpty();
-      await renderPointList();
+  <button onclick="showView('detail-view')">戻る</button>
+</section>
+
+<script>
+  function showView(viewId) {
+    document.querySelectorAll('.view').forEach(v => {
+      v.classList.add('hidden');
     });
-  </script>
+    document.getElementById(viewId).classList.remove('hidden');
+  }
+</script>
+
 </body>
 </html>
