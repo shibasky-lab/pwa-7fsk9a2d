@@ -2,6 +2,6 @@ self.addEventListener('install', () => {
   self.skipWaiting();
 });
 
-self.addEventListener('fetch', () => {
-  // まだ何もしない
+self.addEventListener('activate', () => {
+  self.clients.claim();
 });
