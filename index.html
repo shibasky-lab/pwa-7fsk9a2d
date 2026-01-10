@@ -1,24 +1,28 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My First PWA</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- 検索に出さない -->
+  <!-- 検索非表示 -->
   <meta name="robots" content="noindex, nofollow">
 
-  <!-- PWA設定 -->
+  <!-- PWA -->
   <link rel="manifest" href="manifest.json">
+  <title>基準点探索</title>
 </head>
 <body>
-  <h1>PWA 起動しました</h1>
-  <p>Android / iOS 両対応</p>
 
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js');
-    }
-  </script>
+  <h1>基準点探索アプリ</h1>
+
+  <!-- 画面は後で -->
+
+  <!-- JS読み込み順が重要 -->
+  <script src="js/db.js"></script>
+  <script src="js/points.js"></script>
+  <script src="js/visits.js"></script>
+  <script src="js/photos.js"></script>
+  <script src="js/ui.js"></script>
+
 </body>
 </html>
