@@ -84,29 +84,6 @@
 <script src="js/points.js"></script>
 
   
-<script>
-(async () => {
-  const db = await openDB();
-  const tx = db.transaction("points", "readonly");
-  const store = tx.objectStore("points");
-
-  let count = 0;
-  store.openCursor().onsuccess = e => {
-    const cursor = e.target.result;
-    if (cursor) {
-      count++;
-      cursor.continue();
-    } else {
-      console.log("基準点件数:", count);
-      alert(`基準点 ${count} 件`);
-    }
-  };
-})();
-</script>
-
-
-
-  
 <!-- ================= 詳細画面 ================= -->
 <section id="detail-view" class="view hidden">
   <h2>基準点詳細</h2>
@@ -136,6 +113,7 @@
 
 </body>
 </html>
+
 
 
 
