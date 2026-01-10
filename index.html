@@ -113,6 +113,16 @@
     renderPage();
   }
 
+  function shortType(type) {
+    if (type === "電子基準点") return "電子";
+    if (type === "一等三角点") return "一等";
+    if (type === "二等三角点") return "二等";
+    if (type === "三等三角点") return "三等";
+    if (type === "四等三角点") return "四等";
+    return type;
+  }
+
+
   function renderPage() {
     const tbody = document.getElementById("results-body");
     tbody.innerHTML = "";
@@ -125,7 +135,7 @@
       const tr = document.createElement("tr");
 
       tr.innerHTML = `
-        <td>${p.type}</td>
+        <td>${shortType(p.type)}</td>
         <td>${p.name}</td>
         <td>${p.code}</td>
         <td>${p.prefecture}</td>
@@ -191,5 +201,4 @@
 
 </body>
 </html>
-
 
