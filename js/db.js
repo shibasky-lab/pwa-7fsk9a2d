@@ -1,7 +1,12 @@
-// js/db.js
+if (!window.__DB_INITIALIZED__) {
+  window.__DB_INITIALIZED__ = true;
 
-const DB_NAME = "benchmarkDB";
-const DB_VERSION = 1;
+  const DB_NAME = "benchmark_db";
+  const DB_VERSION = 1;
+
+  // openDB() 定義など…
+}
+
 
 function openDB() {
   return new Promise((resolve, reject) => {
@@ -53,3 +58,4 @@ function getStore(name, mode = "readonly") {
   const tx = db.result.transaction(name, mode);
   return tx.objectStore(name);
 }
+
