@@ -2,3 +2,60 @@
   import { bootstrap } from "./js/bootstrap.js";
   bootstrap();
 </script>
+
+<h2>基準点検索</h2>
+
+<div>
+  点名：
+  <input id="searchName">
+
+  都道府県：
+  <select id="searchPref">
+    <option value="">すべて</option>
+    <option value="千葉県">千葉県</option>
+    <option value="東京都">東京都</option>
+    <!-- 必要に応じて追加 -->
+  </select>
+</div>
+
+<div>
+  <label><input type="checkbox" class="typeCheck" value="電子基準点">電子</label>
+  <label><input type="checkbox" class="typeCheck" value="一等三角点">一等</label>
+  <label><input type="checkbox" class="typeCheck" value="二等三角点">二等</label>
+  <label><input type="checkbox" class="typeCheck" value="三等三角点">三等</label>
+  <label><input type="checkbox" class="typeCheck" value="四等三角点">四等</label>
+
+  <button onclick="searchPoints()">検索</button>
+</div>
+
+<table border="1" style="margin:auto;">
+  <thead>
+    <tr>
+      <th>点種</th>
+      <th>点名</th>
+      <th>基準点コード</th>
+      <th>都道府県</th>
+      <th>詳細</th>
+    </tr>
+  </thead>
+  <tbody id="resultBody"></tbody>
+</table>
+
+<div style="text-align:center;">
+  <button onclick="prevPage()">＜ 前</button>
+  <span id="pageInfo">0 / 0</span>
+  <button onclick="nextPage()">次 ＞</button>
+</div>
+
+<script type="module">
+  import {
+    searchPoints,
+    nextPage,
+    prevPage
+  } from "./js/points.js";
+
+  window.searchPoints = searchPoints;
+  window.nextPage = nextPage;
+  window.prevPage = prevPage;
+  window.openDetail = code => alert("詳細へ: " + code);
+</script>
