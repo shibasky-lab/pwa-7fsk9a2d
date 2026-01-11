@@ -4,14 +4,15 @@
   <meta charset="UTF-8">
   <title>基準点探索PWA</title>
 
-  <!-- PWA -->
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="manifest" href="manifest.json">
 
   <!-- 検索に出さない -->
   <meta name="robots" content="noindex,nofollow">
 
+  <!-- PWA（最低限） -->
+  <link rel="manifest" href="manifest.json">
 </head>
+
 <body>
 
 <h1 style="text-align:center;">基準点探索</h1>
@@ -66,25 +67,25 @@
 </div>
 
 <!-- =========================
-     起動 & JS読込
+     JS 読み込み・起動処理
 ========================= -->
 <script type="module">
-  import { bootstrap } from "./js/bootstrap.js";
+  import { initPointsIfNeeded } from "./js/initPoints.js";
   import {
     searchPoints,
     nextPage,
     prevPage
   } from "./js/points.js";
 
-  // 起動時：データ更新チェック
-  bootstrap();
+  // 初回のみ points.json を投入
+  initPointsIfNeeded();
 
-  // グローバル公開（onclick用）
+  // onclick 用にグローバル公開
   window.searchPoints = searchPoints;
   window.nextPage = nextPage;
   window.prevPage = prevPage;
 
-  // 仮：詳細画面（Step4で置き換える）
+  // Step4で置き換える仮実装
   window.openDetail = code => {
     alert("基準点詳細へ: " + code);
   };
