@@ -1,102 +1,85 @@
-let currentPage = 1;
+import { withStore } from "./db.js";
+
 const PAGE_SIZE = 20;
+let currentPage = 1;
 let lastResults = [];
 
-/* 点種別表示変換 */
-function shortType(type) {
-  if (type === "電子基準点") return "電子";
-  if (type === "一等三角点") return "一等";
-  if (type === "二等三角点") return "二等";
-  if (type === "三等三角点") return "三等";
-  if (type === "四等三角点") return "四等";
-  return type;
-}
+export async function searchPoints() {
+  const name = document.getElementById("searchName").value.trim();
+  const prefecture = document.getElementById("searchPref").value;
+  const types = [...document.querySelectorAll(".typeCheck:checked")]
+    .map(cb => cb.value);
 
-/* 検索実行 */
-async function searchPoints() {
-  const name = document.getElementById("search-name").value.trim();
-  const pref = document.getElementById("search-pref").value;
+  lastResults = await withStore("points", "readonly", store => {
+    return new Promise(resolve => {
+      const results = [];
+      store.openCursor().onsuccess = e => {
+        const cursor = e.target.result;
+        if (!cursor) return resolve(results);
 
-  const checkedTypes = Array.from(
-    document.querySelectorAll('#type-filters input[type="checkbox"]:checked')
-  ).map(cb => cb.value);
+        const p = cursor.value;
 
-  const db = await openDB();
-  const tx = db.transaction("points", "readonly");
-  const store = tx.objectStore("points");
+        if (name && !p.pointName.includes(name)) return cursor.continue();
+        if (prefecture && p.prefecture !== prefecture) return cursor.continue();
+        if (types.length && !types.includes(p.pointType)) return cursor.continue();
 
-  lastResults = [];
+        results.push(p);
+        cursor.continue();
+      };
+    });
+  });
+
   currentPage = 1;
-
-  store.openCursor().onsuccess = e => {
-    const cursor = e.target.result;
-    if (!cursor) {
-      renderPage();
-      return;
-    }
-
-    const p = cursor.value;
-
-    if (
-      (name === "" || p.point_name.includes(name)) &&
-      (pref === "" || p.prefecture === pref) &&
-      checkedTypes.includes(p.point_type)
-    ) {
-      lastResults.push(p);
-    }
-
-    cursor.continue();
-  };
+  renderPage();
 }
 
-/* ページ描画 */
-function renderPage() {
-  const tbody = document.getElementById("result-body");
+export function renderPage() {
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const pageData = lastResults.slice(start, start + PAGE_SIZE);
+
+  const tbody = document.getElementById("resultBody");
   tbody.innerHTML = "";
 
-  const start = (currentPage - 1) * PAGE_SIZE;
-  const pageItems = lastResults.slice(start, start + PAGE_SIZE);
-
-  for (const p of pageItems) {
+  pageData.forEach(p => {
     const tr = document.createElement("tr");
 
     tr.innerHTML = `
-      <td align="center">${shortType(p.point_type)}</td>
-      <td>${p.point_name}</td>
-      <td>${p.point_code}</td>
+      <td>${shortType(p.pointType)}</td>
+      <td>${p.pointName}</td>
+      <td>${p.pointCode}</td>
       <td>${p.prefecture}</td>
-      <td align="center">
-        <button onclick="openDetail('${p.point_code}')">詳細</button>
-      </td>
+      <td><button onclick="openDetail('${p.pointCode}')">詳細</button></td>
     `;
-
     tbody.appendChild(tr);
-  }
+  });
 
-  const totalPages = Math.max(1, Math.ceil(lastResults.length / PAGE_SIZE));
-  document.getElementById("page-info").textContent =
-    `${currentPage} / ${totalPages}`;
+  document.getElementById("pageInfo").textContent =
+    `${currentPage} / ${Math.max(1, Math.ceil(lastResults.length / PAGE_SIZE))}`;
 }
 
-/* ページ操作 */
-document.getElementById("next-page").onclick = () => {
+export function nextPage() {
   if (currentPage * PAGE_SIZE < lastResults.length) {
     currentPage++;
     renderPage();
   }
-};
+}
 
-document.getElementById("prev-page").onclick = () => {
+export function prevPage() {
   if (currentPage > 1) {
     currentPage--;
     renderPage();
   }
-};
+}
 
-/* 検索ボタン */
-document.getElementById("search-btn").onclick = searchPoints;
-
-/* 詳細画面（後で作る） */
-function openDetail(pointCode) {
-  alert(`詳細画面へ遷移: ${pointCode}`);
+// ================================
+// 表示用変換
+// ================================
+function shortType(type) {
+  return {
+    "電子基準点": "電子",
+    "一等三角点": "一等",
+    "二等三角点": "二等",
+    "三等三角点": "三等",
+    "四等三角点": "四等"
+  }[type] || type;
 }
