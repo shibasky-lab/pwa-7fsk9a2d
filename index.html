@@ -1,24 +1,39 @@
-<script type="module">
-  import { bootstrap } from "./js/bootstrap.js";
-  bootstrap();
-</script>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>基準点探索PWA</title>
 
-<h2>基準点検索</h2>
+  <!-- PWA -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="manifest" href="manifest.json">
 
-<div>
+  <!-- 検索に出さない -->
+  <meta name="robots" content="noindex,nofollow">
+
+</head>
+<body>
+
+<h1 style="text-align:center;">基準点探索</h1>
+
+<!-- =========================
+     検索条件
+========================= -->
+<section style="text-align:center;">
   点名：
   <input id="searchName">
 
   都道府県：
   <select id="searchPref">
     <option value="">すべて</option>
-    <option value="千葉県">千葉県</option>
+    <option value="北海道">北海道</option>
     <option value="東京都">東京都</option>
+    <option value="千葉県">千葉県</option>
     <!-- 必要に応じて追加 -->
   </select>
-</div>
+</section>
 
-<div>
+<section style="text-align:center; margin-top:8px;">
   <label><input type="checkbox" class="typeCheck" value="電子基準点">電子</label>
   <label><input type="checkbox" class="typeCheck" value="一等三角点">一等</label>
   <label><input type="checkbox" class="typeCheck" value="二等三角点">二等</label>
@@ -26,9 +41,12 @@
   <label><input type="checkbox" class="typeCheck" value="四等三角点">四等</label>
 
   <button onclick="searchPoints()">検索</button>
-</div>
+</section>
 
-<table border="1" style="margin:auto;">
+<!-- =========================
+     検索結果
+========================= -->
+<table border="1" style="margin:12px auto; text-align:center;">
   <thead>
     <tr>
       <th>点種</th>
@@ -47,15 +65,30 @@
   <button onclick="nextPage()">次 ＞</button>
 </div>
 
+<!-- =========================
+     起動 & JS読込
+========================= -->
 <script type="module">
+  import { bootstrap } from "./js/bootstrap.js";
   import {
     searchPoints,
     nextPage,
     prevPage
   } from "./js/points.js";
 
+  // 起動時：データ更新チェック
+  bootstrap();
+
+  // グローバル公開（onclick用）
   window.searchPoints = searchPoints;
   window.nextPage = nextPage;
   window.prevPage = prevPage;
-  window.openDetail = code => alert("詳細へ: " + code);
+
+  // 仮：詳細画面（Step4で置き換える）
+  window.openDetail = code => {
+    alert("基準点詳細へ: " + code);
+  };
 </script>
+
+</body>
+</html>
