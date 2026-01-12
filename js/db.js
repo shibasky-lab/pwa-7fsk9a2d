@@ -1,5 +1,5 @@
 export const DB_NAME = 'benchmark-pwa';
-export const DB_VERSION = 2;
+export const DB_VERSION = 1;
 
 export function openDB() {
   return new Promise((resolve, reject) => {
@@ -8,37 +8,31 @@ export function openDB() {
     req.onupgradeneeded = e => {
       const db = e.target.result;
 
-      // 基準点マスタ
+      // points
       if (!db.objectStoreNames.contains('points')) {
-        db.createObjectStore('points', {
-          keyPath: 'pointCode'
-        });
+        db.createObjectStore('points', { keyPath: 'pointCode' });
       }
 
-      // 探索履歴（1点 = 1レコード）
+      // visits（1点1履歴）
       if (!db.objectStoreNames.contains('visits')) {
-        db.createObjectStore('visits', {
-          keyPath: 'pointCode'
-        });
+        const store = db.createObjectStore('visits', { keyPath: 'pointCode' });
+        store.createIndex('found', 'found', { unique: false });
+        store.createIndex('visitDate', 'visitDate', { unique: false });
       }
 
-      // 写真（近景・遠景を複数持てる）
+      // photos
       if (!db.objectStoreNames.contains('photos')) {
         const store = db.createObjectStore('photos', {
           keyPath: 'id',
           autoIncrement: true
         });
-
-        // 検索用インデックス
         store.createIndex('pointCode', 'pointCode', { unique: false });
-        store.createIndex('type', 'type', { unique: false }); // 'near' | 'far'
+        store.createIndex('type', 'type', { unique: false }); // near / far
       }
 
-      // 初期化・メタ情報
+      // meta（初期化済みフラグ・バージョン管理用）
       if (!db.objectStoreNames.contains('meta')) {
-        db.createObjectStore('meta', {
-          keyPath: 'key'
-        });
+        db.createObjectStore('meta', { keyPath: 'key' });
       }
     };
 
@@ -46,3 +40,5 @@ export function openDB() {
     req.onerror = () => reject(req.error);
   });
 }
+
+
