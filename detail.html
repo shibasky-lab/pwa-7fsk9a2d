@@ -1,104 +1,242 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>基準点詳細</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>基準点詳細</title>
 
-  <!-- 検索に出さない -->
-  <meta name="robots" content="noindex,nofollow">
+<style>
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: #f7f7f7;
+}
+
+section {
+  background: #fff;
+  margin: 8px;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+h2 {
+  margin: 0 0 8px 0;
+  font-size: 1.1em;
+}
+
+.item {
+  margin-bottom: 4px;
+}
+
+.map {
+  height: 300px;
+}
+
+.photos {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.photos img {
+  width: 50%;
+  border-radius: 6px;
+  object-fit: cover;
+}
+</style>
 </head>
 
 <body>
 
-<button onclick="history.back()">← 戻る</button>
+<!-- 基準点詳細 -->
+<section id="pointDetail">
+  <h2 id="pointName"></h2>
 
-<h2 style="text-align:center;">基準点詳細</h2>
+  <div class="item">点種別：<span id="pointType"></span></div>
+  <div class="item">基準点コード：<span id="pointCode"></span></div>
+  <div class="item" id="pointNumberRow" style="display:none;">
+    点番号：<span id="pointNumber"></span>
+  </div>
+  <div class="item">所在地：<span id="location"></span></div>
+  <div class="item">成果状態：<span id="status"></span>（2025/12/04時点）</div>
+  <div class="item">緯度：<span id="lat"></span></div>
+  <div class="item">経度：<span id="lon"></span></div>
 
-<section id="pointInfo" style="max-width:600px; margin:auto;">
-  <p>読み込み中...</p>
+  <!-- 探索結果表示（登録済みのみ） -->
+  <div id="visitResult" style="display:none;">
+    <hr />
+    <div class="item">探索日：<span id="visitDate"></span></div>
+    <div class="item">発見：<span id="found"></span></div>
+    <div class="item">メモ：<span id="memo"></span></div>
+
+    <div class="photos">
+      <img id="photoNear" style="display:none;">
+      <img id="photoFar" style="display:none;">
+    </div>
+  </div>
 </section>
 
-<hr style="max-width:600px;">
+<!-- 地理院地図 -->
+<section>
+  <h2>地理院地図</h2>
+  <div id="map" class="map"></div>
+</section>
 
-<section style="max-width:600px; margin:auto;">
-  <h3>位置</h3>
-  <iframe
-    id="gsiMap"
-    width="100%"
-    height="300"
-    style="border:0;"
-    loading="lazy">
-  </iframe>
+<!-- 探索履歴登録 -->
+<section>
+  <h2>探索履歴登録</h2>
+
+  <div class="item">
+    探索日：
+    <input type="date" id="inputDate">
+  </div>
+
+  <div class="item">
+    発見できた：
+    <select id="inputFound">
+      <option value="1">はい</option>
+      <option value="0">いいえ</option>
+    </select>
+  </div>
+
+  <div class="item">
+    メモ：
+    <textarea id="inputMemo" rows="3" style="width:100%;"></textarea>
+  </div>
+
+  <button id="saveVisit">保存</button>
+</section>
+
+<!-- 写真登録 -->
+<section>
+  <h2>写真登録</h2>
+  <button id="addNear">近景を登録</button>
+  <button id="addFar">遠景を登録</button>
 </section>
 
 <script type="module">
-import { openDB } from "./js/db.js";
+import { openDB } from './db.js';
 
-function getPointCode() {
-  const params = new URLSearchParams(location.search);
-  return params.get("code");
+const params = new URLSearchParams(location.search);
+const pointCode = params.get('code');
+
+const db = await openDB();
+
+<input type="file" id="fileNear" accept="image/*" capture hidden>
+<input type="file" id="fileFar" accept="image/*" capture hidden>
+
+
+const fileNear = document.getElementById('fileNear');
+const fileFar  = document.getElementById('fileFar');
+
+document.getElementById('addNear').onclick = () => fileNear.click();
+document.getElementById('addFar').onclick  = () => fileFar.click();
+
+fileNear.onchange = () => savePhoto('near', fileNear.files[0]);
+fileFar.onchange  = () => savePhoto('far', fileFar.files[0]);
+
+async function savePhoto(type, file) {
+  if (!file) return;
+
+  const photo = {
+    pointCode,
+    type,          // 'near' or 'far'
+    blob: file,
+    createdAt: new Date().toISOString()
+  };
+
+  const tx = db.transaction('photos', 'readwrite');
+  const store = tx.objectStore('photos');
+
+  // 既存写真があれば削除（1点1枚ルール）
+  const index = store.index('pointType');
+  index.openCursor([pointCode, type]).onsuccess = e => {
+    const cursor = e.target.result;
+    if (cursor) {
+      store.delete(cursor.primaryKey);
+      cursor.continue();
+    } else {
+      store.add(photo);
+    }
+  };
+
+  tx.oncomplete = () => {
+    alert('写真を保存しました');
+    location.reload();
+  };
 }
 
-function typeLabel(type) {
-  return {
-    "電子基準点": "電子",
-    "一等三角点": "一等",
-    "二等三角点": "二等",
-    "三等三角点": "三等",
-    "四等三角点": "四等"
-  }[type] || type;
+
+/* --- 基準点読み込み --- */
+const point = await new Promise(resolve => {
+  const tx = db.transaction('points');
+  tx.objectStore('points').get(pointCode).onsuccess = e => {
+    resolve(e.target.result);
+  };
+});
+
+document.getElementById('pointName').textContent = `点名：${point.pointName}`;
+document.getElementById('pointType').textContent = point.pointType;
+document.getElementById('pointCode').textContent = point.pointCode;
+document.getElementById('location').textContent =
+  `${point.prefecture}${point.city}`;
+document.getElementById('status').textContent = point.status;
+document.getElementById('lat').textContent = point.lat;
+document.getElementById('lon').textContent = point.lon;
+
+if (point.pointNumber) {
+  document.getElementById('pointNumberRow').style.display = '';
+  document.getElementById('pointNumber').textContent = point.pointNumber;
 }
 
-async function loadPoint() {
-  const code = getPointCode();
-  if (!code) {
-    document.getElementById("pointInfo").innerHTML =
-      "<p>基準点コードが指定されていません</p>";
-    return;
-  }
+/* --- 探索履歴表示 --- */
+const visit = await new Promise(resolve => {
+  const tx = db.transaction('visits');
+  tx.objectStore('visits').get(pointCode).onsuccess = e => {
+    resolve(e.target.result);
+  };
+});
 
-  const db = await openDB();
-  const tx = db.transaction("points", "readonly");
-  const store = tx.objectStore("points");
+if (visit) {
+  document.getElementById('visitResult').style.display = '';
+  document.getElementById('visitDate').textContent = visit.visitDate;
+  document.getElementById('found').textContent =
+    visit.found ? '発見' : '未発見';
+  document.getElementById('memo').textContent = visit.memo || '';
 
-  const point = await new Promise((resolve, reject) => {
-    const req = store.get(code);
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  });
-
-  if (!point) {
-    document.getElementById("pointInfo").innerHTML =
-      "<p>基準点が見つかりません</p>";
-    return;
-  }
-
-  let html = `
-    <p><strong>点名：</strong>${point.pointName}</p>
-    <p><strong>点種別：</strong>${point.pointType}</p>
-    <p><strong>基準点コード：</strong>${point.pointCode}</p>
-  `;
-
-  if (point.pointType === "電子基準点" && point.pointNumber) {
-    html += `<p><strong>点番号：</strong>${point.pointNumber}</p>`;
-  }
-
-  html += `
-    <p><strong>所在地：</strong>${point.prefecture}${point.city}</p>
-    <p><strong>成果状態：</strong>${point.status}（2025/12/04時点）</p>
-    <p><strong>緯度：</strong>${point.lat}</p>
-    <p><strong>経度：</strong>${point.lon}</p>
-  `;
-
-  document.getElementById("pointInfo").innerHTML = html;
-
-  const zoom = 15;
-  document.getElementById("gsiMap").src =
-    `https://maps.gsi.go.jp/#${zoom}/${point.lat}/${point.lon}/&base=std&ls=std&disp=1`;
+  loadPhoto('near', 'photoNear');
+  loadPhoto('far', 'photoFar');
 }
 
-loadPoint();
+/* --- 写真表示 --- */
+async function loadPhoto(type, imgId) {
+  const tx = db.transaction('photos');
+  const store = tx.objectStore('photos');
+  const index = store.index('pointType');
+
+  index.get([pointCode, type]).onsuccess = e => {
+    const data = e.target.result;
+    if (data) {
+      const img = document.getElementById(imgId);
+      img.src = URL.createObjectURL(data.blob);
+      img.style.display = '';
+    }
+  };
+}
+
+/* --- 探索履歴保存 --- */
+document.getElementById('saveVisit').onclick = async () => {
+  const visit = {
+    pointCode,
+    visitDate: inputDate.value,
+    found: Number(inputFound.value),
+    memo: inputMemo.value
+  };
+
+  const tx = db.transaction('visits', 'readwrite');
+  tx.objectStore('visits').put(visit);
+  tx.oncomplete = () => location.reload();
+};
 </script>
 
 </body>
