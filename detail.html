@@ -61,7 +61,12 @@ async function loadPoint() {
   const db = await openDB();
   const tx = db.transaction("points", "readonly");
   const store = tx.objectStore("points");
-  const point = await store.get(code);
+
+  const point = await new Promise((resolve, reject) => {
+    const req = store.get(code);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
 
   if (!point) {
     document.getElementById("pointInfo").innerHTML =
@@ -69,7 +74,6 @@ async function loadPoint() {
     return;
   }
 
-  // ---- 点情報表示 ----
   let html = `
     <p><strong>点名：</strong>${point.pointName}</p>
     <p><strong>点種別：</strong>${point.pointType}</p>
@@ -89,12 +93,9 @@ async function loadPoint() {
 
   document.getElementById("pointInfo").innerHTML = html;
 
-  // ---- 地理院地図 ----
   const zoom = 15;
-  const mapUrl =
+  document.getElementById("gsiMap").src =
     `https://maps.gsi.go.jp/#${zoom}/${point.lat}/${point.lon}/&base=std&ls=std&disp=1`;
-
-  document.getElementById("gsiMap").src = mapUrl;
 }
 
 loadPoint();
