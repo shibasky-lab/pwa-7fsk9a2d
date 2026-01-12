@@ -9,7 +9,7 @@
   <!-- 検索に出さない -->
   <meta name="robots" content="noindex,nofollow">
 
-  <!-- PWA（最低限） -->
+  <!-- PWA -->
   <link rel="manifest" href="manifest.json">
 </head>
 
@@ -30,7 +30,6 @@
     <option value="北海道">北海道</option>
     <option value="東京都">東京都</option>
     <option value="千葉県">千葉県</option>
-    <!-- 必要に応じて追加 -->
   </select>
 </section>
 
@@ -67,25 +66,20 @@
 </div>
 
 <!-- =========================
-     JS 読み込み・起動処理
+     JS 読み込み
 ========================= -->
-<script type="module">
-  import { initPointsIfNeeded } from "./js/initPoints.js";
-  import {
-    searchPoints,
-    nextPage,
-    prevPage
-  } from "./js/points.js";
 
-  // 初回のみ points.json を投入
-  initPointsIfNeeded();
+<!-- DB定義 -->
+<script type="module" src="./js/db.js"></script>
 
-  // onclick 用にグローバル公開
-  window.searchPoints = searchPoints;
-  window.nextPage = nextPage;
-  window.prevPage = prevPage;
+<!-- 初期データ投入（points.json 用） -->
+<script type="module" src="./js/initPoints.js"></script>
 
-  // Step4で置き換える仮実装
+<!-- 検索・ページング -->
+<script type="module" src="./js/points.js"></script>
+
+<script>
+  // 詳細画面（Step4で本実装）
   window.openDetail = code => {
     alert("基準点詳細へ: " + code);
   };
