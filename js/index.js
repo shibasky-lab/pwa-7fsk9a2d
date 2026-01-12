@@ -79,7 +79,7 @@ function render() {
       <td>${p.pointName}</td>
       <td>${p.pointCode}</td>
       <td>${p.prefecture}</td>
-      <td><a href="point.html?code=${p.pointCode}">詳細</a></td>
+      <td><a href="detail.html?code=${p.pointCode}">詳細</a></td>
     `;
     body.appendChild(tr);
   });
