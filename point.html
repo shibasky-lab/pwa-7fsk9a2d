@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>基準点詳細</title>
+</head>
+<body>
+
+<h1 id="name"></h1>
+<div id="info"></div>
+
+<select id="state">
+  <option value="">未探索</option>
+  <option value="1">発見</option>
+  <option value="0">未発見</option>
+</select>
+<button onclick="save()">保存</button>
+
+<iframe id="map" width="100%" height="400"></iframe>
+
+<script type="module">
+import { openDB } from './js/db.js';
+
+const code = new URLSearchParams(location.search).get('code');
+const db = await openDB();
+
+const pReq = db.transaction('points').objectStore('points').get(code);
+pReq.onsuccess = () => {
+  const p = pReq.result;
+  document.getElementById('name').textContent = p.pointName;
+  document.getElementById('info').textContent =
+    `${p.pointType} / ${p.prefecture}${p.city}`;
+
+  document.getElementById('map').src =
+    `https://maps.gsi.go.jp/#15/${p.lat}/${p.lon}`;
+};
+
+window.save = async () => {
+  const v = document.getElementById('state').value;
+  const tx = db.transaction('visits', 'readwrite');
+  tx.objectStore('visits').put({
+    pointCode: code,
+    state: v === '' ? null : Number(v),
+    date: new Date().toISOString()
+  });
+  alert('保存しました');
+};
+</script>
+
+</body>
+</html>

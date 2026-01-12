@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head><meta charset="UTF-8"></head>
+<body>
+
+<h1>設定</h1>
+<p>登録基準点数: <span id="count">---</span></p>
+<button onclick="reload()">基準点再投入</button>
+
+<script type="module">
+import { openDB } from './js/db.js';
+import { initPoints } from './js/init.js';
+
+const db = await openDB();
+let n = 0;
+
+db.transaction('points')
+  .objectStore('points')
+  .openCursor().onsuccess = e => {
+    if (e.target.result) {
+      n++;
+      e.target.result.continue();
+    } else {
+      document.getElementById('count').textContent = n;
+    }
+  };
+
+window.reload = async () => {
+  indexedDB.deleteDatabase('benchmark-pwa');
+  location.reload();
+};
+</script>
+
+</body>
+</html>

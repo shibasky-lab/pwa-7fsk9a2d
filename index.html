@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>基準点探索</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- 検索エンジンに出さない -->
+  <meta name="robots" content="noindex,nofollow,noarchive">
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+</head>
+
+<body>
+<h1>基準点探索</h1>
+
+<div id="loading" style="display:none;">
+  読み込み中… <span id="progress">0</span>%
+</div>
+
+<input id="q" placeholder="名称・コード・市町村">
+<button onclick="search()">検索</button>
+
+<ul id="list"></ul>
+
+<script type="module">
+import { initPoints } from './js/init.js';
+import { openDB } from './js/db.js';
+
+const loading = document.getElementById('loading');
+const progress = document.getElementById('progress');
+
+loading.style.display = 'block';
+
+await initPoints(p => progress.textContent = p);
+
+loading.style.display = 'none';
+
+window.search = async () => {
+  const q = document.getElementById('q').value;
+  const db = await openDB();
+  const tx = db.transaction('points');
+  const store = tx.objectStore('points');
+
+  const list = document.getElementById('list');
+  list.innerHTML = '';
+
+  store.openCursor().onsuccess = e => {
+    const cur = e.target.result;
+    if (!cur) return;
+
+    const p = cur.value;
+    if (
+      p.pointName?.includes(q) ||
+      p.pointCode?.includes(q) ||
+      p.city?.includes(q)
+    ) {
+      const li = document.createElement('li');
+      li.innerHTML = `<a href="point.html?code=${p.pointCode}">
+        ${p.pointName}（${p.city}）
+      </a>`;
+      list.appendChild(li);
+    }
+    cur.continue();
+  };
+};
+</script>
+</body>
+</html>
