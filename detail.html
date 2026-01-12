@@ -47,7 +47,8 @@ h2 {
 </head>
 
 <body>
-
+<input type="file" id="fileNear" accept="image/*" capture hidden>
+<input type="file" id="fileFar" accept="image/*" capture hidden>
 <!-- 基準点詳細 -->
 <section id="pointDetail">
   <h2 id="pointName"></h2>
@@ -121,10 +122,6 @@ const params = new URLSearchParams(location.search);
 const pointCode = params.get('code');
 
 const db = await openDB();
-
-<input type="file" id="fileNear" accept="image/*" capture hidden>
-<input type="file" id="fileFar" accept="image/*" capture hidden>
-
 
 const fileNear = document.getElementById('fileNear');
 const fileFar  = document.getElementById('fileFar');
