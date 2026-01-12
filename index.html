@@ -14,6 +14,23 @@
 </head>
 
 <body>
+<!-- 読み込み中表示 -->
+<div id="loadingOverlay" style="
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.7);
+  color:#fff;
+  z-index:9999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-direction:column;
+">
+  <div id="loadingText">読み込み中...</div>
+</div>
+
+
 
 <h1 style="text-align:center;">基準点探索</h1>
 
@@ -87,3 +104,4 @@
 
 </body>
 </html>
+
