@@ -85,8 +85,10 @@ function render() {
   });
 
   const maxPage = Math.max(1, Math.ceil(results.length / PAGE_SIZE));
+
   document.getElementById('pageInfo').textContent =
-    `${currentPage + 1} / ${maxPage}`;
+    `${currentPage + 1} / ${maxPage}（全${results.length}件）`;
+
 
   document.getElementById('prevBtn').disabled = currentPage === 0;
   document.getElementById('nextBtn').disabled =
