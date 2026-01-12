@@ -1,5 +1,5 @@
 export const DB_NAME = 'benchmark-pwa';
-export const DB_VERSION = 2; // ★バージョン上げる
+export const DB_VERSION = 2;
 
 export function openDB() {
   return new Promise((resolve, reject) => {
@@ -21,11 +21,12 @@ export function openDB() {
           keyPath: 'id',
           autoIncrement: true
         });
-        store.createIndex('pointType', ['pointCode', 'type']);
-      }
-
-      if (!db.objectStoreNames.contains('meta')) {
-        db.createObjectStore('meta', { keyPath: 'key' });
+        // ★ 必須インデックス
+        store.createIndex(
+          'pointType',
+          ['pointCode', 'type'],
+          { unique: true }
+        );
       }
     };
 
@@ -33,3 +34,4 @@ export function openDB() {
     req.onerror = () => reject(req.error);
   });
 }
+
