@@ -88,7 +88,15 @@ window.search = async () => {
 
   store.openCursor().onsuccess = e => {
     const cur = e.target.result;
-    if (!cur) return;
+    if (!cur) {
+      // 基準点コード昇順でソート
+      results.sort((a, b) => {
+        return a.pointCode.localeCompare(b.pointCode);
+      });
+
+      render();
+      return;
+    }
 
     const p = cur.value;
     if (
@@ -109,5 +117,6 @@ window.search = async () => {
 
 </body>
 </html>
+
 
 
