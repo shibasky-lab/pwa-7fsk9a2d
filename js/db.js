@@ -1,5 +1,5 @@
 export const DB_NAME = 'benchmark-pwa';
-export const DB_VERSION = 2;
+export const DB_VERSION = 3;
 
 export function openDB() {
   return new Promise((resolve, reject) => {
@@ -34,4 +34,5 @@ export function openDB() {
     req.onerror = () => reject(req.error);
   });
 }
+
 
