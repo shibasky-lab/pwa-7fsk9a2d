@@ -1,79 +1,115 @@
-import { withStore } from "./db.js";
+import { openDB } from "./db.js";
 
-const PAGE_SIZE = 20;
 let currentPage = 1;
-let lastResults = [];
+const PAGE_SIZE = 20;
 
-export async function searchPoints() {
-  const name = document.getElementById("searchName").value.trim();
-  const prefecture = document.getElementById("searchPref").value;
-  const types = [...document.querySelectorAll(".typeCheck:checked")]
-    .map(cb => cb.value);
-
-  lastResults = await withStore("points", "readonly", store => {
-    return new Promise(resolve => {
-      const results = [];
-      store.openCursor().onsuccess = e => {
-        const cursor = e.target.result;
-        if (!cursor) return resolve(results);
-
-        const p = cursor.value;
-
-        if (name && !p.pointName.includes(name)) return cursor.continue();
-        if (prefecture && p.prefecture !== prefecture) return cursor.continue();
-        if (types.length && !types.includes(p.pointType)) return cursor.continue();
-
-        results.push(p);
-        cursor.continue();
-      };
-    });
-  });
-
+/* ===== 検索実行 ===== */
+window.searchPoints = async function () {
   currentPage = 1;
-  renderPage();
+  await loadPage();
+};
+
+/* ===== ページ切り替え ===== */
+window.prevPage = async function () {
+  if (currentPage > 1) {
+    currentPage--;
+    await loadPage();
+  }
+};
+
+window.nextPage = async function () {
+  currentPage++;
+  await loadPage();
+};
+
+/* ===== 実処理 ===== */
+async function loadPage() {
+  const name = document.getElementById("searchName").value.trim();
+  const pref = document.getElementById("searchPref").value;
+
+  const typeChecks = document.querySelectorAll(".typeCheck:checked");
+  const types = Array.from(typeChecks).map(cb => cb.value);
+
+  const db = await openDB();
+  const tx = db.transaction("points", "readonly");
+  const store = tx.objectStore("points");
+
+  const results = [];
+  let skipped = 0;
+
+  store.openCursor().onsuccess = e => {
+    const cursor = e.target.result;
+    if (!cursor) {
+      renderResults(results);
+      renderPager(results.length);
+      return;
+    }
+
+    const p = cursor.value;
+
+    /* ===== フィルタ ===== */
+    if (
+      (name && !p.name.includes(name)) ||
+      (pref && p.pref !== pref) ||
+      (types.length && !types.includes(p.type))
+    ) {
+      cursor.continue();
+      return;
+    }
+
+    /* ===== ページング ===== */
+    if (skipped < (currentPage - 1) * PAGE_SIZE) {
+      skipped++;
+      cursor.continue();
+      return;
+    }
+
+    if (results.length < PAGE_SIZE) {
+      results.push(p);
+      cursor.continue();
+      return;
+    }
+
+    renderResults(results);
+    renderPager(results.length);
+  };
 }
 
-export function renderPage() {
-  const start = (currentPage - 1) * PAGE_SIZE;
-  const pageData = lastResults.slice(start, start + PAGE_SIZE);
-
+/* ===== 表描画 ===== */
+function renderResults(list) {
   const tbody = document.getElementById("resultBody");
   tbody.innerHTML = "";
 
-  pageData.forEach(p => {
-    const tr = document.createElement("tr");
+  if (list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center">該当なし</td></tr>`;
+    return;
+  }
 
+  for (const p of list) {
+    const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${shortType(p.pointType)}</td>
-      <td>${p.pointName}</td>
-      <td>${p.pointCode}</td>
-      <td>${p.prefecture}</td>
-      <td><button onclick="openDetail('${p.pointCode}')">詳細</button></td>
+      <td class="text-center">${shortType(p.type)}</td>
+      <td>${p.name}</td>
+      <td>${p.code}</td>
+      <td>${p.pref}</td>
+      <td class="text-center">
+        <button class="btn btn-sm btn-outline-primary"
+          onclick="location.href='point.html?code=${p.code}'">
+          詳細
+        </button>
+      </td>
     `;
     tbody.appendChild(tr);
-  });
+  }
+}
 
+/* ===== ページ表示 ===== */
+function renderPager(count) {
   document.getElementById("pageInfo").textContent =
-    `${currentPage} / ${Math.max(1, Math.ceil(lastResults.length / PAGE_SIZE))}`;
+    `${currentPage} ページ目${count < PAGE_SIZE ? "（最終）" : ""}`;
 }
 
-export function nextPage() {
-  if (currentPage * PAGE_SIZE < lastResults.length) {
-    currentPage++;
-    renderPage();
-  }
-}
-
-export function prevPage() {
-  if (currentPage > 1) {
-    currentPage--;
-    renderPage();
-  }
-}
-
-// ================================
-// 表示用変換
-// ================================
+/* ===== 点種略称 ===== */
 function shortType(type) {
   return {
     "電子基準点": "電子",
