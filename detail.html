@@ -172,6 +172,11 @@ const point = await new Promise(resolve => {
   };
 });
 
+if (!point) {
+  alert('基準点データが見つかりません');
+  throw new Error('point not found');
+}
+
 document.getElementById('pointName').textContent = `点名：${point.pointName}`;
 document.getElementById('pointType').textContent = point.pointType;
 document.getElementById('pointCode').textContent = point.pointCode;
@@ -185,6 +190,7 @@ if (point.pointNumber) {
   document.getElementById('pointNumberRow').style.display = '';
   document.getElementById('pointNumber').textContent = point.pointNumber;
 }
+
 
 /* --- 探索履歴表示 --- */
 const visit = await new Promise(resolve => {
