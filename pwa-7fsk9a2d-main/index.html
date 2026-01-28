@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>基準点探索</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- 検索エンジンに出さない -->
+  <meta name="robots" content="noindex,nofollow,noarchive">
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+</head>
+
+<body>
+<h1>基準点検索</h1>
+
+<div id="loading" style="display:none;">
+  読み込み中… <span id="progress">0</span>%
+</div>
+
+<!-- 検索条件 -->
+<section>
+  点名：
+  <input id="searchName">
+
+  都道府県：
+  <select id="searchPref">
+    <option value="">すべて</option>
+  </select>
+</section>
+
+<section>
+  <label><input type="checkbox" class="typeCheck" value="電子基準点">電子</label>
+  <label><input type="checkbox" class="typeCheck" value="一等三角点">一等</label>
+  <label><input type="checkbox" class="typeCheck" value="二等三角点">二等</label>
+  <label><input type="checkbox" class="typeCheck" value="三等三角点">三等</label>
+  <label><input type="checkbox" class="typeCheck" value="四等三角点">四等</label>
+
+  <button id="searchBtn">検索</button>
+</section>
+
+<!-- 検索結果 -->
+<table border="1" style="margin-top:10px;">
+  <thead>
+    <tr>
+      <th>点種</th>
+      <th>点名</th>
+      <th>基準点コード</th>
+      <th>都道府県</th>
+      <th>詳細</th>
+    </tr>
+  </thead>
+  <tbody id="resultBody"></tbody>
+</table>
+
+<!-- ページング -->
+<div>
+  <button id="prevBtn">＜ 前</button>
+  <span id="pageInfo">0 / 0</span>
+  <button id="nextBtn">次 ＞</button>
+</div>
+  
+<script type="module" src="./js/index.js"></script>
+
+<script type="module">
+import { initPoints } from './js/init.js';
+import { openDB } from './js/db.js';
+
+const loading = document.getElementById('loading');
+const progress = document.getElementById('progress');
+
+loading.style.display = 'block';
+
+await initPoints(p => progress.textContent = p);
+
+loading.style.display = 'none';
+
+window.search = async () => {
+  const q = document.getElementById('q').value;
+  const db = await openDB();
+  const tx = db.transaction('points');
+  const store = tx.objectStore('points');
+
+  const list = document.getElementById('list');
+  list.innerHTML = '';
+
+  store.openCursor().onsuccess = e => {
+    const cur = e.target.result;
+    if (!cur) {
+      // 基準点コード昇順でソート
+      results.sort((a, b) => {
+        return a.pointCode.localeCompare(b.pointCode);
+      });
+
+      render();
+      return;
+    }
+
+    const p = cur.value;
+    if (
+      p.pointName?.includes(q) ||
+      p.pointCode?.includes(q) ||
+      p.city?.includes(q)
+    ) {
+      const li = document.createElement('li');
+      li.innerHTML = `<a href="point.html?code=${p.pointCode}">
+        ${p.pointName}（${p.city}）
+      </a>`;
+      list.appendChild(li);
+    }
+    cur.continue();
+  };
+};
+</script>
+
+</body>
+</html>
+
+
+

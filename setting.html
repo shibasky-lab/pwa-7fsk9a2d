@@ -1,35 +1,101 @@
 <!DOCTYPE html>
 <html lang="ja">
-<head><meta charset="UTF-8"></head>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="設定">
+  <meta name="theme-color" content="#2196F3">
+  <title>設定</title>
+  
+  <link rel="manifest" href="/manifest.json">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
 <body>
+  <header>
+    <h1>設定</h1>
+    <p class="subtitle">アプリケーション設定</p>
+  </header>
 
-<h1>設定</h1>
-<p>登録基準点数: <span id="count">---</span></p>
-<button onclick="reload()">基準点再投入</button>
+  <nav>
+    <ul class="nav-tabs">
+      <li><a href="#" class="nav-link" data-page="search">基準点検索</a></li>
+      <li><a href="#" class="nav-link" data-page="history">訪問履歴</a></li>
+      <li><a href="#" class="nav-link" data-page="data">データ</a></li>
+      <li><a href="#" class="nav-link active" data-page="setting">設定</a></li>
+    </ul>
+  </nav>
 
-<script type="module">
-import { openDB } from './js/db.js';
-import { initPoints } from './js/init.js';
+  <main>
+    <div class="container">
+      <div class="card">
+        <div class="card-header">
+          <h3>データ管理</h3>
+        </div>
+        <div class="card-body">
+          <button class="btn btn-block mb-8" id="backup-btn">
+            📦 バックアップ（ZIP出力）
+          </button>
+          <button class="btn btn-block btn-secondary mb-8" id="update-points-btn">
+            🔄 点情報の更新
+          </button>
+        </div>
+      </div>
 
-const db = await openDB();
-let n = 0;
+      <div class="card">
+        <div class="card-header">
+          <h3>データ削除</h3>
+        </div>
+        <div class="card-body">
+          <p class="text-muted mb-8">この操作は取り消せません。ご注意ください。</p>
+          <button class="btn btn-block" style="background-color: #F44336;" id="clear-history-btn">
+            🗑️ 訪問履歴を削除
+          </button>
+          <button class="btn btn-block mt-8" style="background-color: #F44336;" id="clear-all-btn">
+            🗑️ すべてのデータを削除
+          </button>
+        </div>
+      </div>
 
-db.transaction('points')
-  .objectStore('points')
-  .openCursor().onsuccess = e => {
-    if (e.target.result) {
-      n++;
-      e.target.result.continue();
-    } else {
-      document.getElementById('count').textContent = n;
-    }
-  };
+      <div class="card">
+        <div class="card-header">
+          <h3>アプリ情報</h3>
+        </div>
+        <div class="card-body">
+          <div class="form-group">
+            <label>バージョン</label>
+            <input type="text" value="1.0.0" readonly>
+          </div>
+          <div class="form-group">
+            <label>最終更新</label>
+            <input type="text" value="2026年1月28日" readonly>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
 
-window.reload = async () => {
-  indexedDB.deleteDatabase('benchmark-pwa');
-  location.reload();
-};
-</script>
+  <!-- ボトムナビゲーション -->
+  <nav class="bottom-nav">
+    <a href="#" class="bottom-nav-link" data-page="search" title="検索">
+      <div class="icon">🔍</div>
+      <span>検索</span>
+    </a>
+    <a href="#" class="bottom-nav-link" data-page="history" title="履歴">
+      <div class="icon">📋</div>
+      <span>履歴</span>
+    </a>
+    <a href="#" class="bottom-nav-link" data-page="data" title="データ">
+      <div class="icon">📊</div>
+      <span>データ</span>
+    </a>
+    <a href="#" class="bottom-nav-link active" data-page="setting" title="設定">
+      <div class="icon">⚙️</div>
+      <span>設定</span>
+    </a>
+  </nav>
 
+  <script src="/js/db.js"></script>
+  <script src="/js/init.js"></script>
+  <script src="/js/setting.js"></script>
 </body>
 </html>
