@@ -308,6 +308,41 @@ class KijuntenDB {
     })
   }
 
+  // ===== メタデータ操作 =====
+
+  async setMetadata(key, data) {
+    const tx = this._transaction([STORES.METADATA], 'readwrite')
+    return new Promise((resolve, reject) => {
+      const request = tx.objectStore(STORES.METADATA).put({ key, data })
+      request.onerror = () => reject(request.error)
+      request.onsuccess = () => resolve(request.result)
+    })
+  }
+
+  async getMetadata(key) {
+    const tx = this._transaction([STORES.METADATA])
+    return new Promise((resolve, reject) => {
+      const request = tx.objectStore(STORES.METADATA).get(key)
+      request.onerror = () => reject(request.error)
+      request.onsuccess = () => resolve(request.result ? request.result.data : null)
+    })
+  }
+
+  async getAllMetadata() {
+    const tx = this._transaction([STORES.METADATA])
+    return new Promise((resolve, reject) => {
+      const request = tx.objectStore(STORES.METADATA).getAll()
+      request.onerror = () => reject(request.error)
+      request.onsuccess = () => {
+        const result = {}
+        request.result.forEach(item => {
+          result[item.key] = item.data
+        })
+        resolve(result)
+      }
+    })
+  }
+
   // ===== ユーティリティ =====
 
   async clearAll() {
