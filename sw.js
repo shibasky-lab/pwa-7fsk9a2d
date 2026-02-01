@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kijunten-pwa-v5'
+const CACHE_NAME = 'kijunten-pwa-v6'
 const urlsToCache = [
   './',
   './index.html',
@@ -9,7 +9,15 @@ const urlsToCache = [
   './src/metadata.js',
   './manifest.json',
   './icon-192.png',
-  './icon-512.png'
+  './icon-512.png',
+  './data/pref_ids.json',
+  './data/quality_ids.json',
+  './data/attachment_ids.json',
+  './data/result_status_ids.json',
+  './data/result_division_ids.json',
+  './data/reconstruction_status_ids.json',
+  './data/attr_status_ids.json',
+  './data/land_type_ids.json'
 ]
 
 // インストール時にキャッシュを作成
@@ -55,8 +63,8 @@ self.addEventListener('fetch', event => {
     return
   }
 
-  // dataディレクトリのJSONファイルはキャッシュしない（IndexedDBで管理）
-  if (event.request.url.includes('/data/')) {
+  // points_XX.jsonはキャッシュしない（IndexedDBで管理）
+  if (event.request.url.includes('/data/points_')) {
     event.respondWith(fetch(event.request))
     return
   }

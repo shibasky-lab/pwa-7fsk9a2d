@@ -194,7 +194,7 @@
 
   <script type="module">
     import KijuntenDB from './src/db.js'
-    import { getLabel, ensureMasterDataLoaded } from './src/metadata.js'
+    import { getLabel, ensureMasterDataLoaded, setDB } from './src/metadata.js'
 
     const db = new KijuntenDB()
     const loading = document.getElementById('loading')
@@ -216,9 +216,12 @@
 
     async function loadBaseDetail(id) {
       try {
+        // DBを初期化してmetadata.jsに渡す
+        await db.init()
+        setDB(db)
+        
         // マスタデータの読み込みを待機
         await ensureMasterDataLoaded()
-        await db.init()
 
         let prefNames = {}
         try {
@@ -260,10 +263,10 @@
       const prefName = prefNames[base.pref_id] || '不明'
       const qualityLabel = getLabel('quality_ids', base.quality_id)
       const resultDivisionLabel = getLabel('result_division_ids', base.result_division_id)
-      const resultStatusLabel = getLabel('result_status_ids', base.result_status_id)
-      const reconstructionStatusLabel = getLabel('reconstruction_status_ids', base.reconstruction_status_id)
-      const landTypeLabel = getLabel('land_type_ids', base.land_type_id)
-      const attrStatusLabel = getLabel('attr_status_ids', base.attr_status_id)
+      const resultStatusLabel = base.result_status_id ? getLabel('result_status_ids', base.result_status_id) : null
+      const reconstructionStatusLabel = base.reconstruction_status_id ? getLabel('reconstruction_status_ids', base.reconstruction_status_id) : null
+      const landTypeLabel = base.land_type_id ? getLabel('land_type_ids', base.land_type_id) : null
+      const attrStatusLabel = base.attr_status_id ? getLabel('attr_status_ids', base.attr_status_id) : null
       const attachmentLabel = getLabel('attachment_ids', base.attachment_id)
       
       let shortRank = rankLabel
@@ -311,21 +314,42 @@
           ` : ''}
           
           ${resultStatusLabel || base.status_date ? `
-            <div class="detail-item">${resultStatusLabel ? `<div class="detail-label">成果状態</div><div class="detail-value">${resultStatusLabel}</div>` : ''}</div>
-            <div class="detail-item">${base.status_date ? `<div class="detail-label">状態日付</div><div class="detail-value">${base.status_date}</div>` : ''}</div>
+            <div class="detail-item">
+              <div class="detail-label">成果状態</div>
+              <div class="detail-value">${resultStatusLabel || 'データなし'}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">状態日付</div>
+              <div class="detail-value">${base.status_date || 'データなし'}</div>
+            </div>
           ` : ''}
           
           ${reconstructionStatusLabel || base.reconstruction_date ? `
-            <div class="detail-item">${reconstructionStatusLabel ? `<div class="detail-label">作業内容</div><div class="detail-value">${reconstructionStatusLabel}</div>` : ''}</div>
-            <div class="detail-item">${base.reconstruction_date ? `<div class="detail-label">作業年月日</div><div class="detail-value">${base.reconstruction_date}</div>` : ''}</div>
+            <div class="detail-item">
+              <div class="detail-label">作業内容</div>
+              <div class="detail-value">${reconstructionStatusLabel || 'データなし'}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">作業年月日</div>
+              <div class="detail-value">${base.reconstruction_date || 'データなし'}</div>
+            </div>
           ` : ''}
           
           ${attrStatusLabel || base.date ? `
-            <div class="detail-item">${attrStatusLabel ? `<div class="detail-label">現況状態</div><div class="detail-value">${attrStatusLabel}</div>` : ''}</div>
-            <div class="detail-item">${base.date ? `<div class="detail-label">調査年月日</div><div class="detail-value">${base.date}</div>` : ''}</div>
+            <div class="detail-item">
+              <div class="detail-label">現況状態</div>
+              <div class="detail-value">${attrStatusLabel || 'データなし'}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">調査年月日</div>
+              <div class="detail-value">${base.date || 'データなし'}</div>
+            </div>
           ` : ''}
           
-          ${landTypeLabel ? `<div class="detail-item" style="grid-column: 1 / -1;"><div class="detail-label">現況地目</div><div class="detail-value">${landTypeLabel}</div></div>` : ''}
+          <div class="detail-item" style="grid-column: 1 / -1;">
+            <div class="detail-label">現況地目</div>
+            <div class="detail-value">${landTypeLabel || 'データなし'}</div>
+          </div>
         </div>
 
         <div class="action-buttons">
