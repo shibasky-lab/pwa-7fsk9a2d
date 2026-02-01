@@ -6,6 +6,7 @@
 import KijuntenDB from './db.js'
 
 const db = new KijuntenDB()
+let dbInitialized = false
 
 export const METADATA_DEFS = {
   // 基準点種別（rank_id）
@@ -89,25 +90,13 @@ async function loadMasterData() {
 
   masterDataPromise = (async () => {
     try {
-      await db.init()
-
-      // IndexedDBからマスタデータを読み込み
-      const cachedMetadata = await db.getAllMetadata()
-      
-      // キャッシュがあればそれを使用
-      if (Object.keys(cachedMetadata).length > 0) {
-        console.log('[Metadata] Loading from IndexedDB')
-        for (const def of Object.values(METADATA_DEFS)) {
-          if (cachedMetadata[def.key]) {
-            def.data = cachedMetadata[def.key]
-          }
-        }
-        masterDataLoaded = true
-        return
+      // DBを初期化
+      if (!dbInitialized) {
+        await db.init()
+        dbInitialized = true
       }
 
-      // キャッシュがない場合はJSONファイルから読み込み
-      console.log('[Metadata] Loading from JSON files')
+      // マスタファイルの定義
       const masterFiles = [
         { key: 'quality_ids', file: '/data/quality_ids.json' },
         { key: 'attachment_ids', file: '/data/attachment_ids.json' },
@@ -118,10 +107,34 @@ async function loadMasterData() {
         { key: 'land_type_ids', file: '/data/land_type_ids.json' }
       ]
 
+      // IndexedDBからマスタデータを読み込み
+      const cachedMetadata = await db.getAllMetadata()
+      
+      // 実際のマスタデータキーをチェック
+      const hasValidData = masterFiles.some(({ key }) => cachedMetadata[key] && Object.keys(cachedMetadata[key]).length > 0)
+      
+      // キャッシュがあればそれを使用
+      if (hasValidData) {
+        console.log('[Metadata] Loading from IndexedDB', cachedMetadata)
+        for (const def of Object.values(METADATA_DEFS)) {
+          if (cachedMetadata[def.key]) {
+            def.data = cachedMetadata[def.key]
+            console.log(`[Metadata] Loaded ${def.key}:`, Object.keys(def.data).length, 'items')
+          }
+        }
+        masterDataLoaded = true
+        return
+      }
+
+      // キャッシュがない場合はJSONファイルから読み込み
+      console.log('[Metadata] Loading from JSON files')
+
       for (const { key, file } of masterFiles) {
         try {
           const response = await fetch(file)
           const data = await response.json()
+          
+          console.log(`[Metadata] Loaded ${key} from JSON:`, Object.keys(data).length, 'items')
           
           // METADATA_DEFSに設定
           for (const def of Object.values(METADATA_DEFS)) {
@@ -153,9 +166,6 @@ export async function ensureMasterDataLoaded() {
   await loadMasterData()
 }
 
-// 初期化時にマスタデータを読み込む
-loadMasterData()
-
 /**
  * メタデータを取得
  * @param {string} key - メタデータキー
@@ -178,9 +188,15 @@ export function getMetadataValue(key) {
  */
 export function getLabel(metadataKey, id) {
   for (const def of Object.values(METADATA_DEFS)) {
-    if (def.key === metadataKey && def.data[id]) {
-      return def.data[id]
+    if (def.key === metadataKey) {
+      if (def.data[id]) {
+        return def.data[id]
+      } else {
+        console.warn(`[Metadata] No label found for ${metadataKey}:${id}`, 'Available keys:', Object.keys(def.data))
+        return id
+      }
     }
   }
+  console.error(`[Metadata] No metadata definition for key: ${metadataKey}`)
   return id
 }

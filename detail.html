@@ -194,7 +194,7 @@
 
   <script type="module">
     import KijuntenDB from './src/db.js'
-    import { getLabel, ensureMasterDataLoaded, setDB } from './src/metadata.js'
+    import { getLabel, ensureMasterDataLoaded } from './src/metadata.js'
 
     const db = new KijuntenDB()
     const loading = document.getElementById('loading')
@@ -216,9 +216,8 @@
 
     async function loadBaseDetail(id) {
       try {
-        // DBを初期化してmetadata.jsに渡す
+        // DBを初期化
         await db.init()
-        setDB(db)
         
         // マスタデータの読み込みを待機
         await ensureMasterDataLoaded()
