@@ -3,6 +3,10 @@
  * _id系パラメータと_value系パラメータの対応表
  */
 
+import KijuntenDB from './db.js'
+
+const db = new KijuntenDB()
+
 export const METADATA_DEFS = {
   // 基準点種別（rank_id）
   RANK_IDS: {
@@ -78,40 +82,67 @@ export const METADATA_DEFS = {
 let masterDataLoaded = false
 let masterDataPromise = null
 
-// JSONファイルからマスタデータを読み込む
+// JSONファイルからマスタデータを読み込んでIndexedDBに保存
 async function loadMasterData() {
   if (masterDataLoaded) return
   if (masterDataPromise) return masterDataPromise
 
   masterDataPromise = (async () => {
-    const masterFiles = [
-      { key: 'quality_ids', file: '/data/quality_ids.json' },
-      { key: 'attachment_ids', file: '/data/attachment_ids.json' },
-      { key: 'result_status_ids', file: '/data/result_status_ids.json' },
-      { key: 'result_division_ids', file: '/data/result_division_ids.json' },
-      { key: 'reconstruction_status_ids', file: '/data/reconstruction_status_ids.json' },
-      { key: 'attr_status_ids', file: '/data/attr_status_ids.json' },
-      { key: 'land_type_ids', file: '/data/land_type_ids.json' }
-    ]
+    try {
+      await db.init()
 
-    for (const { key, file } of masterFiles) {
-      try {
-        const response = await fetch(file)
-        const data = await response.json()
-        
-        // METADATA_DEFSの該当するキーにデータを設定
+      // IndexedDBからマスタデータを読み込み
+      const cachedMetadata = await db.getAllMetadata()
+      
+      // キャッシュがあればそれを使用
+      if (Object.keys(cachedMetadata).length > 0) {
+        console.log('[Metadata] Loading from IndexedDB')
         for (const def of Object.values(METADATA_DEFS)) {
-          if (def.key === key) {
-            def.data = data
-            break
+          if (cachedMetadata[def.key]) {
+            def.data = cachedMetadata[def.key]
           }
         }
-      } catch (error) {
-        console.error(`Failed to load ${file}:`, error)
+        masterDataLoaded = true
+        return
       }
+
+      // キャッシュがない場合はJSONファイルから読み込み
+      console.log('[Metadata] Loading from JSON files')
+      const masterFiles = [
+        { key: 'quality_ids', file: '/data/quality_ids.json' },
+        { key: 'attachment_ids', file: '/data/attachment_ids.json' },
+        { key: 'result_status_ids', file: '/data/result_status_ids.json' },
+        { key: 'result_division_ids', file: '/data/result_division_ids.json' },
+        { key: 'reconstruction_status_ids', file: '/data/reconstruction_status_ids.json' },
+        { key: 'attr_status_ids', file: '/data/attr_status_ids.json' },
+        { key: 'land_type_ids', file: '/data/land_type_ids.json' }
+      ]
+
+      for (const { key, file } of masterFiles) {
+        try {
+          const response = await fetch(file)
+          const data = await response.json()
+          
+          // METADATA_DEFSに設定
+          for (const def of Object.values(METADATA_DEFS)) {
+            if (def.key === key) {
+              def.data = data
+              break
+            }
+          }
+
+          // IndexedDBに保存
+          await db.setMetadata(key, data)
+        } catch (error) {
+          console.error(`Failed to load ${file}:`, error)
+        }
+      }
+      
+      masterDataLoaded = true
+    } catch (error) {
+      console.error('Failed to load master data:', error)
+      throw error
     }
-    
-    masterDataLoaded = true
   })()
 
   return masterDataPromise
