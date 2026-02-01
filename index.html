@@ -300,6 +300,40 @@
         const progressFill = document.getElementById('progress-fill')
         const fileList = document.getElementById('file-list')
 
+        // まずマスタテーブルを読み込み
+        const masterFiles = [
+          'data/pref_ids.json',
+          'data/quality_ids.json',
+          'data/attachment_ids.json',
+          'data/result_status_ids.json',
+          'data/result_division_ids.json',
+          'data/reconstruction_status_ids.json',
+          'data/attr_status_ids.json',
+          'data/land_type_ids.json'
+        ]
+
+        progressText.textContent = 'マスタテーブルを読み込み中...'
+        for (const path of masterFiles) {
+          try {
+            const res = await fetch(path)
+            if (!res.ok) throw new Error(`HTTP ${res.status}`)
+            const data = await res.json()
+            
+            // ファイル名からキーを抽出（例：pref_ids.json → pref_ids）
+            const key = path.split('/').pop().replace('.json', '')
+            await db.setMetadata(key, data)
+            
+            if (fileList) {
+              const li = document.createElement('li')
+              li.textContent = path + ` — ${Object.keys(data).length}件`
+              fileList.appendChild(li)
+            }
+          } catch (err) {
+            console.warn('Failed loading', path, err)
+          }
+        }
+
+        // 基準点データを読み込み
         const total = 47
         for (let i = 1; i <= total; i++) {
           const idx = String(i).padStart(2, '0')
