@@ -305,7 +305,7 @@
         </div>
 
         <div class="detail-grid">
-          ${base.u_code ? `<div class="detail-item"><div class="detail-label">ICタグ</div><div class="detail-value"><code>${base.u_code}</code></div></div><div class="detail-item"></div>` : ''}
+          ${base.u_code ? `<div class="detail-item" style="grid-column: 1 / -1;"><div class="detail-label">ICタグ</div><div class="detail-value"><code>${base.u_code}</code></div></div>` : ''}
           
           ${base.fig20_name || base.fig5_name ? `
             <div class="detail-item">${base.fig20_name ? `<div class="detail-label">20万分1地勢図</div><div class="detail-value">${base.fig20_name}</div>` : ''}</div>
