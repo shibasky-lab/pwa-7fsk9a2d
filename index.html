@@ -221,6 +221,15 @@
           </a>
         </div>
 
+        <div class="info-box" id="install-prompt" style="display: none; background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);">
+          <h3 style="color: #2e7d32;">📱 このアプリをインストール</h3>
+          <p>ホーム画面に追加して、アプリのように使えます。オフラインでも利用可能です。</p>
+          <div style="display: flex; gap: 0.5rem; margin-top: 0.8rem;">
+            <button id="install-btn" style="flex: 1; padding: 0.7rem; background: #4CAF50; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">インストール</button>
+            <button id="install-cancel-btn" style="padding: 0.7rem 1.2rem; background: white; color: #666; border: 1px solid #ddd; border-radius: 6px; cursor: pointer;">後で</button>
+          </div>
+        </div>
+
         <div class="info-box">
           <h3>📱 このアプリについて</h3>
           <p>国土地理院が公開する基準点データを使用して、電子基準点・三角点の検索、探索記録が可能です。</p>
@@ -246,6 +255,46 @@
     const db = new KijuntenDB()
     const dbStatus = document.getElementById('db-status')
     const dbStats = document.getElementById('db-stats')
+
+    // PWAインストールプロンプト
+    let deferredPrompt = null
+    const installPrompt = document.getElementById('install-prompt')
+    const installBtn = document.getElementById('install-btn')
+    const installCancelBtn = document.getElementById('install-cancel-btn')
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      // デフォルトのインストールプロンプトを抑制
+      e.preventDefault()
+      deferredPrompt = e
+      
+      // カスタムインストールプロンプトを表示
+      installPrompt.style.display = 'block'
+    })
+
+    installBtn.addEventListener('click', async () => {
+      if (!deferredPrompt) return
+      
+      // インストールプロンプトを表示
+      deferredPrompt.prompt()
+      
+      // ユーザーの選択結果を待つ
+      const { outcome } = await deferredPrompt.userChoice
+      console.log(`User response to the install prompt: ${outcome}`)
+      
+      // プロンプトを非表示
+      installPrompt.style.display = 'none'
+      deferredPrompt = null
+    })
+
+    installCancelBtn.addEventListener('click', () => {
+      installPrompt.style.display = 'none'
+    })
+
+    // インストール済みの場合はプロンプトを表示しない
+    window.addEventListener('appinstalled', () => {
+      installPrompt.style.display = 'none'
+      deferredPrompt = null
+    })
 
     // Service Worker の登録
     if ('serviceWorker' in navigator) {
