@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>基準点検索</title>
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <h1>📍 基準点検索</h1>
+    <a href="/" class="home-btn" title="メニューに戻る">🏠</a>
+  </header>
+
+  <main>
+    <div class="container">
+      <section id="search-section">
+        <!-- フィルター -->
+        <div class="form-group">
+          <label>基準点種別</label>
+          <div class="checkbox-group">
+            <label><input type="checkbox" class="rank-filter" value="EL0"> 電子基準点</label>
+            <label><input type="checkbox" class="rank-filter" value="TR1"> 一等三角点</label>
+            <label><input type="checkbox" class="rank-filter" value="TR2"> 二等三角点</label>
+            <label><input type="checkbox" class="rank-filter" value="TR3"> 三等三角点</label>
+            <label><input type="checkbox" class="rank-filter" value="TR4"> 四等三角点</label>
+          </div>
+        </div>
+
+        <!-- 検索入力 -->
+        <div class="form-group">
+          <label for="pref-select">都道府県</label>
+          <select id="pref-select">
+            <option value="">すべて</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="name-search">点名で検索（漢字・ひらがな）</label>
+          <input type="text" id="name-search" placeholder="点名または点名のひらがなを入力">
+        </div>
+
+        <div class="button-group">
+          <button id="search-btn">🔍 検索</button>
+          <button id="clear-btn" class="secondary">🔄 クリア</button>
+        </div>
+
+        <!-- 検索結果 -->
+        <div id="results">
+          <div class="results-header" id="results-header" style="display:none;">
+            <span>🔍</span>
+            <span id="results-count"></span>
+          </div>
+          <table id="results-table" style="display:none;">
+            <thead>
+              <tr>
+                <th>種別</th>
+                <th>点名</th>
+                <th>基準点コード</th>
+                <th>都道府県</th>
+                <th>詳細</th>
+              </tr>
+            </thead>
+            <tbody id="results-tbody">
+            </tbody>
+          </table>
+
+          <div id="no-results" style="text-align: center; padding: 2rem; color: #999;">
+            検索条件を入力して検索してください
+          </div>
+        </div>
+
+        <!-- ページネーション -->
+        <div class="pagination" id="pagination" style="display:none;">
+          <button id="prev-btn">← 前</button>
+          <span id="page-info"></span>
+          <button id="next-btn">次 →</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <style>
+    /* ヘッダーホームボタン */
+    header {
+      position: relative;
+    }
+
+    .home-btn {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 45px;
+      height: 45px;
+      background: white;
+      color: #2196F3;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      transition: all 0.2s;
+    }
+
+    .home-btn:hover {
+      background: #2196F3;
+      color: white;
+      transform: translateY(-50%) scale(1.05);
+      box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+    }
+
+    /* 検索セクション装飾 */
+    #search-section {
+      background: white;
+      padding: 1.2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .form-group {
+      background: #f8f9fa;
+      padding: 0.7rem;
+      border-radius: 6px;
+      margin-bottom: 0.7rem;
+      border-left: 4px solid #2196F3;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 0.4rem;
+      font-size: 0.9rem;
+    }
+
+    .form-group input[type="text"],
+    .form-group select {
+      width: 100%;
+      padding: 0.6rem;
+      border: 2px solid #ddd;
+      border-radius: 4px;
+      font-size: 0.95rem;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input[type="text"]:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #2196F3;
+      box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+    }
+
+    .checkbox-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 0.4rem;
+    }
+
+    .checkbox-group label {
+      display: flex;
+      align-items: center;
+      margin: 0;
+      font-weight: normal;
+      background: white;
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      border: 2px solid #ddd;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.85rem;
+    }
+
+    .checkbox-group label:hover {
+      border-color: #2196F3;
+      background: #e3f2fd;
+    }
+
+    .checkbox-group input[type="checkbox"]:checked + label,
+    .checkbox-group label:has(input[type="checkbox"]:checked) {
+      background: #2196F3;
+      color: white;
+      border-color: #2196F3;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: auto;
+      margin-right: 0.4rem;
+    }
+
+    /* ボタングループ */
+    .button-group {
+      display: flex;
+      gap: 0.7rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+
+    button {
+      flex: 1;
+      min-width: 120px;
+      padding: 0.7rem 1.2rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    #search-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    #search-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    #search-btn:active {
+      transform: translateY(0);
+    }
+
+    button.secondary {
+      background: linear-gradient(135deg, #999 0%, #777 100%);
+      color: white;
+    }
+
+    button.secondary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(119, 119, 119, 0.4);
+    }
+
+    button.secondary:active {
+      transform: translateY(0);
+    }
+
+    a {
+      color: #2196F3;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+      /* テーブルスタイル */
+      #results-table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 0.9rem;
+        table-layout: fixed;
+      }
+
+      #results-table th,
+      #results-table td {
+        border: 1px solid #ddd;
+        padding: 0.4rem 0.2rem;
+        text-align: center;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* 列幅の固定 */
+      #results-table th:nth-child(1),
+      #results-table td:nth-child(1) {
+        width: 2.5em; /* 種別: 全角2文字 */
+      }
+
+      #results-table th:nth-child(2),
+      #results-table td:nth-child(2) {
+        width: auto; /* 点名: 残りのスペース */
+        white-space: nowrap;
+      }
+
+      #results-table th:nth-child(3),
+      #results-table td:nth-child(3) {
+        width: 9em; /* 基準点コード: コンパクトに */
+        font-size: 0.8rem;
+        padding: 0.4rem 0.1rem;
+      }
+
+      #results-table th:nth-child(4),
+      #results-table td:nth-child(4) {
+        width: 4.5em; /* 都道府県: 全角4文字 */
+      }
+
+      #results-table th:nth-child(5),
+      #results-table td:nth-child(5) {
+        width: 2.5em; /* 詳細: 全角2文字 */
+      }
+
+      #results-table thead tr {
+        background: #2196F3;
+        color: white;
+        border-bottom: 3px solid #1976D2;
+      }
+
+      #results-table tbody tr:hover {
+        background: #f5f5f5;
+      }
+
+      .detail-btn {
+        display: inline-block;
+        padding: 0.3rem 0.4rem;
+        background: #2196F3;
+        color: white;
+        text-decoration: none;
+        border-radius: 4px;
+        font-size: 1rem;
+        transition: background 0.2s;
+        line-height: 1;
+      }
+
+      .detail-btn:hover {
+        background: #1976D2;
+        text-decoration: none;
+      }
+
+      /* ページネーション */
+      .pagination {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.7rem;
+        margin-top: 1rem;
+        padding: 0.7rem;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+
+      .pagination button {
+        padding: 0.5rem 1.2rem;
+        font-size: 0.85rem;
+        border-radius: 6px;
+        transition: all 0.2s;
+        min-width: auto;
+      }
+
+      .pagination button:disabled {
+        background: #e0e0e0;
+        color: #999;
+        cursor: not-allowed;
+        opacity: 0.6;
+      }
+
+      .pagination button:not(:disabled):hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(33, 150, 243, 0.3);
+      }
+
+      #page-info {
+        font-weight: 600;
+        color: #333;
+        background: #f0f0f0;
+        padding: 0.4rem 0.8rem;
+        border-radius: 4px;
+        font-size: 0.85rem;
+      }
+
+      /* 検索結果情報 */
+      #results {
+        margin-top: 1.2rem;
+      }
+
+      .results-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 0.7rem 1rem;
+        border-radius: 8px 8px 0 0;
+        font-weight: 600;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      #results-table {
+        border-radius: 0 0 8px 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      }
+  </style>
+
+  <script type="module">
+    import KijuntenDB from './src/db.js'
+    import { getLabel } from './src/metadata.js'
+
+    const db = new KijuntenDB()
+    const PAGE_SIZE = 20
+    let currentPage = 1
+    let searchResults = []
+    let allBases = []
+    let prefNames = {} // 都道府県マスタ
+
+    await db.init()
+
+    // 都道府県マスタをロード
+    try {
+      const res = await fetch('data/pref_ids.json')
+      if (res.ok) {
+        prefNames = await res.json()
+        // プルダウンに選択肢を追加
+        const prefSelect = document.getElementById('pref-select')
+        Object.keys(prefNames).sort().forEach(prefId => {
+          const option = document.createElement('option')
+          option.value = prefId
+          option.textContent = prefNames[prefId]
+          prefSelect.appendChild(option)
+        })
+      }
+    } catch (err) {
+      console.warn('Failed to load pref_ids.json:', err)
+    }
+
+    // 全データを読み込み
+    allBases = await db.getAllBases()
+
+    if (allBases.length === 0) {
+      document.getElementById('no-results').innerHTML = '<p style="color: #f44336;">⚠️ データがまだダウンロードされていません。<a href="/">メニュー</a>からデータをダウンロードしてください。</p>'
+    }
+
+    const nameSearchInput = document.getElementById('name-search')
+    const prefSelect = document.getElementById('pref-select')
+    const rankFilters = document.querySelectorAll('.rank-filter')
+    const searchBtn = document.getElementById('search-btn')
+    const clearBtn = document.getElementById('clear-btn')
+    const resultsTable = document.getElementById('results-table')
+    const resultsTbody = document.getElementById('results-tbody')
+    const noResults = document.getElementById('no-results')
+    const pagination = document.getElementById('pagination')
+    const pageInfo = document.getElementById('page-info')
+    const prevBtn = document.getElementById('prev-btn')
+    const nextBtn = document.getElementById('next-btn')
+
+    searchBtn.addEventListener('click', async () => {
+      let rankIds = Array.from(rankFilters)
+        .filter(cb => cb.checked)
+        .map(cb => cb.value)
+      
+      // TR4が選択されている場合、EK0も自動的に含める
+      if (rankIds.includes('TR4') && !rankIds.includes('EK0')) {
+        rankIds.push('EK0')
+      }
+      // EK0が選択されている場合、TR4も自動的に含める
+      if (rankIds.includes('EK0') && !rankIds.includes('TR4')) {
+        rankIds.push('TR4')
+      }
+      
+      const searchQuery = nameSearchInput.value
+      const selectedPrefId = prefSelect.value
+      
+      const filters = {
+        rankIds,
+        nameQuery: searchQuery,
+        nameKanaQuery: searchQuery,
+        prefId: selectedPrefId
+      }
+
+      searchResults = await db.searchBases(filters)
+      // 都道府県コード順、点種別順でソート
+      sortResults()
+      currentPage = 1
+      displayResults()
+    })
+
+    // ソート関数：都道府県コード順 → 点種別順
+    function sortResults() {
+      const rankOrder = { 'EL0': 1, 'TR1': 2, 'TR2': 3, 'TR3': 4, 'TR4': 5, 'EK0': 5 }
+      searchResults.sort((a, b) => {
+        // 第一優先: 都道府県コード
+        if (a.pref_id !== b.pref_id) {
+          return a.pref_id.localeCompare(b.pref_id)
+        }
+        // 第二優先: 点種別
+        const aRank = rankOrder[a.rank_id] || 99
+        const bRank = rankOrder[b.rank_id] || 99
+        return aRank - bRank
+      })
+    }
+
+    clearBtn.addEventListener('click', () => {
+      rankFilters.forEach(cb => cb.checked = false)
+      nameSearchInput.value = ''
+      prefSelect.value = ''
+      searchResults = []
+      currentPage = 1
+      resultsTable.style.display = 'none'
+      document.getElementById('results-header').style.display = 'none'
+      noResults.style.display = 'block'
+      pagination.style.display = 'none'
+    })
+
+    prevBtn.addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage--
+        displayResults()
+      }
+    })
+
+    nextBtn.addEventListener('click', () => {
+      const maxPage = Math.ceil(searchResults.length / PAGE_SIZE)
+      if (currentPage < maxPage) {
+        currentPage++
+        displayResults()
+      }
+    })
+
+    function displayResults() {
+      const resultsHeader = document.getElementById('results-header')
+      const resultsCount = document.getElementById('results-count')
+      
+      if (searchResults.length === 0) {
+        resultsTable.style.display = 'none'
+        resultsHeader.style.display = 'none'
+        noResults.style.display = 'block'
+        pagination.style.display = 'none'
+        return
+      }
+
+      const maxPage = Math.ceil(searchResults.length / PAGE_SIZE)
+      const start = (currentPage - 1) * PAGE_SIZE
+      const end = start + PAGE_SIZE
+      const pageResults = searchResults.slice(start, end)
+      
+      // 検索結果数を表示
+      resultsCount.textContent = `検索結果: ${searchResults.length}件`
+      resultsHeader.style.display = 'flex'
+
+      resultsTbody.innerHTML = pageResults.map(base => {
+        const prefName = prefNames[base.pref_id] || '-'
+        // 種別を短縮表示
+        const rankLabel = getLabel('rank_ids', base.rank_id)
+        let shortRank = rankLabel
+        if (rankLabel.includes('電子')) shortRank = '電子'
+        else if (rankLabel.includes('一等')) shortRank = '一等'
+        else if (rankLabel.includes('二等')) shortRank = '二等'
+        else if (rankLabel.includes('三等')) shortRank = '三等'
+        else if (rankLabel.includes('四等')) shortRank = '四等'
+        
+        return `
+        <tr>
+          <td>${shortRank}</td>
+          <td>${base.name || '-'}</td>
+          <td><code style="font-size: 0.75rem;">${base.id}</code></td>
+          <td>${prefName}</td>
+          <td><a href="detail.html?id=${base.id}" class="detail-btn" title="詳細を表示">📖</a></td>
+        </tr>
+      `}).join('')
+
+      pageInfo.textContent = `${currentPage}/${maxPage}（全${searchResults.length}件）`
+
+      resultsTable.style.display = 'table'
+      noResults.style.display = 'none'
+      pagination.style.display = 'flex'
+
+      prevBtn.disabled = currentPage === 1
+      nextBtn.disabled = currentPage === maxPage
+    }
+  </script>
+</body>
+</html>

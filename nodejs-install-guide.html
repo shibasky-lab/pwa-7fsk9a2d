@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Node.js インストール完全ガイド</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 1rem;
+      background: #f5f5f5;
+      color: #333;
+    }
+    .container {
+      background: white;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      margin-bottom: 1rem;
+    }
+    h1 {
+      color: #68A063;
+      border-bottom: 3px solid #68A063;
+      padding-bottom: 1rem;
+    }
+    h2 {
+      color: #1976D2;
+      margin-top: 2rem;
+      border-left: 4px solid #1976D2;
+      padding-left: 1rem;
+    }
+    h3 {
+      color: #555;
+    }
+    .method {
+      background: #f9f9f9;
+      padding: 1.5rem;
+      border-radius: 4px;
+      margin: 1.5rem 0;
+      border-left: 4px solid #4CAF50;
+    }
+    .method.easy {
+      border-left-color: #4CAF50;
+      background: #e8f5e9;
+    }
+    .method.medium {
+      border-left-color: #FF9800;
+      background: #fff3e0;
+    }
+    .method.advanced {
+      border-left-color: #2196F3;
+      background: #e3f2fd;
+    }
+    .step {
+      background: white;
+      padding: 1rem;
+      border-radius: 4px;
+      margin: 1rem 0;
+      border-left: 4px solid #1976D2;
+    }
+    .code {
+      background: #272822;
+      color: #f8f8f2;
+      padding: 1rem;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+      margin: 1rem 0;
+      line-height: 1.4;
+      border: 1px solid #555;
+    }
+    .warning {
+      background: #fff3e0;
+      border-left: 4px solid #FF9800;
+      padding: 1rem;
+      border-radius: 4px;
+      margin: 1rem 0;
+    }
+    .success {
+      background: #e8f5e9;
+      border-left: 4px solid #4CAF50;
+      padding: 1rem;
+      border-radius: 4px;
+      margin: 1rem 0;
+    }
+    .info {
+      background: #e3f2fd;
+      border-left: 4px solid #2196F3;
+      padding: 1rem;
+      border-radius: 4px;
+      margin: 1rem 0;
+    }
+    .screenshot {
+      max-width: 100%;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin: 1rem 0;
+    }
+    ul, ol {
+      line-height: 1.8;
+    }
+    li {
+      margin: 0.5rem 0;
+    }
+    .button-group {
+      display: flex;
+      gap: 1rem;
+      margin: 1rem 0;
+      flex-wrap: wrap;
+    }
+    .btn {
+      padding: 0.75rem 1.5rem;
+      background: #68A063;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1rem;
+      text-decoration: none;
+      display: inline-block;
+      transition: all 0.3s;
+    }
+    .btn:hover {
+      background: #5a8a54;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .btn.download {
+      background: #4CAF50;
+    }
+    .btn.download:hover {
+      background: #45a049;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 0.75rem;
+      text-align: left;
+    }
+    th {
+      background: #f0f0f0;
+      font-weight: 600;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin: 0.25rem;
+    }
+    .badge.easy {
+      background: #c8e6c9;
+      color: #1b5e20;
+    }
+    .badge.recommended {
+      background: #4CAF50;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🟢 Node.js インストール完全ガイド（Windows）</h1>
+
+    <div class="info">
+      <strong>📌 このガイドについて:</strong> Node.jsをWindowsにインストールし、PWAプロジェクトでプロキシサーバーを実行するための手順です。
+    </div>
+
+    <h2>📊 インストール方法の比較</h2>
+    
+    <table>
+      <thead>
+        <tr>
+          <th>方法</th>
+          <th>難易度</th>
+          <th>所要時間</th>
+          <th>推奨</th>
+          <th>特徴</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>公式インストーラー</strong></td>
+          <td><span class="badge easy">簡単</span></td>
+          <td>5分</td>
+          <td><span class="badge recommended">⭐推奨</span></td>
+          <td>最も簡単。クリックするだけ</td>
+        </tr>
+        <tr>
+          <td><strong>Chocolatey</strong></td>
+          <td>中程度</td>
+          <td>10分</td>
+          <td>◎ 良い</td>
+          <td>パッケージマネージャー経由。更新が簡単</td>
+        </tr>
+        <tr>
+          <td><strong>WSL2 + Linux</strong></td>
+          <td>難しい</td>
+          <td>30分</td>
+          <td>上級者向け</td>
+          <td>Linux環境。開発環境としては最適</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>✅ 方法1: 公式インストーラー（推奨）</h2>
+
+    <div class="method easy">
+      <h3>📥 ステップ1: Node.js公式サイトにアクセス</h3>
+      
+      <p><strong>以下のリンクをクリック:</strong></p>
+      <div class="button-group">
+        <a href="https://nodejs.org" target="_blank" class="btn download">Node.js公式サイト</a>
+      </div>
+
+      <p>または URL をコピペ: <code>https://nodejs.org</code></p>
+
+      <div class="info">
+        <strong>💡 ページが表示されたら:</strong>
+        <br>2つのボタンが見えます：
+        <br><strong>LTS（推奨）</strong> と <strong>Current</strong>
+        <br>→ <strong>LTS版</strong> をダウンロードしてください（安定版）
+      </div>
+    </div>
+
+    <div class="step">
+      <h3>📥 ステップ2: インストーラーをダウンロード</h3>
+      
+      <ol>
+        <li>Node.js公式サイトで<strong>「LTS」ボタン</strong>をクリック</li>
+        <li>Windows Installer（.msi）ファイルが自動ダウンロードされます
+          <br><code>node-v20.x.x-x64.msi</code> のようなファイル名
+        </li>
+        <li>ダウンロードフォルダを確認</li>
+      </ol>
+
+      <div class="screenshot">
+        <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 300'%3E%3Crect fill='%23f5f5f5' width='600' height='300'/%3E%3Ctext x='50' y='150' font-size='16' fill='%23666'%3ENode.js公式サイトの例%3C/text%3E%3C/svg%3E" alt="Node.js official site" class="screenshot">
+      </div>
+    </div>
+
+    <div class="step">
+      <h3>🚀 ステップ3: インストーラーを実行</h3>
+      
+      <ol>
+        <li>ダウンロードしたファイルをダブルクリック</li>
+        <li>「このアプリがデバイスに変更を加えることを許可しますか？」と聞かれたら
+          <br><strong>「はい」</strong> をクリック
+        </li>
+      </ol>
+
+      <div class="warning">
+        ⚠️ ユーザーアカウント制御（UAC）ダイアログが表示される場合があります。
+        <br>管理者権限で実行を許可してください。
+      </div>
+    </div>
+
+    <div class="step">
+      <h3>⚙️ ステップ4: インストール画面を進める</h3>
+      
+      <ol>
+        <li><strong>言語選択</strong>: 「日本語」を選択 → 「OK」</li>
+        <li><strong>ウェルカム画面</strong>: 「Next」をクリック</li>
+        <li><strong>ライセンス同意</strong>: 
+          <br>「I accept the terms in the License Agreement」にチェック → 「Next」
+        </li>
+        <li><strong>インストール先</strong>:
+          <br>デフォルト（C:\Program Files\nodejs）のまま → 「Next」
+        </li>
+        <li><strong>カスタムセットアップ</strong>:
+          <br>デフォルトのまま → 「Next」
+        </li>
+        <li><strong>ツールのインストール</strong>:
+          <br>チェックは入れなくてOK → 「Next」
+        </li>
+        <li><strong>インストール実行</strong>: 「Install」をクリック</li>
+        <li><strong>完了</strong>: 「Finish」をクリック</li>
+      </ol>
+
+      <div class="success">
+        ✓ インストール完了！自動的にシステムパスが設定されます。
+      </div>
+    </div>
+
+    <div class="step">
+      <h3>✅ ステップ5: インストール確認</h3>
+      
+      <p><strong>新しいPowerShellウィンドウを開く:</strong></p>
+      <ol>
+        <li>Windows キー を押す</li>
+        <li>「powershell」と入力</li>
+        <li>「Windows PowerShell」をクリック</li>
+      </ol>
+
+      <p><strong>以下のコマンドを実行:</strong></p>
+      <div class="code">
+node --version
+npm --version
+      </div>
+
+      <p><strong>期待される出力:</strong></p>
+      <div class="code">
+v20.10.0
+10.2.3
+      </div>
+
+      <div class="success">
+        ✓ バージョン番号が表示されたらインストール成功！
+      </div>
+    </div>
+
+    <h2>✅ 方法2: Chocolatey（パッケージマネージャー）</h2>
+
+    <div class="method medium">
+      <h3>📋 前提: Chocolatey をインストール</h3>
+      
+      <p>Chocolatey がまだインストールされていない場合：</p>
+
+      <ol>
+        <li><strong>PowerShell を管理者権限で開く</strong>
+          <br>（Windows キー → 「powershell」→ 右クリック → 「管理者として実行」）
+        </li>
+        <li>以下のコマンドを実行:
+          <div class="code">
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+          </div>
+        </li>
+        <li>「Y」 を入力して Enter</li>
+        <li>次のコマンドを実行:
+          <div class="code">
+(New-Object System.Net.ServicePointManager).SecurityProtocol = 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+          </div>
+        </li>
+        <li>インストール完了するまで待機（3～5分）</li>
+      </ol>
+
+      <div class="info">
+        💡 詳細: <a href="https://chocolatey.org/install" target="_blank">Chocolatey公式インストール</a>
+      </div>
+    </div>
+
+    <div class="step">
+      <h3>📥 Node.js をインストール</h3>
+      
+      <p><strong>管理者権限の PowerShell で:</strong></p>
+      <div class="code">
+choco install nodejs
+      </div>
+
+      <p>または LTS版を指定:</p>
+      <div class="code">
+choco install nodejs-lts
+      </div>
+
+      <p>インストール完了後、PowerShell を再起動して確認:</p>
+      <div class="code">
+node --version
+npm --version
+      </div>
+    </div>
+
+    <h2>✅ 方法3: WSL2 + Linux（上級者向け）</h2>
+
+    <div class="method advanced">
+      <h3>📋 WSL2（Windows Subsystem for Linux）を有効化</h3>
+      
+      <ol>
+        <li>PowerShell を管理者権限で開く</li>
+        <li>以下を実行:
+          <div class="code">
+wsl --install
+          </div>
+        </li>
+        <li>再起動を促されたら、Windowsを再起動</li>
+      </ol>
+
+      <div class="warning">
+        ⚠️ 時間がかかります（30分程度）。初回のみです。
+      </div>
+    </div>
+
+    <div class="step">
+      <h3>🐧 WSL2 の Ubuntu で Node.js をインストール</h3>
+      
+      <ol>
+        <li>Windows メニューから「Ubuntu」を検索して起動</li>
+        <li>ユーザー名とパスワードを設定</li>
+        <li>以下を実行:
+          <div class="code">
+curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+sudo apt-get install -y nodejs
+          </div>
+        </li>
+        <li>確認:
+          <div class="code">
+node --version
+npm --version
+          </div>
+        </li>
+      </ol>
+
+      <div class="info">
+        💡 WSL2は開発環境として優れています。Linuxコマンドがそのまま使えます。
+      </div>
+    </div>
+
+    <h2>🔧 トラブルシューティング</h2>
+
+    <div class="step">
+      <h3>❌ 「node: コマンドが見つかりません」</h3>
+      
+      <p><strong>原因:</strong> PowerShellがNode.jsをインストール前に起動していた</p>
+      
+      <p><strong>解決策:</strong></p>
+      <ol>
+        <li>すべてのPowerShellウィンドウを閉じる</li>
+        <li>新しいPowerShellウィンドウを開く</li>
+        <li>再度確認: <code>node --version</code></li>
+      </ol>
+    </div>
+
+    <div class="step">
+      <h3>❌ インストーラーが起動しない</h3>
+      
+      <p><strong>解決策:</strong></p>
+      <ol>
+        <li>PowerShell を <strong>管理者権限</strong> で実行</li>
+        <li>インストーラーファイルをもう一度ダウンロード</li>
+        <li>ウイルス対策ソフトが干渉していないか確認</li>
+      </ol>
+    </div>
+
+    <div class="step">
+      <h3>❌ npm が動作しない</h3>
+      
+      <p><strong>確認・修復:</strong></p>
+      <div class="code">
+npm cache clean --force
+npm install -g npm@latest
+      </div>
+    </div>
+
+    <h2>📚 インストール後の確認</h2>
+
+    <div class="success">
+      <strong>✓ インストール完了の確認:</strong>
+      <div class="code">
+node --version
+npm --version
+npm list -g --depth=0
+      </div>
+      
+      <p>バージョン番号が表示されれば成功です。</p>
+    </div>
+
+    <h2>🎯 次のステップ（PWAプロジェクト）</h2>
+
+    <div class="info">
+      Node.js をインストールしたら、以下を実行してください：
+      
+      <div class="code">
+cd "d:\デスクトップ\★ソフトウェア作ろう\pwa"
+node api-proxy.js
+      </div>
+
+      別のターミナルで：
+      <div class="code">
+python -m http.server 8000
+      </div>
+
+      ブラウザで http://localhost:8000 を開く
+    </div>
+
+    <h2>💡 便利な npm コマンド</h2>
+
+    <div class="step">
+      <table>
+        <thead>
+          <tr>
+            <th>コマンド</th>
+            <th>説明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>node --version</code></td>
+            <td>Node.jsのバージョンを確認</td>
+          </tr>
+          <tr>
+            <td><code>npm --version</code></td>
+            <td>npmのバージョンを確認</td>
+          </tr>
+          <tr>
+            <td><code>npm install -g パッケージ名</code></td>
+            <td>グローバルパッケージをインストール</td>
+          </tr>
+          <tr>
+            <td><code>npm uninstall -g パッケージ名</code></td>
+            <td>グローバルパッケージをアンインストール</td>
+          </tr>
+          <tr>
+            <td><code>npm update -g</code></td>
+            <td>すべてのグローバルパッケージを更新</td>
+          </tr>
+          <tr>
+            <td><code>node ファイル名.js</code></td>
+            <td>JavaScriptファイルを実行</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>📞 質問がある場合</h2>
+
+    <p>以下の情報を教えてください：</p>
+    <ul>
+      <li>どこまで進めたか</li>
+      <li>実際のエラーメッセージ（スクリーンショット可）</li>
+      <li>Windows のバージョン（Win10/Win11）</li>
+      <li>システムの言語設定</li>
+    </ul>
+  </div>
+</body>
+</html>

@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>基準点詳細</title>
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    header {
+      position: relative;
+    }
+
+    .home-btn {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 45px;
+      height: 45px;
+      background: white;
+      color: #2196F3;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      transition: all 0.2s;
+    }
+
+    .home-btn:hover {
+      background: #2196F3;
+      color: white;
+      transform: translateY(-50%) scale(1.05);
+      box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+    }
+
+    #detail-section {
+      background: white;
+      padding: 1.2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .loading, .error {
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .error {
+      color: #f44336;
+    }
+
+    .info-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    .info-card h2 {
+      margin: 0 0 0.5rem 0;
+      font-size: 1.3rem;
+    }
+
+    .info-card .subtitle {
+      font-size: 0.9rem;
+      opacity: 0.9;
+      margin-bottom: 0.5rem;
+    }
+
+    .info-card .code {
+      font-family: monospace;
+      font-size: 0.85rem;
+      background: rgba(255,255,255,0.2);
+      padding: 0.3rem 0.6rem;
+      border-radius: 4px;
+      display: inline-block;
+    }
+
+    .map-link {
+      display: block;
+      background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+      color: white;
+      text-align: center;
+      padding: 0.8rem;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      margin: 1rem 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: all 0.2s;
+    }
+
+    .map-link:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+    }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.7rem;
+      margin: 1rem 0;
+    }
+
+    .detail-item {
+      background: #f8f9fa;
+      padding: 0.7rem;
+      border-radius: 6px;
+      border-left: 4px solid #2196F3;
+    }
+
+    .detail-label {
+      font-size: 0.8rem;
+      color: #666;
+      margin-bottom: 0.3rem;
+      font-weight: 600;
+    }
+
+    .detail-value {
+      font-size: 0.95rem;
+      color: #333;
+    }
+
+    .action-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.7rem;
+      margin-top: 1.5rem;
+    }
+
+    .action-btn {
+      display: block;
+      padding: 0.7rem;
+      text-align: center;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .action-btn.primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .action-btn.secondary {
+      background: linear-gradient(135deg, #999 0%, #777 100%);
+      color: white;
+    }
+
+    .action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+
+    #map {
+      width: 100%;
+      height: 300px;
+      border-radius: 8px;
+      margin-top: 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>📍 基準点詳細</h1>
+    <a href="index.html" class="home-btn" title="メニューに戻る">🏠</a>
+  </header>
+
+  <main>
+    <div class="container">
+      <section id="detail-section">
+        <div id="loading" class="loading">
+          <p>読み込み中...</p>
+        </div>
+        <div id="error" class="error" style="display:none;"></div>
+        <div id="content" style="display:none;"></div>
+        <div id="map" style="display:none;"></div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module">
+    import KijuntenDB from './src/db.js'
+    import { getLabel, ensureMasterDataLoaded } from './src/metadata.js'
+
+    const db = new KijuntenDB()
+    const loading = document.getElementById('loading')
+    const error = document.getElementById('error')
+    const content = document.getElementById('content')
+    const mapElement = document.getElementById('map')
+    const isOnline = navigator.onLine
+
+    const params = new URLSearchParams(window.location.search)
+    const baseId = params.get('id')
+
+    if (!baseId) {
+      loading.style.display = 'none'
+      error.innerHTML = '<p>基準点IDが指定されていません</p><p><a href="search.html">← 検索に戻る</a></p>'
+      error.style.display = 'block'
+    } else {
+      loadBaseDetail(baseId)
+    }
+
+    async function loadBaseDetail(id) {
+      try {
+        // マスタデータの読み込みを待機
+        await ensureMasterDataLoaded()
+        await db.init()
+
+        let prefNames = {}
+        try {
+          const res = await fetch('data/pref_ids.json')
+          if (res.ok) prefNames = await res.json()
+        } catch (err) {
+          console.warn('Failed to load pref_ids.json:', err)
+        }
+
+        const base = await db.getBase(id)
+
+        if (!base) {
+          loading.style.display = 'none'
+          error.innerHTML = '<p>指定された基準点が見つかりません</p><p><a href="search.html">← 検索に戻る</a></p>'
+          error.style.display = 'block'
+          return
+        }
+
+        displayBaseDetail(base, prefNames)
+        
+        loading.style.display = 'none'
+        content.style.display = 'block'
+        
+        if (isOnline) {
+          loadLeafletAndShowMap(base.lat, base.lon, base.name)
+        } else {
+          mapElement.style.display = 'none'
+        }
+      } catch (err) {
+        console.error('Error loading base detail:', err)
+        loading.style.display = 'none'
+        error.innerHTML = '<p>データの読み込みに失敗しました</p><p><a href="search.html">← 検索に戻る</a></p>'
+        error.style.display = 'block'
+      }
+    }
+
+    function displayBaseDetail(base, prefNames) {
+      const rankLabel = getLabel('rank_ids', base.rank_id)
+      const prefName = prefNames[base.pref_id] || '不明'
+      const qualityLabel = getLabel('quality_ids', base.quality_id)
+      const resultDivisionLabel = getLabel('result_division_ids', base.result_division_id)
+      const resultStatusLabel = getLabel('result_status_ids', base.result_status_id)
+      const reconstructionStatusLabel = getLabel('reconstruction_status_ids', base.reconstruction_status_id)
+      const landTypeLabel = getLabel('land_type_ids', base.land_type_id)
+      const attrStatusLabel = getLabel('attr_status_ids', base.attr_status_id)
+      const attachmentLabel = getLabel('attachment_ids', base.attachment_id)
+      
+      let shortRank = rankLabel
+      if (rankLabel.includes('電子')) shortRank = '電子基準点'
+      else if (rankLabel.includes('一等')) shortRank = '一等三角点'
+      else if (rankLabel.includes('二等')) shortRank = '二等三角点'
+      else if (rankLabel.includes('三等')) shortRank = '三等三角点'
+      else if (rankLabel.includes('四等')) shortRank = '四等三角点'
+
+      // abbreviateとnoの表示処理
+      let abbrevNoDisplay = ''
+      if (base.abbreviate && base.abbreviate.trim() !== '' && base.abbreviate.trim() !== ' ') {
+        // abbreviateがある場合：略称　等級番号
+        abbrevNoDisplay = base.abbreviate
+        if (base.no) {
+          abbrevNoDisplay += `　${base.no}`
+        }
+      } else if (base.no) {
+        // abbreviateがなくnoがある場合（電子基準点など）
+        abbrevNoDisplay = base.no
+      }
+
+      // 点名の表示（ふりがながある場合は併記）
+      let nameDisplay = base.name || '名称不明'
+      if (base.name_kana) {
+        nameDisplay += ` / ${base.name_kana}`
+      }
+
+      content.innerHTML = `
+        <div class="info-card">
+          <div class="subtitle" style="margin-bottom: 0.3rem; color: white;">${shortRank} / ${prefName}</div>
+          <div class="code" style="margin-bottom: 0.3rem; color: white;">${base.id}</div>
+          ${abbrevNoDisplay ? `<div style="font-size: 0.9rem; margin-bottom: 0.3rem; color: white;">${abbrevNoDisplay}</div>` : ''}
+          <h2 style="margin-bottom: 0.3rem; color: white;">${nameDisplay}</h2>
+          <div style="font-family: monospace; font-size: 0.95rem; margin-bottom: 0.3rem; color: white;">${base.lat} / ${base.lon}</div>
+          ${resultDivisionLabel ? `<div style="font-size: 0.9rem; color: white;">${resultDivisionLabel}</div>` : ''}
+        </div>
+
+        <div class="detail-grid">
+          ${base.u_code ? `<div class="detail-item"><div class="detail-label">ICタグ</div><div class="detail-value"><code>${base.u_code}</code></div></div><div class="detail-item"></div>` : ''}
+          
+          ${base.fig20_name || base.fig5_name ? `
+            <div class="detail-item">${base.fig20_name ? `<div class="detail-label">20万分1地勢図</div><div class="detail-value">${base.fig20_name}</div>` : ''}</div>
+            <div class="detail-item">${base.fig5_name ? `<div class="detail-label">5万分1地形図</div><div class="detail-value">${base.fig5_name}</div>` : ''}</div>
+          ` : ''}
+          
+          ${resultStatusLabel || base.status_date ? `
+            <div class="detail-item">${resultStatusLabel ? `<div class="detail-label">成果状態</div><div class="detail-value">${resultStatusLabel}</div>` : ''}</div>
+            <div class="detail-item">${base.status_date ? `<div class="detail-label">状態日付</div><div class="detail-value">${base.status_date}</div>` : ''}</div>
+          ` : ''}
+          
+          ${reconstructionStatusLabel || base.reconstruction_date ? `
+            <div class="detail-item">${reconstructionStatusLabel ? `<div class="detail-label">作業内容</div><div class="detail-value">${reconstructionStatusLabel}</div>` : ''}</div>
+            <div class="detail-item">${base.reconstruction_date ? `<div class="detail-label">作業年月日</div><div class="detail-value">${base.reconstruction_date}</div>` : ''}</div>
+          ` : ''}
+          
+          ${attrStatusLabel || base.date ? `
+            <div class="detail-item">${attrStatusLabel ? `<div class="detail-label">現況状態</div><div class="detail-value">${attrStatusLabel}</div>` : ''}</div>
+            <div class="detail-item">${base.date ? `<div class="detail-label">調査年月日</div><div class="detail-value">${base.date}</div>` : ''}</div>
+          ` : ''}
+          
+          ${landTypeLabel ? `<div class="detail-item" style="grid-column: 1 / -1;"><div class="detail-label">現況地目</div><div class="detail-value">${landTypeLabel}</div></div>` : ''}
+        </div>
+
+        <div class="action-buttons">
+          <a href="visit.html?id=${base.id}" class="action-btn primary">📝 訪問記録</a>
+          <a href="search.html" class="action-btn secondary">← 検索に戻る</a>
+        </div>
+      `
+    }
+
+    function loadLeafletAndShowMap(lat, lon, name) {
+      const leafletCSS = document.createElement('link')
+      leafletCSS.rel = 'stylesheet'
+      leafletCSS.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+      document.head.appendChild(leafletCSS)
+
+      const leafletJS = document.createElement('script')
+      leafletJS.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+      leafletJS.onload = () => {
+        mapElement.style.display = 'block'
+        initMap(lat, lon, name)
+      }
+      leafletJS.onerror = () => {
+        mapElement.style.display = 'none'
+      }
+      document.head.appendChild(leafletJS)
+    }
+
+    function initMap(lat, lon, name) {
+      if (typeof L === 'undefined') {
+        mapElement.style.display = 'none'
+        return
+      }
+
+      try {
+        const map = L.map('map', {
+          center: [lat, lon],
+          zoom: 15,
+          zoomControl: false,
+          attributionControl: true
+        })
+
+        L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', {
+          attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank">国土地理院</a>',
+          maxZoom: 18
+        }).addTo(map)
+
+        const marker = L.marker([lat, lon]).addTo(map)
+        marker.bindPopup(`<b>${name || '基準点'}</b>`).openPopup()
+      } catch (err) {
+        console.error('Map initialization failed:', err)
+        mapElement.style.display = 'none'
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="基準点検索・探索記録アプリ">
+  <meta name="theme-color" content="#2196F3">
+  <title>基準点検索 - PWA</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* メインセクション */
+    section {
+      background: white;
+      padding: 1.2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    /* メニューグリッド */
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.8rem;
+      margin: 1.2rem 0;
+    }
+
+    .menu-card {
+      padding: 1.2rem;
+      text-align: center;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 8px;
+      text-decoration: none;
+      color: white;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      border: none;
+    }
+
+    .menu-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+    }
+
+    .menu-icon {
+      font-size: 2rem;
+      display: block;
+      margin-bottom: 0.4rem;
+    }
+
+    /* データベース状況ボックス */
+    .status-box {
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      padding: 1rem;
+      border-radius: 8px;
+      margin: 1rem 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .status-box h3 {
+      margin-top: 0;
+      margin-bottom: 0.8rem;
+      color: #333;
+      font-size: 1rem;
+    }
+
+    .db-stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.7rem;
+      margin: 0.8rem 0;
+    }
+
+    .stat-item {
+      text-align: center;
+      background: white;
+      padding: 0.8rem;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: bold;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: #666;
+      margin-top: 0.3rem;
+    }
+
+    /* プログレスバー */
+    .progress-bar {
+      width: 100%;
+      height: 20px;
+      background: #e0e0e0;
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 0.4rem 0;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #4CAF50, #2196F3);
+      transition: width 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      font-size: 0.8rem;
+    }
+
+    /* アプリ紹介ボックス */
+    .info-box {
+      background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+      padding: 1rem;
+      border-radius: 8px;
+      margin-top: 1.2rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .info-box h3 {
+      color: #1976D2;
+      margin-top: 0;
+      margin-bottom: 0.7rem;
+      font-size: 1rem;
+    }
+
+    .info-box p {
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin: 0.5rem 0;
+    }
+
+    .info-box ul {
+      margin: 0.7rem 0;
+      padding-left: 1.3rem;
+      font-size: 0.85rem;
+      line-height: 1.6;
+    }
+
+    .info-box ul li {
+      margin-bottom: 0.3rem;
+    }
+
+    .info-box a {
+      color: #1976D2;
+      text-decoration: none;
+      word-break: break-all;
+    }
+
+    .info-box a:hover {
+      text-decoration: underline;
+    }
+
+    /* レスポンシブ */
+    @media (max-width: 768px) {
+      .menu-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .db-stats {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>📍 基準点検索 PWA</h1>
+  </header>
+
+  <main>
+    <div class="container">
+      <section>
+        <div class="status-box">
+          <h3>📊 データベース状況</h3>
+          <div id="db-status">
+            <p>初期化中...</p>
+          </div>
+          <div class="db-stats" id="db-stats" style="display:none;">
+            <div class="stat-item">
+              <div class="stat-value" id="stat-bases">-</div>
+              <div class="stat-label">基準点情報</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="stat-visits">-</div>
+              <div class="stat-label">訪問履歴</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="menu-grid">
+          <a href="search.html" class="menu-card">
+            <span class="menu-icon">🔍</span>
+            基準点検索
+          </a>
+          <a href="visit.html" class="menu-card">
+            <span class="menu-icon">📝</span>
+            訪問履歴
+          </a>
+          <a href="data.html" class="menu-card">
+            <span class="menu-icon">📊</span>
+            統計データ
+          </a>
+          <a href="setting.html" class="menu-card">
+            <span class="menu-icon">⚙️</span>
+            設定
+          </a>
+        </div>
+
+        <div class="info-box">
+          <h3>📱 このアプリについて</h3>
+          <p>国土地理院が公開する基準点データを使用して、電子基準点・三角点の検索、探索記録が可能です。</p>
+          <ul>
+            <li>📍 全国の基準点情報（電子基準点、一等～四等三角点）</li>
+            <li>💾 初回ダウンロード後、オフラインでも使用可能</li>
+            <li>📝 探索履歴と写真を記録</li>
+            <li>🗺️ 地理院地図でロケーション確認</li>
+            <li>🎯 GPS機能で測設モード対応</li>
+          </ul>
+          <p style="font-size: 0.8rem; color: #666; margin: 0.8rem 0 0 0;">
+            出典：国土地理院（基準点成果等閲覧サービス）<br>
+            <a href="https://service.gsi.go.jp/kijunten/" target="_blank">https://service.gsi.go.jp/kijunten/</a>
+          </p>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script type="module">
+    import KijuntenDB from './src/db.js'
+
+    const db = new KijuntenDB()
+    const dbStatus = document.getElementById('db-status')
+    const dbStats = document.getElementById('db-stats')
+
+    // Service Worker の登録
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js')
+        .then(registration => {
+          console.log('Service Worker registered:', registration.scope)
+        })
+        .catch(err => {
+          console.error('Service Worker registration failed:', err)
+        })
+    }
+
+    // DB初期化
+    async function initDB() {
+      try {
+        await db.init()
+        await updateDBStatus()
+        // 初回起動時はローカルの data/points_XX.json を読み込んで IndexedDB に保存
+        const size = await db.getSize()
+        const initialDone = await db.getMetadata('initial_import_done')
+        if (size.bases === 0 && !initialDone) {
+          // 自動でローカルデータを取り込む
+          await loadLocalData()
+        }
+      } catch (error) {
+        console.error('DB init error:', error)
+        dbStatus.innerHTML = '<p style="color: #f44336;">エラー: IndexedDBの初期化に失敗しました</p>'
+      }
+    }
+
+    // ローカル data/points_01..47.json を順次読み込み DB に登録
+    async function loadLocalData() {
+      try {
+        // 進捗表示要素を作成
+        const statusBox = document.querySelector('.status-box')
+        const progressDiv = document.createElement('div')
+        progressDiv.id = 'download-progress'
+        progressDiv.style.marginTop = '1rem'
+        progressDiv.innerHTML = `
+          <p id="progress-text">ローカルデータを読み込み中...</p>
+          <div class="progress-bar">
+            <div class="progress-bar-fill" id="progress-fill" style="width: 0%"></div>
+          </div>
+          <div style="margin-top:8px; max-height:160px; overflow:auto; background:#fff; padding:0.5rem; border-radius:4px; border:1px solid #eee;">
+            <strong style="font-size:0.9rem;">読み込みファイル:</strong>
+            <ul id="file-list" style="margin:6px 0 0 1rem; padding:0; list-style:disc;"></ul>
+          </div>
+        `
+        statusBox.appendChild(progressDiv)
+
+        const progressText = document.getElementById('progress-text')
+        const progressFill = document.getElementById('progress-fill')
+        const fileList = document.getElementById('file-list')
+
+        const total = 47
+        for (let i = 1; i <= total; i++) {
+          const idx = String(i).padStart(2, '0')
+          const path = `data/points_${idx}.json`
+          progressText.textContent = `読み込み: ${path}`
+          try {
+            const res = await fetch(path)
+            if (!res.ok) throw new Error(`HTTP ${res.status}`)
+            const arr = await res.json()
+            if (Array.isArray(arr) && arr.length > 0) {
+              // bases に追加（ファイル単位で追加）
+              await db.addBases(arr)
+              // 読み込んだファイルをリストに追加して可視化
+              if (fileList) {
+                const li = document.createElement('li')
+                li.textContent = path + ` — ${arr.length.toLocaleString()}件`
+                fileList.appendChild(li)
+              }
+            }
+          } catch (err) {
+            console.warn('Failed loading', path, err)
+          }
+
+          const pct = Math.round((i / total) * 100)
+          progressFill.style.width = pct + '%'
+        }
+
+        // 完了マーク
+        await db.setMetadata('initial_import_done', true)
+        progressText.textContent = '✓ ローカルデータ取り込み完了'
+        progressFill.style.width = '100%'
+        await new Promise(r => setTimeout(r, 800))
+        progressDiv.style.display = 'none'
+        updateDBStatus()
+      } catch (error) {
+        console.error('Local import error:', error)
+        const progressText = document.getElementById('progress-text')
+        if (progressText) {
+          progressText.textContent = '❌ ローカルデータ取り込みエラー'
+        }
+      }
+    }
+
+    // DB状況更新
+    async function updateDBStatus() {
+      try {
+        const size = await db.getSize()
+        
+        if (size.bases === 0) {
+          dbStatus.innerHTML = '<p style="color: #FF9800;">⚠️ データがまだダウンロードされていません</p>'
+        } else {
+          dbStatus.innerHTML = '<p style="color: #4CAF50;">✓ データは利用可能です</p>'
+        }
+
+        document.getElementById('stat-bases').textContent = size.bases.toLocaleString()
+        document.getElementById('stat-visits').textContent = size.visits
+        dbStats.style.display = 'grid'
+      } catch (error) {
+        console.error('Error updating DB status:', error)
+      }
+    }
+
+    // 初期化
+    await initDB()
+  </script>
+</body>
+</html>
