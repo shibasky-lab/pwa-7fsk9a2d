@@ -58,9 +58,9 @@
     }
 
     .orientation-btn {
-      position: fixed;
-      right: 1rem;
-      bottom: 200px;
+      position: absolute;
+      right: 10px;
+      bottom: 10px;
       width: 50px;
       height: 50px;
       background: white;
@@ -92,7 +92,7 @@
       top: 60px;
       left: 0;
       right: 0;
-      bottom: 180px;
+      bottom: 0;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -105,57 +105,31 @@
       max-height: 100%;
     }
 
-    #info-panel {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 180px;
-      background: white;
-      box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
-      padding: 1rem;
-      overflow-y: auto;
-    }
-
-    .info-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 0.5rem 0;
-      border-bottom: 1px solid #eee;
-    }
-
-    .info-label {
-      font-weight: 600;
-      color: #666;
-    }
-
-    .info-value {
-      color: #333;
+    .coord-display {
+      position: absolute;
+      left: 10px;
+      bottom: 10px;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 0.4rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
       font-family: monospace;
-    }
-
-    .status-indicator {
-      display: inline-block;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      margin-right: 0.5rem;
-    }
-
-    .status-active {
-      background: #4CAF50;
-      box-shadow: 0 0 8px #4CAF50;
-    }
-
-    .status-inactive {
-      background: #f44336;
+      color: #333;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      z-index: 50;
     }
 
     .target-info {
+      position: fixed;
+      top: 70px;
+      left: 10px;
+      max-width: calc(100% - 20px);
+      width: auto;
       background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-      padding: 0.8rem;
+      padding: 1rem;
       border-radius: 8px;
-      margin-bottom: 0.8rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      z-index: 60;
     }
 
     .target-name {
@@ -169,6 +143,51 @@
       font-size: 0.85rem;
       color: #666;
       font-family: monospace;
+      margin-bottom: 0.8rem;
+      padding-bottom: 0.8rem;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem;
+      font-size: 0.85rem;
+    }
+
+    .info-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .info-item-label {
+      font-weight: 600;
+      color: #555;
+      font-size: 0.75rem;
+      margin-bottom: 0.2rem;
+    }
+
+    .info-item-value {
+      color: #333;
+      font-family: monospace;
+      font-size: 0.9rem;
+    }
+
+    .status-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 0.4rem;
+    }
+
+    .status-active {
+      background: #4CAF50;
+      box-shadow: 0 0 6px #4CAF50;
+    }
+
+    .status-inactive {
+      background: #f44336;
     }
 
     /* 座標入力ポップアップ */
@@ -362,47 +381,39 @@
     <a href="index.html" class="home-btn" title="メニューに戻る">🏠</a>
   </header>
 
-  <div id="radar-container">
-    <canvas id="radar" width="600" height="600"></canvas>
+  <div class="target-info">
+    <div class="target-name" id="target-name">読み込み中...</div>
+    <div class="target-id" id="target-id"></div>
+    
+    <div class="info-grid">
+      <div class="info-item">
+        <div class="info-item-label">
+          <span class="status-indicator" id="gps-status"></span>
+          GPS状態
+        </div>
+        <div class="info-item-value" id="gps-status-text">取得中...</div>
+      </div>
+      <div class="info-item">
+        <div class="info-item-label">精度</div>
+        <div class="info-item-value" id="gps-accuracy">--</div>
+      </div>
+      <div class="info-item">
+        <div class="info-item-label">方位</div>
+        <div class="info-item-value" id="bearing">--</div>
+      </div>
+      <div class="info-item">
+        <div class="info-item-label">距離</div>
+        <div class="info-item-value" id="distance">--</div>
+      </div>
+    </div>
   </div>
 
-  <button id="orientation-btn" class="orientation-btn" title="方向モード切替">
-    🧭
-  </button>
-
-  <div id="info-panel">
-    <div class="target-info">
-      <div class="target-name" id="target-name">読み込み中...</div>
-      <div class="target-id" id="target-id"></div>
-    </div>
-
-    <div class="info-row">
-      <span class="info-label">
-        <span class="status-indicator" id="gps-status"></span>
-        GPS状態
-      </span>
-      <span class="info-value" id="gps-status-text">取得中...</span>
-    </div>
-
-    <div class="info-row">
-      <span class="info-label">GPS精度</span>
-      <span class="info-value" id="gps-accuracy">--</span>
-    </div>
-
-    <div class="info-row">
-      <span class="info-label">距離</span>
-      <span class="info-value" id="distance">--</span>
-    </div>
-
-    <div class="info-row">
-      <span class="info-label">方位</span>
-      <span class="info-value" id="bearing">--</span>
-    </div>
-
-    <div class="info-row">
-      <span class="info-label">現在位置</span>
-      <span class="info-value" id="current-pos">--</span>
-    </div>
+  <div id="radar-container">
+    <canvas id="radar" width="600" height="600"></canvas>
+    <button id="orientation-btn" class="orientation-btn" title="方向モード切替">
+      🧭
+    </button>
+    <div class="coord-display" id="current-pos">--</div>
   </div>
 
   <script type="module">
@@ -881,48 +892,6 @@
 
       // 回転を元に戻す
       ctx.restore()
-
-      // レーダー中央に方角と距離を表示
-      if (currentPosition && targetBase) {
-        const distance = calculateDistance(
-          currentPosition.lat, currentPosition.lon,
-          targetBase.lat, targetBase.lon
-        )
-        
-        const bearing = calculateBearing(
-          currentPosition.lat, currentPosition.lon,
-          targetBase.lat, targetBase.lon
-        )
-
-        // 方角（16方位）
-        const directions = ['北', '北北東', '北東', '東北東', '東', '東南東', '南東', '南南東',
-                           '南', '南南西', '南西', '西南西', '西', '西北西', '北西', '北北西']
-        const index = Math.round(bearing / 22.5) % 16
-        const directionText = directions[index]
-
-        // 距離表示
-        let distanceText
-        if (distance < 1000) {
-          distanceText = `${distance.toFixed(1)}m`
-        } else {
-          distanceText = `${(distance / 1000).toFixed(2)}km`
-        }
-
-        // 半透明の背景
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'
-        ctx.fillRect(centerX - 80, centerY + 80, 160, 50)
-        ctx.strokeStyle = '#333333'
-        ctx.lineWidth = 2
-        ctx.strokeRect(centerX - 80, centerY + 80, 160, 50)
-
-        // テキスト表示
-        ctx.fillStyle = '#333333'
-        ctx.font = 'bold 18px sans-serif'
-        ctx.textAlign = 'center'
-        ctx.textBaseline = 'middle'
-        ctx.fillText(directionText, centerX, centerY + 95)
-        ctx.fillText(distanceText, centerX, centerY + 115)
-      }
 
       // アニメーションループ
       requestAnimationFrame(drawRadar)
