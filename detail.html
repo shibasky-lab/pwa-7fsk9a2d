@@ -196,6 +196,36 @@
       border-radius: 8px;
       margin-top: 1rem;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      position: relative;
+    }
+
+    .location-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 40px;
+      height: 40px;
+      background: white;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      z-index: 1000;
+      transition: all 0.2s;
+    }
+
+    .location-btn:hover {
+      transform: scale(1.05);
+    }
+
+    .location-btn.active {
+      background: #4CAF50;
+      border-color: #4CAF50;
+      color: white;
     }
   </style>
 </head>
@@ -214,7 +244,9 @@
         </div>
         <div id="error" class="error" style="display:none;"></div>
         <div id="content" style="display:none;"></div>
-        <div id="map" style="display:none;"></div>
+        <div id="map" style="display:none;">
+          <button id="location-btn" class="location-btn" title="現在地を表示">📍</button>
+        </div>
       </section>
     </div>
   </main>
@@ -229,6 +261,11 @@
     const content = document.getElementById('content')
     const mapElement = document.getElementById('map')
     const isOnline = navigator.onLine
+
+    let map = null
+    let currentLocationMarker = null
+    let locationWatchId = null
+    let isLocationEnabled = false
 
     const params = new URLSearchParams(window.location.search)
     const baseId = params.get('id')
@@ -416,7 +453,7 @@
       }
 
       try {
-        const map = L.map('map', {
+        map = L.map('map', {
           center: [lat, lon],
           zoom: 15,
           zoomControl: false,
@@ -430,9 +467,103 @@
 
         const marker = L.marker([lat, lon]).addTo(map)
         marker.bindPopup(`<b>${name || '基準点'}</b>`).openPopup()
+
+        // 位置情報ボタンのイベントリスナー
+        document.getElementById('location-btn').addEventListener('click', toggleLocation)
       } catch (err) {
         console.error('Map initialization failed:', err)
         mapElement.style.display = 'none'
+      }
+    }
+
+    // 位置情報のオンオフ切り替え
+    function toggleLocation() {
+      if (isLocationEnabled) {
+        disableLocation()
+      } else {
+        enableLocation()
+      }
+    }
+
+    // 位置情報を有効化
+    function enableLocation() {
+      if (!navigator.geolocation) {
+        alert('GPS機能が利用できません')
+        return
+      }
+
+      const btn = document.getElementById('location-btn')
+      btn.classList.add('active')
+      isLocationEnabled = true
+
+      // 位置情報の監視を開始
+      locationWatchId = navigator.geolocation.watchPosition(
+        (position) => {
+          const lat = position.coords.latitude
+          const lon = position.coords.longitude
+          const accuracy = position.coords.accuracy
+
+          // 現在位置マーカーを更新
+          if (currentLocationMarker) {
+            currentLocationMarker.setLatLng([lat, lon])
+          } else {
+            // 青い円形マーカーで現在位置を表示
+            currentLocationMarker = L.circleMarker([lat, lon], {
+              radius: 8,
+              color: '#000000',
+              weight: 2,
+              fillColor: '#2196F3',
+              fillOpacity: 1
+            }).addTo(map)
+            currentLocationMarker.bindPopup(`<b>現在地</b><br>精度: ±${accuracy.toFixed(1)}m`)
+          }
+
+          // 精度円を追加/更新
+          if (currentLocationMarker.accuracyCircle) {
+            currentLocationMarker.accuracyCircle.setLatLng([lat, lon])
+            currentLocationMarker.accuracyCircle.setRadius(accuracy)
+          } else {
+            currentLocationMarker.accuracyCircle = L.circle([lat, lon], {
+              radius: accuracy,
+              color: '#2196F3',
+              fillColor: '#2196F3',
+              fillOpacity: 0.1,
+              weight: 2
+            }).addTo(map)
+          }
+        },
+        (error) => {
+          console.error('Location error:', error)
+          alert('GPS位置情報の取得に失敗しました')
+          disableLocation()
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0
+        }
+      )
+    }
+
+    // 位置情報を無効化
+    function disableLocation() {
+      const btn = document.getElementById('location-btn')
+      btn.classList.remove('active')
+      isLocationEnabled = false
+
+      // 位置情報の監視を停止
+      if (locationWatchId !== null) {
+        navigator.geolocation.clearWatch(locationWatchId)
+        locationWatchId = null
+      }
+
+      // マーカーと円を削除
+      if (currentLocationMarker) {
+        if (currentLocationMarker.accuracyCircle) {
+          map.removeLayer(currentLocationMarker.accuracyCircle)
+        }
+        map.removeLayer(currentLocationMarker)
+        currentLocationMarker = null
       }
     }
   </script>
