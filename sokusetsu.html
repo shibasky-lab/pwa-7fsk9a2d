@@ -3,21 +3,940 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
   <title>測設モード</title>
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 0.8rem 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    header h1 {
+      margin: 0;
+      color: white;
+      font-size: 1.2rem;
+    }
+
+    .home-btn {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 40px;
+      height: 40px;
+      background: white;
+      color: #667eea;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      transition: all 0.2s;
+    }
+
+    .home-btn:hover {
+      transform: translateY(-50%) scale(1.05);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .orientation-btn {
+      position: fixed;
+      right: 1rem;
+      bottom: 200px;
+      width: 50px;
+      height: 50px;
+      background: white;
+      color: #667eea;
+      border: 2px solid #667eea;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      cursor: pointer;
+      z-index: 50;
+      transition: all 0.2s;
+    }
+
+    .orientation-btn:active {
+      transform: scale(0.95);
+    }
+
+    .orientation-btn.north-up {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-color: #764ba2;
+    }
+
+    #radar-container {
+      position: fixed;
+      top: 60px;
+      left: 0;
+      right: 0;
+      bottom: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+    }
+
+    #radar {
+      display: block;
+      max-width: 100%;
+      max-height: 100%;
+    }
+
+    #info-panel {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 180px;
+      background: white;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+      padding: 1rem;
+      overflow-y: auto;
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #eee;
+    }
+
+    .info-label {
+      font-weight: 600;
+      color: #666;
+    }
+
+    .info-value {
+      color: #333;
+      font-family: monospace;
+    }
+
+    .status-indicator {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 0.5rem;
+    }
+
+    .status-active {
+      background: #4CAF50;
+      box-shadow: 0 0 8px #4CAF50;
+    }
+
+    .status-inactive {
+      background: #f44336;
+    }
+
+    .target-info {
+      background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+      padding: 0.8rem;
+      border-radius: 8px;
+      margin-bottom: 0.8rem;
+    }
+
+    .target-name {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #1976D2;
+      margin-bottom: 0.3rem;
+    }
+
+    .target-id {
+      font-size: 0.85rem;
+      color: #666;
+      font-family: monospace;
+    }
+
+    /* 座標入力ポップアップ */
+    #coord-popup {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+    }
+
+    #coord-popup.hidden {
+      display: none;
+    }
+
+    .popup-content {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+
+    .popup-title {
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: #667eea;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .format-toggle {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      background: #f0f0f0;
+      padding: 0.3rem;
+      border-radius: 8px;
+    }
+
+    .format-toggle button {
+      flex: 1;
+      padding: 0.5rem;
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+
+    .format-toggle button.active {
+      background: white;
+      color: #667eea;
+      font-weight: bold;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .input-group {
+      margin-bottom: 1rem;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #666;
+      margin-bottom: 0.3rem;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 0.7rem;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-family: monospace;
+      box-sizing: border-box;
+    }
+
+    .input-group input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .dms-inputs {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .dms-inputs input {
+      flex: 1;
+    }
+
+    .popup-buttons {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .popup-buttons button {
+      flex: 1;
+      padding: 0.8rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-cancel {
+      background: #e0e0e0;
+      color: #666;
+    }
+
+    .btn-cancel:active {
+      transform: scale(0.98);
+    }
+
+    .btn-ok {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-ok:active {
+      transform: scale(0.98);
+    }
+
+    .format-hint {
+      font-size: 0.8rem;
+      color: #999;
+      margin-top: 0.3rem;
+    }
+  </style>
 </head>
 <body>
+  <!-- 座標入力ポップアップ -->
+  <div id="coord-popup" class="hidden">
+    <div class="popup-content">
+      <div class="popup-title">📍 測設座標を入力</div>
+      
+      <div class="format-toggle">
+        <button id="format-decimal">度小数</button>
+        <button id="format-dms" class="active">度分秒</button>
+      </div>
+
+      <!-- 度小数形式 -->
+      <div id="decimal-inputs" style="display: none;">
+        <div class="input-group">
+          <label>緯度 (Latitude)</label>
+          <input type="text" id="lat-decimal" placeholder="35.71772228" inputmode="decimal">
+          <div class="format-hint">例: 35.71772228</div>
+        </div>
+        <div class="input-group">
+          <label>経度 (Longitude)</label>
+          <input type="text" id="lon-decimal" placeholder="139.48102264" inputmode="decimal">
+          <div class="format-hint">例: 139.48102264</div>
+        </div>
+      </div>
+
+      <!-- 度分秒形式 -->
+      <div id="dms-inputs">
+        <div class="input-group">
+          <label>緯度 (Latitude)</label>
+          <input type="text" id="lat-dms" placeholder="354303.8002" inputmode="decimal">
+          <div class="format-hint">例: 354303.8002 (35度43分3.8002秒)</div>
+        </div>
+        <div class="input-group">
+          <label>経度 (Longitude)</label>
+          <input type="text" id="lon-dms" placeholder="1392851.6815" inputmode="decimal">
+          <div class="format-hint">例: 1392851.6815 (139度28分51.6815秒)</div>
+        </div>
+      </div>
+
+      <div class="popup-buttons">
+        <button class="btn-cancel" id="coord-cancel">キャンセル</button>
+        <button class="btn-ok" id="coord-ok">測設開始</button>
+      </div>
+    </div>
+  </div>
+
   <header>
-    <h1>📍 測設モード</h1>
+    <h1>🎯 測設モード</h1>
+    <a href="index.html" class="home-btn" title="メニューに戻る">🏠</a>
   </header>
 
-  <main>
-    <div class="container">
-      <section id="sokusetsu-section">
-        <p>測設モード（近日実装）</p>
-        <p><a href="index.html">← メニューに戻る</a></p>
-      </section>
+  <div id="radar-container">
+    <canvas id="radar" width="600" height="600"></canvas>
+  </div>
+
+  <button id="orientation-btn" class="orientation-btn" title="方向モード切替">
+    🧭
+  </button>
+
+  <div id="info-panel">
+    <div class="target-info">
+      <div class="target-name" id="target-name">読み込み中...</div>
+      <div class="target-id" id="target-id"></div>
     </div>
-  </main>
+
+    <div class="info-row">
+      <span class="info-label">
+        <span class="status-indicator" id="gps-status"></span>
+        GPS状態
+      </span>
+      <span class="info-value" id="gps-status-text">取得中...</span>
+    </div>
+
+    <div class="info-row">
+      <span class="info-label">GPS精度</span>
+      <span class="info-value" id="gps-accuracy">--</span>
+    </div>
+
+    <div class="info-row">
+      <span class="info-label">距離</span>
+      <span class="info-value" id="distance">--</span>
+    </div>
+
+    <div class="info-row">
+      <span class="info-label">方位</span>
+      <span class="info-value" id="bearing">--</span>
+    </div>
+
+    <div class="info-row">
+      <span class="info-label">現在位置</span>
+      <span class="info-value" id="current-pos">--</span>
+    </div>
+  </div>
+
+  <script type="module">
+    import KijuntenDB from './src/db.js'
+
+    const db = new KijuntenDB()
+    const canvas = document.getElementById('radar')
+    const ctx = canvas.getContext('2d')
+    
+    let currentPosition = null
+    let targetBase = null
+    let watchId = null
+    let deviceHeading = 0 // デバイスの向き（度）
+    let northUp = false // false=ヘディングアップ、true=ノースアップ
+
+    // 円の半径（メートル）
+    const circles = [5, 25, 50]
+    const maxRadius = 50 // 最大表示範囲
+
+    // URLパラメータから目標IDを取得
+    const params = new URLSearchParams(window.location.search)
+    const targetId = params.get('id')
+
+    // 初期化
+    async function init() {
+      try {
+        await db.init()
+        
+        // 目標点を決定
+        if (targetId) {
+          // detail.htmlから遷移した場合
+          targetBase = await db.getBase(targetId)
+          localStorage.setItem('last_sokusetsu_target', targetId)
+          startSokusetsu()
+        } else {
+          // メニューから開いた場合：座標入力ポップアップを表示
+          showCoordPopup()
+        }
+      } catch (error) {
+        console.error('初期化エラー:', error)
+        document.getElementById('target-name').textContent = 'エラーが発生しました'
+      }
+    }
+
+    // 測設を開始
+    function startSokusetsu() {
+      if (targetBase) {
+        // 入力座標の場合と基準点の場合で表示を切り替え
+        if (targetBase.id === 'custom') {
+          // 入力座標の場合
+          document.getElementById('target-name').textContent = '入力座標'
+          document.getElementById('target-id').textContent = `${targetBase.lat.toFixed(8)}, ${targetBase.lon.toFixed(8)}`
+        } else {
+          // 基準点の場合
+          document.getElementById('target-name').textContent = targetBase.name || '名称不明'
+          document.getElementById('target-id').textContent = targetBase.id
+        }
+      } else {
+        document.getElementById('target-name').textContent = '目標が見つかりません'
+        document.getElementById('target-id').textContent = ''
+      }
+
+      // 位置情報の監視を開始
+      startLocationWatch()
+      
+      // デバイスの向きを監視開始
+      startOrientationWatch()
+      
+      // レーダー描画開始
+      drawRadar()
+      
+      // 方向モード切替ボタン
+      document.getElementById('orientation-btn').addEventListener('click', toggleOrientationMode)
+      updateOrientationButton()
+    }
+
+    // 座標入力ポップアップを表示
+    function showCoordPopup() {
+      const popup = document.getElementById('coord-popup')
+      popup.classList.remove('hidden')
+      
+      // フォーマット切替
+      document.getElementById('format-decimal').addEventListener('click', () => {
+        document.getElementById('format-decimal').classList.add('active')
+        document.getElementById('format-dms').classList.remove('active')
+        document.getElementById('decimal-inputs').style.display = 'block'
+        document.getElementById('dms-inputs').style.display = 'none'
+      })
+      
+      document.getElementById('format-dms').addEventListener('click', () => {
+        document.getElementById('format-dms').classList.add('active')
+        document.getElementById('format-decimal').classList.remove('active')
+        document.getElementById('decimal-inputs').style.display = 'none'
+        document.getElementById('dms-inputs').style.display = 'block'
+      })
+      
+      // キャンセルボタン
+      document.getElementById('coord-cancel').addEventListener('click', () => {
+        window.location.href = 'index.html'
+      })
+      
+      // OKボタン
+      document.getElementById('coord-ok').addEventListener('click', () => {
+        const isDecimal = document.getElementById('format-decimal').classList.contains('active')
+        let lat, lon
+        
+        if (isDecimal) {
+          // 度小数形式
+          lat = parseFloat(document.getElementById('lat-decimal').value)
+          lon = parseFloat(document.getElementById('lon-decimal').value)
+        } else {
+          // 度分秒形式
+          const latDMS = document.getElementById('lat-dms').value
+          const lonDMS = document.getElementById('lon-dms').value
+          lat = dmsToDecimal(latDMS)
+          lon = dmsToDecimal(lonDMS)
+        }
+        
+        if (isNaN(lat) || isNaN(lon)) {
+          alert('正しい座標を入力してください')
+          return
+        }
+        
+        // 目標座標を設定
+        targetBase = {
+          id: 'custom',
+          name: '入力座標',
+          lat: lat,
+          lon: lon
+        }
+        
+        popup.classList.add('hidden')
+        startSokusetsu()
+      })
+    }
+    
+    // 度分秒を度小数に変換
+    function dmsToDecimal(dmsString) {
+      // dmsString形式: "354303.8002" (35度43分03.8002秒)
+      const str = dmsString.replace(/[^0-9.]/g, '')
+      if (str.length < 7) return NaN
+      
+      // 小数点の位置を見つける
+      const dotIndex = str.indexOf('.')
+      let integerPart, decimalPart
+      
+      if (dotIndex !== -1) {
+        // 小数点がある場合
+        integerPart = str.substring(0, dotIndex)
+        decimalPart = str.substring(dotIndex) // .を含む
+      } else {
+        // 小数点がない場合
+        integerPart = str
+        decimalPart = ''
+      }
+      
+      // 整数部分から度・分・秒を抽出
+      // 後ろから2桁が秒の整数部、その前2桁が分、残りが度
+      const secondsInt = parseInt(integerPart.substring(integerPart.length - 2))
+      const minutes = parseInt(integerPart.substring(integerPart.length - 4, integerPart.length - 2))
+      const degrees = parseInt(integerPart.substring(0, integerPart.length - 4))
+      
+      // 秒を完全な数値に（整数部 + 小数部）
+      const seconds = parseFloat(secondsInt + decimalPart)
+      
+      // 度小数に変換（小数点第8位に四捨五入）
+      const decimal = degrees + (minutes / 60) + (seconds / 3600)
+      return parseFloat(decimal.toFixed(8))
+    }
+
+    // 位置情報の監視開始
+    function startLocationWatch() {
+      if (!navigator.geolocation) {
+        document.getElementById('gps-status-text').textContent = '非対応'
+        document.getElementById('gps-status').className = 'status-indicator status-inactive'
+        return
+      }
+
+      watchId = navigator.geolocation.watchPosition(
+        (position) => {
+          currentPosition = {
+            lat: position.coords.latitude,
+            lon: position.coords.longitude,
+            accuracy: position.coords.accuracy
+          }
+          
+          document.getElementById('gps-status-text').textContent = '取得中'
+          document.getElementById('gps-status').className = 'status-indicator status-active'
+          document.getElementById('current-pos').textContent = 
+            `${currentPosition.lat.toFixed(6)}, ${currentPosition.lon.toFixed(6)}`
+          
+          // GPS精度を表示
+          if (position.coords.accuracy) {
+            document.getElementById('gps-accuracy').textContent = 
+              `±${position.coords.accuracy.toFixed(1)}m`
+          }
+          
+          updateDistance()
+        },
+        (error) => {
+          console.error('位置情報エラー:', error)
+          document.getElementById('gps-status-text').textContent = 'エラー'
+          document.getElementById('gps-status').className = 'status-indicator status-inactive'
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0
+        }
+      )
+    }
+
+    // デバイスの向きを監視開始
+    function startOrientationWatch() {
+      if (window.DeviceOrientationEvent) {
+        // iOS 13+での許可リクエスト
+        if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+          DeviceOrientationEvent.requestPermission()
+            .then(permissionState => {
+              if (permissionState === 'granted') {
+                window.addEventListener('deviceorientationabsolute', handleOrientation, true)
+                window.addEventListener('deviceorientation', handleOrientation, true)
+              }
+            })
+            .catch(console.error)
+        } else {
+          // Android等
+          window.addEventListener('deviceorientationabsolute', handleOrientation, true)
+          window.addEventListener('deviceorientation', handleOrientation, true)
+        }
+      }
+    }
+
+    // デバイスの向きを処理
+    function handleOrientation(event) {
+      if (event.webkitCompassHeading) {
+        // iOS
+        deviceHeading = event.webkitCompassHeading
+      } else if (event.alpha !== null) {
+        // Android (absolute)
+        deviceHeading = 360 - event.alpha
+      }
+    }
+
+    // 2点間の距離を計算（メートル）
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371000 // 地球の半径（メートル）
+      const φ1 = lat1 * Math.PI / 180
+      const φ2 = lat2 * Math.PI / 180
+      const Δφ = (lat2 - lat1) * Math.PI / 180
+      const Δλ = (lon2 - lon1) * Math.PI / 180
+
+      const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                Math.cos(φ1) * Math.cos(φ2) *
+                Math.sin(Δλ/2) * Math.sin(Δλ/2)
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+
+      return R * c
+    }
+
+    // 方位角を計算（度）
+    function calculateBearing(lat1, lon1, lat2, lon2) {
+      const φ1 = lat1 * Math.PI / 180
+      const φ2 = lat2 * Math.PI / 180
+      const Δλ = (lon2 - lon1) * Math.PI / 180
+
+      const y = Math.sin(Δλ) * Math.cos(φ2)
+      const x = Math.cos(φ1) * Math.sin(φ2) -
+                Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ)
+      
+      const θ = Math.atan2(y, x)
+      return (θ * 180 / Math.PI + 360) % 360
+    }
+
+    // 距離と方位を更新
+    function updateDistance() {
+      if (!currentPosition || !targetBase) return
+
+      const distance = calculateDistance(
+        currentPosition.lat, currentPosition.lon,
+        targetBase.lat, targetBase.lon
+      )
+      
+      const bearing = calculateBearing(
+        currentPosition.lat, currentPosition.lon,
+        targetBase.lat, targetBase.lon
+      )
+
+      // 距離表示
+      if (distance < 1000) {
+        document.getElementById('distance').textContent = `${distance.toFixed(1)}m`
+      } else {
+        document.getElementById('distance').textContent = `${(distance / 1000).toFixed(2)}km`
+      }
+
+      // 方位表示
+      const directions = ['北', '北北東', '北東', '東北東', '東', '東南東', '南東', '南南東',
+                         '南', '南南西', '南西', '西南西', '西', '西北西', '北西', '北北西']
+      const index = Math.round(bearing / 22.5) % 16
+      document.getElementById('bearing').textContent = 
+        `${bearing.toFixed(1)}° (${directions[index]})`
+    }
+
+    // 方向モード切替
+    function toggleOrientationMode() {
+      northUp = !northUp
+      updateOrientationButton()
+    }
+
+    // 方向モードボタンの表示更新
+    function updateOrientationButton() {
+      const btn = document.getElementById('orientation-btn')
+      if (northUp) {
+        btn.classList.add('north-up')
+        btn.textContent = '🧭'
+        btn.title = 'ノースアップ'
+      } else {
+        btn.classList.remove('north-up')
+        btn.textContent = '📱'
+        btn.title = 'ヘディングアップ'
+      }
+    }
+
+    // レーダー描画
+    function drawRadar() {
+      const width = canvas.width
+      const height = canvas.height
+      const centerX = width / 2
+      const centerY = height / 2
+      const scale = Math.min(width, height) / 2 * 0.85
+
+      // 背景クリア（白）
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(0, 0, width, height)
+
+      // キャンバスを回転（モードに応じて）
+      ctx.save()
+      ctx.translate(centerX, centerY)
+      if (!northUp) {
+        // ヘディングアップモード：デバイスの向きに合わせて回転
+        ctx.rotate((-deviceHeading) * Math.PI / 180)
+      }
+      // ノースアップモードは回転なし
+      ctx.translate(-centerX, -centerY)
+
+      // 円を描画（白黒デザイン）- 大きい円から描画
+      circles.slice().reverse().forEach((radius, index) => {
+        const r = (radius / maxRadius) * scale
+        const originalIndex = circles.length - 1 - index
+        
+        // 円の塗りつぶし（グレー）
+        ctx.fillStyle = originalIndex % 2 === 0 ? '#f5f5f5' : '#e0e0e0'
+        ctx.beginPath()
+        ctx.arc(centerX, centerY, r, 0, 2 * Math.PI)
+        ctx.fill()
+
+        // 円周（黒）
+        ctx.strokeStyle = '#333333'
+        ctx.lineWidth = 2
+        ctx.stroke()
+
+        // 距離ラベル（黒）
+        ctx.fillStyle = '#000000'
+        ctx.font = '14px sans-serif'
+        ctx.textAlign = 'center'
+        ctx.fillText(`${radius}m`, centerX, centerY - r + 20)
+      })
+
+      // 8方位線（黒）
+      for (let i = 0; i < 8; i++) {
+        const angle = (i * 45) * Math.PI / 180
+        ctx.strokeStyle = '#666666'
+        ctx.lineWidth = 1
+        ctx.beginPath()
+        ctx.moveTo(centerX, centerY)
+        ctx.lineTo(
+          centerX + Math.cos(angle - Math.PI/2) * scale,
+          centerY + Math.sin(angle - Math.PI/2) * scale
+        )
+        ctx.stroke()
+
+        // 方位ラベル（黒）
+        const labelRadius = scale + 20
+        const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
+        ctx.fillStyle = '#000000'
+        ctx.font = 'bold 16px sans-serif'
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillText(
+          directions[i],
+          centerX + Math.cos(angle - Math.PI/2) * labelRadius,
+          centerY + Math.sin(angle - Math.PI/2) * labelRadius
+        )
+      }
+
+      // 中心点（現在地：緑）
+      ctx.fillStyle = '#4CAF50'
+      ctx.beginPath()
+      ctx.arc(centerX, centerY, 8, 0, 2 * Math.PI)
+      ctx.fill()
+      ctx.strokeStyle = 'white'
+      ctx.lineWidth = 2
+      ctx.stroke()
+
+      // 目標点を描画
+      if (currentPosition && targetBase) {
+        const distance = calculateDistance(
+          currentPosition.lat, currentPosition.lon,
+          targetBase.lat, targetBase.lon
+        )
+        
+        const bearing = calculateBearing(
+          currentPosition.lat, currentPosition.lon,
+          targetBase.lat, targetBase.lon
+        )
+
+        // 表示範囲内なら目標を描画
+        if (distance <= maxRadius) {
+          const r = (distance / maxRadius) * scale
+          const angle = bearing * Math.PI / 180
+          const x = centerX + Math.cos(angle - Math.PI/2) * r
+          const y = centerY + Math.sin(angle - Math.PI/2) * r
+
+          // 目標点
+          ctx.fillStyle = '#ff5252'
+          ctx.beginPath()
+          ctx.arc(x, y, 12, 0, 2 * Math.PI)
+          ctx.fill()
+          
+          ctx.strokeStyle = 'white'
+          ctx.lineWidth = 3
+          ctx.stroke()
+
+          // パルス効果
+          const pulseRadius = 12 + Math.sin(Date.now() / 200) * 5
+          ctx.strokeStyle = 'rgba(255, 82, 82, 0.5)'
+          ctx.lineWidth = 2
+          ctx.beginPath()
+          ctx.arc(x, y, pulseRadius, 0, 2 * Math.PI)
+          ctx.stroke()
+
+          // 点線（黒）
+          ctx.strokeStyle = '#333333'
+          ctx.lineWidth = 2
+          ctx.setLineDash([5, 5])
+          ctx.beginPath()
+          ctx.moveTo(centerX, centerY)
+          ctx.lineTo(x, y)
+          ctx.stroke()
+          ctx.setLineDash([])
+        } else {
+          // 範囲外の場合、方向のみ表示
+          const angle = bearing * Math.PI / 180
+          const arrowX = centerX + Math.cos(angle - Math.PI/2) * (scale * 0.9)
+          const arrowY = centerY + Math.sin(angle - Math.PI/2) * (scale * 0.9)
+
+          // 矢印（赤）
+          ctx.fillStyle = '#ff5252'
+          ctx.strokeStyle = 'white'
+          ctx.lineWidth = 2
+          ctx.beginPath()
+          ctx.moveTo(arrowX, arrowY)
+          ctx.lineTo(
+            arrowX - Math.cos(angle - Math.PI/2 - 0.4) * 15,
+            arrowY - Math.sin(angle - Math.PI/2 - 0.4) * 15
+          )
+          ctx.lineTo(
+            arrowX - Math.cos(angle - Math.PI/2 + 0.4) * 15,
+            arrowY - Math.sin(angle - Math.PI/2 + 0.4) * 15
+          )
+          ctx.closePath()
+          ctx.fill()
+          ctx.stroke()
+        }
+      }
+
+      // 回転を元に戻す
+      ctx.restore()
+
+      // レーダー中央に方角と距離を表示
+      if (currentPosition && targetBase) {
+        const distance = calculateDistance(
+          currentPosition.lat, currentPosition.lon,
+          targetBase.lat, targetBase.lon
+        )
+        
+        const bearing = calculateBearing(
+          currentPosition.lat, currentPosition.lon,
+          targetBase.lat, targetBase.lon
+        )
+
+        // 方角（16方位）
+        const directions = ['北', '北北東', '北東', '東北東', '東', '東南東', '南東', '南南東',
+                           '南', '南南西', '南西', '西南西', '西', '西北西', '北西', '北北西']
+        const index = Math.round(bearing / 22.5) % 16
+        const directionText = directions[index]
+
+        // 距離表示
+        let distanceText
+        if (distance < 1000) {
+          distanceText = `${distance.toFixed(1)}m`
+        } else {
+          distanceText = `${(distance / 1000).toFixed(2)}km`
+        }
+
+        // 半透明の背景
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'
+        ctx.fillRect(centerX - 80, centerY + 80, 160, 50)
+        ctx.strokeStyle = '#333333'
+        ctx.lineWidth = 2
+        ctx.strokeRect(centerX - 80, centerY + 80, 160, 50)
+
+        // テキスト表示
+        ctx.fillStyle = '#333333'
+        ctx.font = 'bold 18px sans-serif'
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillText(directionText, centerX, centerY + 95)
+        ctx.fillText(distanceText, centerX, centerY + 115)
+      }
+
+      // アニメーションループ
+      requestAnimationFrame(drawRadar)
+    }
+
+    // ページを閉じる時に監視を停止
+    window.addEventListener('beforeunload', () => {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId)
+      }
+    })
+
+    // 初期化実行
+    init()
+  </script>
 </body>
 </html>

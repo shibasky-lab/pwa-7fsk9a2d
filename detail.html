@@ -40,6 +40,32 @@
       box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
     }
 
+    .sokusetsu-btn {
+      position: absolute;
+      right: 4.5rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 45px;
+      height: 45px;
+      background: white;
+      color: #4CAF50;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      transition: all 0.2s;
+    }
+
+    .sokusetsu-btn:hover {
+      background: #4CAF50;
+      color: white;
+      transform: translateY(-50%) scale(1.05);
+      box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+    }
+
     #detail-section {
       background: white;
       padding: 1.2rem;
@@ -176,6 +202,7 @@
 <body>
   <header>
     <h1>📍 基準点詳細</h1>
+    <a href="#" id="sokusetsu-btn" class="sokusetsu-btn" title="測設モード">🎯</a>
     <a href="index.html" class="home-btn" title="メニューに戻る">🏠</a>
   </header>
 
@@ -262,10 +289,10 @@
       const prefName = prefNames[base.pref_id] || '不明'
       const qualityLabel = getLabel('quality_ids', base.quality_id)
       const resultDivisionLabel = getLabel('result_division_ids', base.result_division_id)
-      const resultStatusLabel = base.result_status_id ? getLabel('result_status_ids', base.result_status_id) : null
-      const reconstructionStatusLabel = base.reconstruction_status_id ? getLabel('reconstruction_status_ids', base.reconstruction_status_id) : null
-      const landTypeLabel = base.land_type_id ? getLabel('land_type_ids', base.land_type_id) : null
-      const attrStatusLabel = base.attr_status_id ? getLabel('attr_status_ids', base.attr_status_id) : null
+      const resultStatusLabel = base.result_status_id != null ? getLabel('result_status_ids', base.result_status_id) : null
+      const reconstructionStatusLabel = base.reconstruction_status_id != null ? getLabel('reconstruction_status_ids', base.reconstruction_status_id) : null
+      const landTypeLabel = base.land_type_id != null ? getLabel('land_type_ids', base.land_type_id) : null
+      const attrStatusLabel = base.attr_status_id != null ? getLabel('attr_status_ids', base.attr_status_id) : null
       const attachmentLabel = getLabel('attachment_ids', base.attachment_id)
       
       let shortRank = rankLabel
@@ -292,6 +319,12 @@
       let nameDisplay = base.name || '名称不明'
       if (base.name_kana) {
         nameDisplay += ` / ${base.name_kana}`
+      }
+
+      // 測設ボタンのリンクを設定
+      const sokusetsuBtn = document.getElementById('sokusetsu-btn')
+      if (sokusetsuBtn) {
+        sokusetsuBtn.href = `sokusetsu.html?id=${base.id}`
       }
 
       content.innerHTML = `
