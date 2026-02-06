@@ -16,12 +16,17 @@
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       min-height: 100vh;
       padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
     }
 
     .container {
       max-width: 600px;
+      width: 100%;
       margin: 0 auto;
       padding: 1rem;
+      box-sizing: border-box;
     }
 
     header {
@@ -39,39 +44,14 @@
       color: #333;
     }
 
-    .home-btn {
-      position: absolute;
-      right: 1rem;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 45px;
-      height: 45px;
-      background: white;
-      color: #2196F3;
-      border: 2px solid #2196F3;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.5rem;
-      text-decoration: none;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      transition: all 0.2s;
-    }
-
-    .home-btn:hover {
-      background: #2196F3;
-      color: white;
-      transform: translateY(-50%) scale(1.05);
-      box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
-    }
-
     .base-info {
       background: white;
       padding: 1rem;
+      padding-right: 60px;
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       margin-bottom: 1rem;
+      position: relative;
     }
 
     .base-info .rank {
@@ -258,6 +238,29 @@
       box-shadow: none;
     }
 
+    .delete-btn {
+      position: absolute;
+      top: 0.8rem;
+      right: 0.8rem;
+      background: rgba(244, 67, 54, 0.9);
+      color: white;
+      border: 2px solid rgba(244, 67, 54, 0.3);
+      padding: 0.5rem 0.8rem;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .delete-btn:hover {
+      background: rgba(244, 67, 54, 1);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+    }
+
     .loading, .error {
       text-align: center;
       padding: 2rem;
@@ -281,6 +284,7 @@
       background: rgba(0, 0, 0, 0.9);
       z-index: 1000;
       padding: 1rem;
+      overflow: auto;
     }
 
     .crop-modal.show {
@@ -291,19 +295,66 @@
     }
 
     .crop-container {
+      position: relative;
+      display: inline-block;
       max-width: 90vw;
       max-height: 70vh;
-      position: relative;
       background: #000;
       border-radius: 8px;
       overflow: hidden;
     }
 
-    .crop-canvas {
-      max-width: 100%;
-      max-height: 100%;
+    .crop-image {
       display: block;
+      max-width: 100%;
+      max-height: 70vh;
+      user-select: none;
     }
+
+    .crop-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+    }
+
+    .crop-frame {
+      position: absolute;
+      border: 2px solid #4CAF50;
+      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+      cursor: move;
+      pointer-events: auto;
+    }
+
+    .crop-frame::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 30px;
+      height: 30px;
+      border: 2px solid #4CAF50;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .crop-handle {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: #4CAF50;
+      border: 2px solid white;
+      border-radius: 50%;
+      pointer-events: auto;
+    }
+
+    .crop-handle.nw { top: -10px; left: -10px; cursor: nw-resize; }
+    .crop-handle.ne { top: -10px; right: -10px; cursor: ne-resize; }
+    .crop-handle.sw { bottom: -10px; left: -10px; cursor: sw-resize; }
+    .crop-handle.se { bottom: -10px; right: -10px; cursor: se-resize; }
 
     .crop-controls {
       display: flex;
@@ -347,13 +398,89 @@
       color: #666;
       margin-top: 0.25rem;
     }
+
+    /* 削除確認モーダル */
+    .delete-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .delete-modal.show {
+      display: flex;
+    }
+
+    .delete-modal-content {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      max-width: 85%;
+      width: 380px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+
+    .delete-modal-title {
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: #f44336;
+      margin-bottom: 1rem;
+    }
+
+    .delete-modal-message {
+      font-size: 1rem;
+      color: #333;
+      margin-bottom: 2rem;
+    }
+
+    .delete-modal-buttons {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .delete-modal-btn {
+      flex: 1;
+      padding: 0.8rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .delete-modal-btn.yes {
+      background: #f44336;
+      color: white;
+    }
+
+    .delete-modal-btn.yes:hover {
+      background: #d32f2f;
+      transform: translateY(-2px);
+    }
+
+    .delete-modal-btn.no {
+      background: #e0e0e0;
+      color: #333;
+    }
+
+    .delete-modal-btn.no:hover {
+      background: #bdbdbd;
+      transform: translateY(-2px);
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>📝 履歴入力</h1>
-      <a href="detail.html" id="back-btn" class="home-btn">←</a>
+      <h1 id="page-title">📝 履歴入力</h1>
     </header>
 
     <div id="loading" class="loading">
@@ -364,6 +491,7 @@
 
     <div id="content" style="display: none;">
       <div class="base-info">
+        <button id="delete-btn" class="delete-btn" style="display: none;" onclick="showDeleteModal()">🗑️ 削除</button>
         <div class="rank" id="base-rank"></div>
         <div class="name" id="base-name"></div>
       </div>
@@ -425,10 +553,30 @@
     </div>
   </div>
 
+  <!-- 削除確認モーダル -->
+  <div class="delete-modal" id="delete-modal">
+    <div class="delete-modal-content">
+      <div class="delete-modal-title">🗑️ 探索履歴の削除</div>
+      <div class="delete-modal-message">本当に削除しますか？</div>
+      <div class="delete-modal-buttons">
+        <button class="delete-modal-btn yes" onclick="confirmDelete()">はい</button>
+        <button class="delete-modal-btn no" onclick="closeDeleteModal()">いいえ</button>
+      </div>
+    </div>
+  </div>
+
   <!-- トリミングモーダル -->
   <div class="crop-modal" id="crop-modal">
-    <div class="crop-container">
-      <canvas id="crop-canvas" class="crop-canvas"></canvas>
+    <div class="crop-container" id="crop-container">
+      <img id="crop-image" class="crop-image" alt="トリミング対象">
+      <div class="crop-overlay">
+        <div class="crop-frame" id="crop-frame">
+          <div class="crop-handle nw"></div>
+          <div class="crop-handle ne"></div>
+          <div class="crop-handle sw"></div>
+          <div class="crop-handle se"></div>
+        </div>
+      </div>
     </div>
     <div class="crop-controls">
       <button type="button" class="confirm-btn" onclick="confirmCrop()">✓ 確定</button>
@@ -451,12 +599,24 @@
     const error = document.getElementById('error')
     const content = document.getElementById('content')
     const cropModal = document.getElementById('crop-modal')
-    const cropCanvas = document.getElementById('crop-canvas')
-    const cropCtx = cropCanvas.getContext('2d')
+    const cropContainer = document.getElementById('crop-container')
+    const cropImage = document.getElementById('crop-image')
+    const cropFrame = document.getElementById('crop-frame')
+    
+    // トリミング枠の状態
+    let cropRect = { x: 0, y: 0, width: 0, height: 0 }
+    let isDragging = false
+    let isResizing = false
+    let resizeHandle = null
+    let dragStartX = 0
+    let dragStartY = 0
+    let originalCropRect = null
 
     // URLパラメータから基準点IDを取得
     const params = new URLSearchParams(window.location.search)
     const baseId = params.get('id')
+    const visitId = params.get('visitId') // 編集モードかチェック
+    const isEditMode = visitId !== null
 
     if (!baseId) {
       error.textContent = 'エラー: 基準点IDが指定されていません'
@@ -466,11 +626,18 @@
       loadBaseData()
     }
 
+    // 編集モードの場合はタイトルを変更
+    if (isEditMode) {
+      document.getElementById('page-title').textContent = '📝 履歴編集'
+    }
+
     // 今日の日付をデフォルトにセット
     document.getElementById('visit-date').valueAsDate = new Date()
 
-    // 戻るボタンのリンクを設定
-    document.getElementById('back-btn').href = `detail.html?id=${baseId}`
+    // 編集モードの場合は削除ボタンを表示
+    if (isEditMode) {
+      document.getElementById('delete-btn').style.display = 'block'
+    }
 
     async function loadBaseData() {
       try {
@@ -493,19 +660,105 @@
         else if (rankLabel.includes('一等')) shortRank = '一等三角点'
         else if (rankLabel.includes('二等')) shortRank = '二等三角点'
         else if (rankLabel.includes('三等')) shortRank = '三等三角点'
-        else if (rankLabel.includes('四等')) shortRank = '四等三角点'
-
+        
+        // 基準点情報を表示
         document.getElementById('base-rank').textContent = shortRank
-        document.getElementById('base-name').textContent = baseData.name || '名称不明'
+        document.getElementById('base-name').textContent = baseData.name
 
+        // コンテンツを表示
         loading.style.display = 'none'
         content.style.display = 'block'
+        
+        // 編集モードの場合は既存データを読み込む
+        if (isEditMode) {
+          await loadVisitData(visitId)
+          // 送信ボタンのテキストを変更
+          document.querySelector('.submit-btn').textContent = '💾 更新する'
+        }
       } catch (err) {
         console.error('Error loading base data:', err)
         error.textContent = 'エラー: データの読み込みに失敗しました'
         error.style.display = 'block'
         loading.style.display = 'none'
       }
+    }
+
+    async function loadVisitData(visitId) {
+      try {
+        const visitData = await getVisitById(parseInt(visitId))
+        
+        if (!visitData) {
+          // 履歴が見つからない場合は新規作成モードに切り替え
+          console.warn('履歴データが見つかりません。新規作成モードに切り替えます。')
+          return
+        }
+
+        // フォームにデータを設定
+        document.getElementById('visit-date').value = visitData.visitDate
+        document.getElementById('found').checked = visitData.found
+        document.getElementById('memo').value = visitData.memo || ''
+
+        // 近景写真
+        if (visitData.nearPhoto) {
+          nearPhotoData = visitData.nearPhoto
+          document.getElementById('near-preview-img').src = visitData.nearPhoto
+          document.getElementById('near-preview').classList.add('show')
+          document.getElementById('near-photo-item').classList.add('has-photo')
+        }
+
+        // 遠景写真
+        if (visitData.farPhoto) {
+          farPhotoData = visitData.farPhoto
+          document.getElementById('far-preview-img').src = visitData.farPhoto
+          document.getElementById('far-preview').classList.add('show')
+          document.getElementById('far-photo-item').classList.add('has-photo')
+        }
+      } catch (err) {
+        console.error('Error loading visit data:', err)
+        // エラーの場合も新規作成モードとして続行
+      }
+    }
+
+    function getVisitById(visitId) {
+      return new Promise((resolve, reject) => {
+        // バージョン指定なしで現在のバージョンを開く
+        const request = indexedDB.open('visitHistoryDB')
+
+        request.onerror = () => reject(new Error('データベースを開けませんでした'))
+
+        request.onsuccess = (event) => {
+          const db = event.target.result
+
+          if (!db.objectStoreNames.contains('visits')) {
+            db.close()
+            resolve(null)
+            return
+          }
+
+          const transaction = db.transaction(['visits'], 'readonly')
+          const store = transaction.objectStore('visits')
+          const getRequest = store.get(visitId)
+
+          getRequest.onsuccess = () => {
+            db.close()
+            resolve(getRequest.result)
+          }
+
+          getRequest.onerror = () => {
+            db.close()
+            reject(new Error('データの取得に失敗しました'))
+          }
+        }
+
+        request.onupgradeneeded = (event) => {
+          const db = event.target.result
+          if (!db.objectStoreNames.contains('visits')) {
+            const objectStore = db.createObjectStore('visits', { keyPath: 'visitId', autoIncrement: true })
+            objectStore.createIndex('baseId', 'baseId', { unique: false })
+            objectStore.createIndex('visitDate', 'visitDate', { unique: false })
+          }
+        }
+      })
     }
 
     function selectPhoto(type) {
@@ -535,56 +788,228 @@
     function showCropModal() {
       cropModal.classList.add('show')
       
-      // 画像を縦長3:4の比率でトリミング
-      const img = currentImage
-      const targetRatio = 3 / 4 // 幅:高さ = 3:4
+      // 画像を表示
+      cropImage.src = currentImage.src
       
-      let cropWidth, cropHeight, offsetX, offsetY
-
-      const imgRatio = img.width / img.height
-
-      if (imgRatio > targetRatio) {
-        // 画像が横長すぎる場合、高さ基準でトリミング
-        cropHeight = img.height
-        cropWidth = img.height * targetRatio
-        offsetX = (img.width - cropWidth) / 2
-        offsetY = 0
-      } else {
-        // 画像が縦長すぎる場合、幅基準でトリミング
-        cropWidth = img.width
-        cropHeight = img.width / targetRatio
-        offsetX = 0
-        offsetY = (img.height - cropHeight) / 2
+      // 画像読み込み完了後にトリミング枠を初期化
+      cropImage.onload = () => {
+        initCropFrame()
       }
+    }
 
-      // キャンバスサイズを設定（表示用）
-      const displayWidth = Math.min(360, window.innerWidth - 40)
-      const displayHeight = displayWidth / targetRatio
+    function initCropFrame() {
+      const img = cropImage
+      const imgWidth = img.width
+      const imgHeight = img.height
+      const displayWidth = img.clientWidth
+      const displayHeight = img.clientHeight
+      
+      // 表示サイズと実際のサイズの比率
+      const scale = displayWidth / imgWidth
+      
+      const targetRatio = 3 / 4
+      
+      // 初期トリミング範囲を画像の中央に設定
+      let frameWidth, frameHeight
+      
+      if (displayWidth / displayHeight > targetRatio) {
+        // 画像が横長の場合、高さ基準
+        frameHeight = displayHeight * 0.8
+        frameWidth = frameHeight * targetRatio
+      } else {
+        // 画像が縦長の場合、幅基準
+        frameWidth = displayWidth * 0.8
+        frameHeight = frameWidth / targetRatio
+      }
+      
+      // 最大サイズを制限
+      if (frameWidth > displayWidth) {
+        frameWidth = displayWidth
+        frameHeight = frameWidth / targetRatio
+      }
+      if (frameHeight > displayHeight) {
+        frameHeight = displayHeight
+        frameWidth = frameHeight * targetRatio
+      }
+      
+      cropRect = {
+        x: (displayWidth - frameWidth) / 2,
+        y: (displayHeight - frameHeight) / 2,
+        width: frameWidth,
+        height: frameHeight
+      }
+      
+      updateCropFrame()
+      setupCropEvents()
+    }
 
-      cropCanvas.width = displayWidth
-      cropCanvas.height = displayHeight
+    function updateCropFrame() {
+      cropFrame.style.left = cropRect.x + 'px'
+      cropFrame.style.top = cropRect.y + 'px'
+      cropFrame.style.width = cropRect.width + 'px'
+      cropFrame.style.height = cropRect.height + 'px'
+    }
 
-      // トリミング領域を描画
-      cropCtx.drawImage(
-        img,
-        offsetX, offsetY, cropWidth, cropHeight,
-        0, 0, displayWidth, displayHeight
-      )
+    function setupCropEvents() {
+      // フレーム移動
+      cropFrame.addEventListener('mousedown', startDrag)
+      cropFrame.addEventListener('touchstart', startDrag, { passive: false })
+      
+      // リサイズハンドル
+      const handles = cropFrame.querySelectorAll('.crop-handle')
+      handles.forEach(handle => {
+        handle.addEventListener('mousedown', startResize)
+        handle.addEventListener('touchstart', startResize, { passive: false })
+      })
+      
+      // ドキュメント全体でmove/endを監視
+      document.addEventListener('mousemove', handleMove)
+      document.addEventListener('mouseup', endDragOrResize)
+      document.addEventListener('touchmove', handleMove, { passive: false })
+      document.addEventListener('touchend', endDragOrResize)
+    }
+
+    function startDrag(e) {
+      if (e.target.classList.contains('crop-handle')) return
+      
+      e.preventDefault()
+      e.stopPropagation()
+      
+      isDragging = true
+      const point = getEventPoint(e)
+      dragStartX = point.x - cropRect.x
+      dragStartY = point.y - cropRect.y
+      originalCropRect = { ...cropRect }
+    }
+
+    function startResize(e) {
+      e.preventDefault()
+      e.stopPropagation()
+      
+      isResizing = true
+      resizeHandle = e.target.classList[1] // nw, ne, sw, se
+      const point = getEventPoint(e)
+      dragStartX = point.x
+      dragStartY = point.y
+      originalCropRect = { ...cropRect }
+    }
+
+    function handleMove(e) {
+      if (!isDragging && !isResizing) return
+      
+      e.preventDefault()
+      const point = getEventPoint(e)
+      
+      if (isDragging) {
+        // フレーム移動
+        const containerRect = cropImage.getBoundingClientRect()
+        let newX = point.x - dragStartX
+        let newY = point.y - dragStartY
+        
+        // 画像内に制限
+        newX = Math.max(0, Math.min(newX, cropImage.clientWidth - cropRect.width))
+        newY = Math.max(0, Math.min(newY, cropImage.clientHeight - cropRect.height))
+        
+        cropRect.x = newX
+        cropRect.y = newY
+        updateCropFrame()
+      } else if (isResizing) {
+        // リサイズ
+        const deltaX = point.x - dragStartX
+        const deltaY = point.y - dragStartY
+        const targetRatio = 3 / 4
+        
+        let newWidth = originalCropRect.width
+        let newHeight = originalCropRect.height
+        let newX = originalCropRect.x
+        let newY = originalCropRect.y
+        
+        // 各コーナーに応じてリサイズ
+        if (resizeHandle === 'se') {
+          // 右下: 高さ基準でリサイズ
+          newHeight = originalCropRect.height + deltaY
+          newWidth = newHeight * targetRatio
+        } else if (resizeHandle === 'sw') {
+          // 左下: 高さ基準でリサイズ
+          newHeight = originalCropRect.height + deltaY
+          newWidth = newHeight * targetRatio
+          newX = originalCropRect.x - (newWidth - originalCropRect.width)
+        } else if (resizeHandle === 'ne') {
+          // 右上: 高さ基準でリサイズ
+          newHeight = originalCropRect.height - deltaY
+          newWidth = newHeight * targetRatio
+          newY = originalCropRect.y + deltaY
+        } else if (resizeHandle === 'nw') {
+          // 左上: 高さ基準でリサイズ
+          newHeight = originalCropRect.height - deltaY
+          newWidth = newHeight * targetRatio
+          newX = originalCropRect.x - (newWidth - originalCropRect.width)
+          newY = originalCropRect.y + deltaY
+        }
+        
+        // 最小サイズ
+        const minSize = 50
+        if (newWidth < minSize || newHeight < minSize / targetRatio) return
+        
+        // 画像内に制限
+        if (newX < 0 || newY < 0 || 
+            newX + newWidth > cropImage.clientWidth || 
+            newY + newHeight > cropImage.clientHeight) return
+        
+        cropRect = { x: newX, y: newY, width: newWidth, height: newHeight }
+        updateCropFrame()
+      }
+    }
+
+    function endDragOrResize() {
+      isDragging = false
+      isResizing = false
+      resizeHandle = null
+    }
+
+    function getEventPoint(e) {
+      const containerRect = cropImage.getBoundingClientRect()
+      let clientX, clientY
+      
+      if (e.type.startsWith('touch')) {
+        clientX = e.touches[0].clientX
+        clientY = e.touches[0].clientY
+      } else {
+        clientX = e.clientX
+        clientY = e.clientY
+      }
+      
+      return {
+        x: clientX - containerRect.left,
+        y: clientY - containerRect.top
+      }
     }
 
     function confirmCrop() {
-      // キャンバスから360x480の画像を作成
+      // 表示サイズと実際の画像サイズの比率を計算
+      const img = currentImage
+      const displayWidth = cropImage.clientWidth
+      const scale = img.width / displayWidth
+      
+      // 実際の画像からクロップする座標とサイズを計算
+      const sourceX = cropRect.x * scale
+      const sourceY = cropRect.y * scale
+      const sourceWidth = cropRect.width * scale
+      const sourceHeight = cropRect.height * scale
+      
+      // 360x480の最終キャンバスを作成
       const finalCanvas = document.createElement('canvas')
       finalCanvas.width = 360
       finalCanvas.height = 480
-      const finalCtx = finalCanvas.getContext('2d')
-
-      // 現在のキャンバスの内容を360x480にリサイズ
-      finalCtx.drawImage(cropCanvas, 0, 0, 360, 480)
-
-      // Data URLとして保存
+      const ctx = finalCanvas.getContext('2d')
+      
+      // 元画像からクロップ領域を指定サイズで描画
+      ctx.drawImage(img, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, 360, 480)
+      
+      // Data URLとして取得
       const dataUrl = finalCanvas.toDataURL('image/jpeg', 0.85)
-
+      
+      // プレビューに表示
       if (currentPhotoType === 'near') {
         nearPhotoData = dataUrl
         document.getElementById('near-preview-img').src = dataUrl
@@ -618,6 +1043,69 @@
       }
     }
 
+    // 関数をグローバルスコープに公開
+    window.selectPhoto = selectPhoto
+    window.handlePhotoSelect = handlePhotoSelect
+    window.confirmCrop = confirmCrop
+    window.cancelCrop = cancelCrop
+    window.removePhoto = removePhoto
+    window.showDeleteModal = showDeleteModal
+    window.closeDeleteModal = closeDeleteModal
+    window.confirmDelete = confirmDelete
+
+    function showDeleteModal() {
+      document.getElementById('delete-modal').classList.add('show')
+    }
+
+    function closeDeleteModal() {
+      document.getElementById('delete-modal').classList.remove('show')
+    }
+
+    async function confirmDelete() {
+      try {
+        await deleteVisitHistory(parseInt(visitId))
+        alert('探索履歴を削除しました')
+        window.location.href = `detail.html?id=${baseId}`
+      } catch (err) {
+        console.error('Error deleting visit history:', err)
+        alert('削除に失敗しました: ' + err.message)
+      }
+      closeDeleteModal()
+    }
+
+    function deleteVisitHistory(visitId) {
+      return new Promise((resolve, reject) => {
+        // バージョン指定なしで現在のバージョンを開く
+        const request = indexedDB.open('visitHistoryDB')
+
+        request.onerror = () => reject(new Error('データベースを開けませんでした'))
+
+        request.onsuccess = (event) => {
+          const db = event.target.result
+
+          if (!db.objectStoreNames.contains('visits')) {
+            db.close()
+            resolve()
+            return
+          }
+
+          const transaction = db.transaction(['visits'], 'readwrite')
+          const store = transaction.objectStore('visits')
+          const deleteRequest = store.delete(visitId)
+
+          deleteRequest.onsuccess = () => {
+            db.close()
+            resolve()
+          }
+
+          deleteRequest.onerror = () => {
+            db.close()
+            reject(new Error('データの削除に失敗しました'))
+          }
+        }
+      })
+    }
+
     // フォーム送信処理
     document.getElementById('visit-form').addEventListener('submit', async (e) => {
       e.preventDefault()
@@ -639,48 +1127,101 @@
           createdAt: new Date().toISOString()
         }
 
-        // IndexedDBに保存
-        await saveVisitHistory(visitData)
+        // 編集モードの場合はvisitIdを追加
+        if (isEditMode) {
+          visitData.visitId = parseInt(visitId)
+        }
 
-        alert('探索履歴を登録しました')
+        // IndexedDBに保存
+        await saveVisitHistory(visitData, isEditMode)
+
+        alert(isEditMode ? '探索履歴を更新しました' : '探索履歴を登録しました')
         window.location.href = `detail.html?id=${baseId}`
       } catch (err) {
         console.error('Error saving visit history:', err)
         alert('保存に失敗しました: ' + err.message)
         submitBtn.disabled = false
-        submitBtn.textContent = '💾 登録する'
+        submitBtn.textContent = isEditMode ? '💾 更新する' : '💾 登録する'
       }
     })
 
-    function saveVisitHistory(visitData) {
+    function saveVisitHistory(visitData, isUpdate = false) {
       return new Promise((resolve, reject) => {
-        const request = indexedDB.open('visitHistoryDB', 1)
-
-        request.onerror = () => reject(new Error('データベースを開けませんでした'))
-
-        request.onsuccess = (event) => {
+        // まずデータベースを開いてバージョンを確認
+        const checkRequest = indexedDB.open('visitHistoryDB')
+        
+        checkRequest.onsuccess = (event) => {
           const db = event.target.result
-          const transaction = db.transaction(['visits'], 'readwrite')
-          const store = transaction.objectStore('visits')
-          const addRequest = store.add(visitData)
-
-          addRequest.onsuccess = () => {
-            db.close()
-            resolve()
+          const needsUpgrade = !db.objectStoreNames.contains('visits')
+          const currentVersion = db.version
+          db.close()
+          
+          // オブジェクトストアが必要な場合はバージョンを上げて再作成
+          const targetVersion = needsUpgrade ? currentVersion + 1 : currentVersion
+          const request = indexedDB.open('visitHistoryDB', targetVersion)
+          
+          request.onerror = () => reject(new Error('データベースを開けませんでした'))
+          
+          request.onupgradeneeded = (event) => {
+            const db = event.target.result
+            if (!db.objectStoreNames.contains('visits')) {
+              const objectStore = db.createObjectStore('visits', { keyPath: 'visitId', autoIncrement: true })
+              objectStore.createIndex('baseId', 'baseId', { unique: false })
+              objectStore.createIndex('visitDate', 'visitDate', { unique: false })
+            }
           }
+          
+          request.onsuccess = (event) => {
+            const db = event.target.result
+            const transaction = db.transaction(['visits'], 'readwrite')
+            const store = transaction.objectStore('visits')
+            
+            // 更新の場合はput、新規の場合はadd
+            const saveRequest = isUpdate ? store.put(visitData) : store.add(visitData)
 
-          addRequest.onerror = () => {
-            db.close()
-            reject(new Error('データの保存に失敗しました'))
+            saveRequest.onsuccess = () => {
+              db.close()
+              resolve()
+            }
+
+            saveRequest.onerror = () => {
+              db.close()
+              reject(new Error('データの保存に失敗しました'))
+            }
           }
         }
+        
+        checkRequest.onerror = () => {
+          // データベースが存在しない場合は新規作成
+          const request = indexedDB.open('visitHistoryDB', 1)
+          
+          request.onerror = () => reject(new Error('データベースを開けませんでした'))
+          
+          request.onupgradeneeded = (event) => {
+            const db = event.target.result
+            if (!db.objectStoreNames.contains('visits')) {
+              const objectStore = db.createObjectStore('visits', { keyPath: 'visitId', autoIncrement: true })
+              objectStore.createIndex('baseId', 'baseId', { unique: false })
+              objectStore.createIndex('visitDate', 'visitDate', { unique: false })
+            }
+          }
+          
+          request.onsuccess = (event) => {
+            const db = event.target.result
+            const transaction = db.transaction(['visits'], 'readwrite')
+            const store = transaction.objectStore('visits')
+            
+            const saveRequest = isUpdate ? store.put(visitData) : store.add(visitData)
 
-        request.onupgradeneeded = (event) => {
-          const db = event.target.result
-          if (!db.objectStoreNames.contains('visits')) {
-            const objectStore = db.createObjectStore('visits', { keyPath: 'visitId', autoIncrement: true })
-            objectStore.createIndex('baseId', 'baseId', { unique: false })
-            objectStore.createIndex('visitDate', 'visitDate', { unique: false })
+            saveRequest.onsuccess = () => {
+              db.close()
+              resolve()
+            }
+
+            saveRequest.onerror = () => {
+              db.close()
+              reject(new Error('データの保存に失敗しました'))
+            }
           }
         }
       })

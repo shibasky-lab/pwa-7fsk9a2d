@@ -629,6 +629,10 @@
     let watchId = null
     let deviceHeading = 0 // デバイスの向き（度）
     let northUp = false // false=ヘディングアップ、true=ノースアップ
+    let has5mSoundPlayed = false // 5m以内の音声再生済みフラグ
+
+    // 音声オブジェクト
+    const sound5m = new Audio('assets/audio/5m.mp3')
 
     // 円の半径（メートル）
     const circles = [5, 25, 50]
@@ -668,6 +672,9 @@
     // 測設を開始
     function startSokusetsu() {
       const detailLink = document.getElementById('detail-link')
+      
+      // 音声再生フラグをリセット
+      has5mSoundPlayed = false
       
       if (targetBase) {
         // 入力座標の場合と基準点の場合で表示を切り替え
@@ -1012,6 +1019,18 @@
         document.getElementById('distance').textContent = `${distance.toFixed(1)}m`
       } else {
         document.getElementById('distance').textContent = `${(distance / 1000).toFixed(2)}km`
+      }
+
+      // 5m以内に入ったときに音声再生（一度だけ）
+      if (distance <= 5 && !has5mSoundPlayed) {
+        has5mSoundPlayed = true
+        // 音声設定を確認
+        const soundEnabled = localStorage.getItem('sokusetsuSoundEnabled') !== 'false'
+        if (soundEnabled) {
+          sound5m.play().catch(err => {
+            console.log('音声再生エラー:', err)
+          })
+        }
       }
 
       // 方位表示

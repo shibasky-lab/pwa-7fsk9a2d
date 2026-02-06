@@ -4,21 +4,797 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
-  <title>訪問履歴</title>
+  <title>訪問履歴マップ</title>
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      overflow: hidden;
+    }
+
+    /* ヘッダー */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 60px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      z-index: 1000;
+    }
+
+    header h1 {
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+
+    .header-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .header-btn {
+      width: 40px;
+      height: 40px;
+      background: white;
+      color: #667eea;
+      border: none;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+
+    .header-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    /* 地図 */
+    #map {
+      position: fixed;
+      top: 60px;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 1;
+    }
+
+    /* 地図上のリストボタン */
+    .map-list-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 45px;
+      height: 45px;
+      background: white;
+      color: #667eea;
+      border: 2px solid #333;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      transition: right 0.3s;
+      z-index: 2100;
+    }
+
+    .map-list-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    /* リストが開いたときのボタン位置 */
+    .map-list-btn.shifted {
+      right: calc(80% + 10px);
+    }
+
+    @media (min-width: 350px) {
+      .map-list-btn.shifted {
+        right: 290px;
+      }
+    }
+
+    /* リストパネル */
+    .list-panel {
+      position: fixed;
+      top: 60px;
+      right: -100%;
+      width: 80%;
+      max-width: 280px;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: -2px 0 8px rgba(0,0,0,0.2);
+      z-index: 2000;
+      transition: right 0.3s;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .list-panel.show {
+      right: 0;
+    }
+
+    .list-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 60px;
+    }
+
+    .list-header h2 {
+      font-size: 1.1rem;
+      margin: 0;
+    }
+
+    .list-controls {
+      padding: 1rem;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    .search-box {
+      width: 100%;
+      padding: 0.6rem;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .search-box:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .sort-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .sort-btn {
+      flex: 1;
+      padding: 0.5rem;
+      border: 2px solid #e0e0e0;
+      background: white;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .sort-btn.active {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+
+    .list-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+    }
+
+    .list-item {
+      background: rgba(249, 249, 249, 0.7);
+      border: 2px solid rgba(224, 224, 224, 0.8);
+      border-radius: 8px;
+      padding: 0.6rem;
+      margin-bottom: 0.6rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .list-item:hover {
+      background: rgba(240, 240, 240, 0.9);
+      border-color: #667eea;
+    }
+
+    .list-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: start;
+      margin-bottom: 0.5rem;
+    }
+
+    .list-item-name {
+      font-weight: bold;
+      color: #333;
+      font-size: 0.9rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .list-item-rank {
+      font-size: 0.7rem;
+      color: #666;
+      background: #e0e0e0;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
+    .list-item-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      font-size: 0.75rem;
+      color: #666;
+    }
+
+    .list-item-date {
+      color: #667eea;
+      font-weight: 600;
+    }
+
+    .no-results {
+      text-align: center;
+      padding: 2rem;
+      color: #999;
+    }
+
+    /* カスタムマーカー */
+    .custom-marker {
+      background: #667eea;
+      border: 3px solid white;
+      border-radius: 50% 50% 50% 0;
+      width: 30px;
+      height: 30px;
+      transform: rotate(-45deg);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+
+    .custom-marker::after {
+      content: '';
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: white;
+      border-radius: 50%;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    /* ポップアップカスタム */
+    .leaflet-popup-content-wrapper {
+      border-radius: 8px;
+      padding: 0;
+    }
+
+    .popup-content {
+      padding: 0.75rem;
+      min-width: 200px;
+    }
+
+    .popup-rank {
+      font-size: 0.75rem;
+      color: #666;
+      margin-bottom: 0.25rem;
+    }
+
+    .popup-name {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 0.5rem;
+    }
+
+    .popup-info {
+      font-size: 0.85rem;
+      color: #666;
+      margin-bottom: 0.75rem;
+    }
+
+    .popup-btn {
+      display: block;
+      width: 100%;
+      padding: 0.6rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white !important;
+      text-align: center;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: bold;
+      transition: transform 0.2s;
+    }
+
+    .popup-btn:hover {
+      transform: scale(1.02);
+    }
+
+    .popup-btn:visited {
+      color: white !important;
+    }
+
+    .popup-btn:active {
+      color: white !important;
+    }
+
+    /* ローディング */
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 3000;
+    }
+
+    .loading-overlay.hidden {
+      display: none;
+    }
+
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #667eea;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 <body>
+  <!-- ローディング -->
+  <div class="loading-overlay" id="loading">
+    <div class="spinner"></div>
+  </div>
+
+  <!-- ヘッダー -->
   <header>
-    <h1>📍 訪問履歴</h1>
+    <h1>🗺️ 訪問履歴マップ</h1>
+    <div class="header-buttons">
+      <a href="index.html" class="header-btn" title="メニューに戻る">🏠</a>
+    </div>
   </header>
 
-  <main>
-    <div class="container">
-      <section id="visit-section">
-        <p>訪問履歴（近日実装）</p>
-        <p><a href="index.html">← メニューに戻る</a></p>
-      </section>
+  <!-- 地図 -->
+  <div id="map">
+    <button class="map-list-btn" id="list-btn" title="リスト表示">📋</button>
+  </div>
+
+  <!-- リストパネル -->
+  <div class="list-panel" id="list-panel">
+    <div class="list-header">
+      <h2>訪問履歴リスト</h2>
     </div>
-  </main>
+    
+    <div class="list-controls">
+      <input type="text" class="search-box" id="search-box" placeholder="点名で検索...">
+      
+      <select class="search-box" id="pref-filter" style="margin-bottom: 0.75rem;">
+        <option value="">すべての都道府県</option>
+      </select>
+      
+      <div class="sort-buttons">
+        <button class="sort-btn active" data-sort="date">📅 探索日順</button>
+        <button class="sort-btn" data-sort="rank">🏔️ 点種別順</button>
+      </div>
+    </div>
+    
+    <div class="list-content" id="list-content">
+      <div class="no-results">履歴を読み込み中...</div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script type="module">
+    import KijuntenDB from './src/db.js'
+    import { getLabel, ensureMasterDataLoaded } from './src/metadata.js'
+
+    const db = new KijuntenDB()
+    let map = null
+    let markers = []
+    let allVisits = []
+    let currentSort = 'date'
+    let prefList = []
+
+    // 都道府県コードから名前への変換テーブル
+    const PREF_NAMES = {
+      '01': '北海道', '02': '青森県', '03': '岩手県', '04': '宮城県', '05': '秋田県',
+      '06': '山形県', '07': '福島県', '08': '茨城県', '09': '栃木県', '10': '群馬県',
+      '11': '埼玉県', '12': '千葉県', '13': '東京都', '14': '神奈川県', '15': '新潟県',
+      '16': '富山県', '17': '石川県', '18': '福井県', '19': '山梨県', '20': '長野県',
+      '21': '岐阜県', '22': '静岡県', '23': '愛知県', '24': '三重県', '25': '滋賀県',
+      '26': '京都府', '27': '大阪府', '28': '兵庫県', '29': '奈良県', '30': '和歌山県',
+      '31': '鳥取県', '32': '島根県', '33': '岡山県', '34': '広島県', '35': '山口県',
+      '36': '徳島県', '37': '香川県', '38': '愛媛県', '39': '高知県', '40': '福岡県',
+      '41': '佐賀県', '42': '長崎県', '43': '熊本県', '44': '大分県', '45': '宮崎県',
+      '46': '鹿児島県', '47': '沖縄県'
+    }
+
+    // 初期化
+    async function init() {
+      try {
+        await db.init()
+        await ensureMasterDataLoaded()
+
+        // 地図を初期化
+        initMap()
+
+        // 全訪問履歴を取得
+        allVisits = await getAllVisitsWithBaseInfo()
+
+        if (allVisits.length === 0) {
+          document.getElementById('loading').classList.add('hidden')
+          alert('訪問履歴がありません')
+          return
+        }
+
+        // 地図にマーカーを追加
+        addMarkersToMap(allVisits)
+
+        // 都道府県リストを生成
+        await populatePrefList()
+
+        // リストを更新
+        updateList(allVisits)
+
+        // 地図を全マーカーが見えるように調整
+        if (markers.length > 0) {
+          const group = L.featureGroup(markers)
+          map.fitBounds(group.getBounds().pad(0.1))
+        }
+
+        document.getElementById('loading').classList.add('hidden')
+      } catch (error) {
+        console.error('初期化エラー:', error)
+        document.getElementById('loading').classList.add('hidden')
+        alert('データの読み込みに失敗しました')
+      }
+    }
+
+    // 地図を初期化
+    function initMap() {
+      map = L.map('map', {
+        zoomControl: false
+      }).setView([36.5, 138.0], 6)
+
+      L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', {
+        attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank">地理院タイル</a>',
+        maxZoom: 18
+      }).addTo(map)
+    }
+
+    // 全訪問履歴を基準点情報と共に取得
+    async function getAllVisitsWithBaseInfo() {
+      const visits = await getAllVisits()
+      
+      const visitsWithBase = await Promise.all(visits.map(async (visit) => {
+        const base = await db.getBase(visit.baseId)
+        // 都道府県名を取得
+        let prefName = ''
+        if (base && base.pref_id) {
+          prefName = PREF_NAMES[base.pref_id] || ''
+        }
+        return {
+          ...visit,
+          base: base || { id: visit.baseId, name: '不明', lat: 0, lon: 0 },
+          prefName: prefName,
+          prefCode: base ? base.pref_id : ''
+        }
+      }))
+
+      return visitsWithBase
+    }
+
+    // 都道府県プルダウンを生成
+    async function populatePrefList() {
+      const prefMap = new Map()
+      allVisits.forEach(visit => {
+        if (visit.prefName && visit.prefCode) {
+          prefMap.set(visit.prefCode, visit.prefName)
+        }
+      })
+      
+      // 都道府県コード順にソート
+      const sortedPrefCodes = Array.from(prefMap.keys()).sort()
+      
+      const prefFilter = document.getElementById('pref-filter')
+      sortedPrefCodes.forEach(code => {
+        const option = document.createElement('option')
+        option.value = prefMap.get(code)
+        option.textContent = prefMap.get(code)
+        prefFilter.appendChild(option)
+      })
+    }
+
+    // IndexedDBから全訪問履歴を取得
+    function getAllVisits() {
+      return new Promise((resolve, reject) => {
+        // バージョン指定なしで現在のバージョンを開く
+        const request = indexedDB.open('visitHistoryDB')
+
+        request.onerror = () => reject(new Error('データベースを開けませんでした'))
+
+        request.onsuccess = (event) => {
+          const db = event.target.result
+
+          if (!db.objectStoreNames.contains('visits')) {
+            db.close()
+            resolve([])
+            return
+          }
+
+          const transaction = db.transaction(['visits'], 'readonly')
+          const store = transaction.objectStore('visits')
+          const getRequest = store.getAll()
+
+          getRequest.onsuccess = () => {
+            db.close()
+            resolve(getRequest.result || [])
+          }
+
+          getRequest.onerror = () => {
+            db.close()
+            reject(new Error('データの取得に失敗しました'))
+          }
+        }
+
+        request.onupgradeneeded = (event) => {
+          const db = event.target.result
+          if (!db.objectStoreNames.contains('visits')) {
+            const objectStore = db.createObjectStore('visits', { keyPath: 'visitId', autoIncrement: true })
+            objectStore.createIndex('baseId', 'baseId', { unique: false })
+            objectStore.createIndex('visitDate', 'visitDate', { unique: false })
+          }
+        }
+      })
+    }
+
+    // 地図にマーカーを追加
+    function addMarkersToMap(visits) {
+      // 既存のマーカーをクリア
+      markers.forEach(marker => marker.remove())
+      markers = []
+
+      // 基準点ごとにグループ化（最新の訪問のみ表示）
+      const baseMap = new Map()
+      visits.forEach(visit => {
+        if (!baseMap.has(visit.baseId) || new Date(visit.visitDate) > new Date(baseMap.get(visit.baseId).visitDate)) {
+          baseMap.set(visit.baseId, visit)
+        }
+      })
+
+      baseMap.forEach(visit => {
+        const base = visit.base
+        if (!base.lat || !base.lon) return
+
+        const rankLabel = getLabel('rank_ids', base.rank_id) || '不明'
+        
+        // 点種別に応じたアイコン画像を選択
+        let iconUrl = 'assets/picture/default.png'
+        if (rankLabel.includes('電子')) {
+          iconUrl = 'assets/picture/EL0.png'
+        } else if (rankLabel.includes('一等')) {
+          iconUrl = 'assets/picture/TR1.png'
+        } else if (rankLabel.includes('二等')) {
+          iconUrl = 'assets/picture/TR2.png'
+        } else if (rankLabel.includes('三等')) {
+          iconUrl = 'assets/picture/TR3.png'
+        } else if (rankLabel.includes('四等')) {
+          iconUrl = 'assets/picture/TR4.png'
+        }
+
+        const marker = L.marker([base.lat, base.lon], {
+          icon: L.icon({
+            iconUrl: iconUrl,
+            iconSize: [24, 24],
+            iconAnchor: [12, 12],
+            popupAnchor: [0, -12]
+          })
+        })
+
+        let shortRank = rankLabel
+        if (rankLabel.includes('電子')) shortRank = '電子'
+        else if (rankLabel.includes('一等')) shortRank = '一等'
+        else if (rankLabel.includes('二等')) shortRank = '二等'
+        else if (rankLabel.includes('三等')) shortRank = '三等'
+        else if (rankLabel.includes('四等')) shortRank = '四等'
+
+        const date = new Date(visit.visitDate)
+        const dateStr = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`
+
+        const popupContent = `
+          <div class="popup-content">
+            <div class="popup-rank">${shortRank}</div>
+            <div class="popup-name">${base.name || '名称不明'}</div>
+            <div class="popup-info">最終訪問: ${dateStr}</div>
+            <a href="detail.html?id=${base.id}&tab=history" class="popup-btn">📖 詳細を見る</a>
+          </div>
+        `
+
+        marker.bindPopup(popupContent, {
+          closeButton: false
+        })
+        marker.addTo(map)
+        markers.push(marker)
+      })
+    }
+
+    // リストを更新
+    function updateList(visits) {
+      const listContent = document.getElementById('list-content')
+      
+      if (visits.length === 0) {
+        listContent.innerHTML = '<div class="no-results">該当する履歴がありません</div>'
+        return
+      }
+
+      listContent.innerHTML = visits.map(visit => {
+        const base = visit.base
+        const rankLabel = getLabel('rank_ids', base.rank_id) || '不明'
+        let shortRank = rankLabel
+        if (rankLabel.includes('電子')) shortRank = '電子'
+        else if (rankLabel.includes('一等')) shortRank = '一等'
+        else if (rankLabel.includes('二等')) shortRank = '二等'
+        else if (rankLabel.includes('三等')) shortRank = '三等'
+        else if (rankLabel.includes('四等')) shortRank = '四等'
+
+        const date = new Date(visit.visitDate)
+        const dateStr = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`
+
+        return `
+          <div class="list-item" data-lat="${base.lat}" data-lon="${base.lon}" data-base-id="${base.id}">
+            <div class="list-item-header">
+              <div class="list-item-name">${base.name || '名称不明'}</div>
+              <div class="list-item-rank">${shortRank}</div>
+            </div>
+            <div class="list-item-info">
+              <div class="list-item-date">${dateStr}</div>
+              <div>${visit.prefName || ''}</div>
+            </div>
+          </div>
+        `
+      }).join('')
+
+      // リストアイテムのクリックイベント
+      document.querySelectorAll('.list-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const lat = parseFloat(item.dataset.lat)
+          const lon = parseFloat(item.dataset.lon)
+          
+          // 地図を移動してマーカーをクリック
+          map.setView([lat, lon], 15)
+          
+          // 対応するマーカーのポップアップを開く
+          markers.forEach(marker => {
+            const markerLatLng = marker.getLatLng()
+            if (Math.abs(markerLatLng.lat - lat) < 0.0001 && Math.abs(markerLatLng.lng - lon) < 0.0001) {
+              marker.openPopup()
+            }
+          })
+
+          // パネルを閉じる
+          document.getElementById('list-panel').classList.remove('show')
+        })
+      })
+    }
+
+    // 検索とフィルタリング
+    function filterAndSort() {
+      const searchText = document.getElementById('search-box').value.toLowerCase()
+      const selectedPref = document.getElementById('pref-filter').value
+      
+      let filtered = allVisits.filter(visit => {
+        const base = visit.base
+        const name = (base.name || '').toLowerCase()
+        
+        // 点名での検索
+        const nameMatch = name.includes(searchText)
+        
+        // 都道府県でのフィルター
+        const prefMatch = !selectedPref || visit.prefName === selectedPref
+        
+        return nameMatch && prefMatch
+      })
+
+      // ソート
+      if (currentSort === 'date') {
+        // 探索日順（第二ソート: 点種別）
+        filtered.sort((a, b) => {
+          const dateCompare = new Date(b.visitDate) - new Date(a.visitDate)
+          if (dateCompare !== 0) return dateCompare
+          
+          const rankA = a.base.rank_id || ''
+          const rankB = b.base.rank_id || ''
+          return rankA.localeCompare(rankB)
+        })
+      } else if (currentSort === 'rank') {
+        // 点種別順（第二ソート: 探索日）
+        filtered.sort((a, b) => {
+          const rankA = a.base.rank_id || ''
+          const rankB = b.base.rank_id || ''
+          const rankCompare = rankA.localeCompare(rankB)
+          if (rankCompare !== 0) return rankCompare
+          
+          return new Date(b.visitDate) - new Date(a.visitDate)
+        })
+      }
+
+      updateList(filtered)
+    }
+
+    // イベントリスナー
+    const listBtn = document.getElementById('list-btn')
+    const listPanel = document.getElementById('list-panel')
+
+    listBtn.addEventListener('click', (e) => {
+      e.stopPropagation()
+      listPanel.classList.toggle('show')
+      listBtn.classList.toggle('shifted')
+    })
+
+    // 地図をクリックしたときにリストを閉じる
+    document.getElementById('map').addEventListener('click', () => {
+      listPanel.classList.remove('show')
+      listBtn.classList.remove('shifted')
+    })
+
+    // パネル外をクリックで閉じる
+    listPanel.addEventListener('click', (e) => {
+      if (e.target.id === 'list-panel') {
+        listPanel.classList.remove('show')
+        listBtn.classList.remove('shifted')
+      }
+    })
+
+    document.getElementById('search-box').addEventListener('input', filterAndSort)
+
+    document.getElementById('pref-filter').addEventListener('change', filterAndSort)
+
+    document.querySelectorAll('.sort-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'))
+        btn.classList.add('active')
+        currentSort = btn.dataset.sort
+        filterAndSort()
+      })
+    })
+
+    // 初期化実行
+    init()
+  </script>
 </body>
 </html>

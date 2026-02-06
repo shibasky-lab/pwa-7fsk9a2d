@@ -5,20 +5,503 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
   <title>設定</title>
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 0;
+    }
+
+    header {
+      background: white;
+      padding: 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 1rem;
+      position: relative;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+      color: #333;
+    }
+
+    .back-btn {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 45px;
+      height: 45px;
+      background: white;
+      color: #2196F3;
+      border: 2px solid #2196F3;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      transition: all 0.2s;
+    }
+
+    .back-btn:hover {
+      background: #2196F3;
+      color: white;
+      transform: translateY(-50%) scale(1.05);
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+
+    .setting-section {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .setting-section h2 {
+      margin: 0 0 1rem 0;
+      font-size: 1.2rem;
+      color: #333;
+      border-bottom: 2px solid #f0f0f0;
+      padding-bottom: 0.5rem;
+    }
+
+    .setting-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    .setting-item:last-child {
+      border-bottom: none;
+    }
+
+    .setting-label {
+      font-weight: 600;
+      color: #333;
+    }
+
+    .setting-description {
+      font-size: 0.85rem;
+      color: #666;
+      margin-top: 0.25rem;
+    }
+
+    .btn {
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.9rem;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-danger {
+      background: #f44336;
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: #d32f2f;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+    }
+
+    /* トグルスイッチ */
+    .toggle-switch {
+      position: relative;
+      width: 50px;
+      height: 28px;
+      background: #ccc;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .toggle-switch.active {
+      background: #4CAF50;
+    }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 24px;
+      height: 24px;
+      background: white;
+      border-radius: 50%;
+      transition: left 0.3s;
+    }
+
+    .toggle-switch.active::after {
+      left: 24px;
+    }
+
+    /* モーダル */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      max-width: 400px;
+      width: 85%;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+
+    .modal-title {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 1rem;
+    }
+
+    .modal-text {
+      color: #666;
+      margin-bottom: 1.5rem;
+      line-height: 1.6;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .modal-buttons button {
+      flex: 1;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .file-label {
+      display: inline-block;
+      padding: 0.6rem 1.2rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.9rem;
+    }
+
+    .file-label:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+  </style>
 </head>
 <body>
   <header>
-    <h1>📍 設定</h1>
+    <h1>⚙️ 設定</h1>
+    <a href="index.html" class="back-btn" title="メニューに戻る">🏠</a>
   </header>
 
-  <main>
-    <div class="container">
-      <section id="setting-section">
-        <p>設定（近日実装）</p>
-        <p><a href="index.html">← メニューに戻る</a></p>
-      </section>
+  <div class="container">
+    <!-- データ管理 -->
+    <div class="setting-section">
+      <h2>📦 データ管理</h2>
+      
+      <div class="setting-item">
+        <div>
+          <div class="setting-label">探索履歴のエクスポート</div>
+          <div class="setting-description">訪問履歴と写真をまとめて保存</div>
+        </div>
+        <button class="btn btn-primary" id="export-btn">エクスポート</button>
+      </div>
+
+      <div class="setting-item">
+        <div>
+          <div class="setting-label">探索履歴のインポート</div>
+          <div class="setting-description">写真を含むバックアップから復元</div>
+        </div>
+        <label class="file-label" for="import-file">インポート</label>
+        <input type="file" id="import-file" accept=".zip">
+      </div>
     </div>
-  </main>
+
+    <!-- 音声設定 -->
+    <div class="setting-section">
+      <h2>🔊 音声設定</h2>
+      
+      <div class="setting-item">
+        <div>
+          <div class="setting-label">測設時の音声通知</div>
+          <div class="setting-description">5m以内に到達時の音声</div>
+        </div>
+        <div class="toggle-switch active" id="sound-toggle"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script type="module">
+    import KijuntenDB from './src/db.js'
+    const db = new KijuntenDB()
+    await db.init()
+
+    // 音声設定の読み込み
+    const soundToggle = document.getElementById('sound-toggle')
+    const soundEnabled = localStorage.getItem('sokusetsuSoundEnabled') !== 'false'
+    if (!soundEnabled) {
+      soundToggle.classList.remove('active')
+    }
+
+    // 音声トグル
+    soundToggle.addEventListener('click', () => {
+      soundToggle.classList.toggle('active')
+      const enabled = soundToggle.classList.contains('active')
+      localStorage.setItem('sokusetsuSoundEnabled', enabled)
+    })
+
+    // エクスポート
+    document.getElementById('export-btn').addEventListener('click', async () => {
+      try {
+        const btn = document.getElementById('export-btn')
+        btn.disabled = true
+        btn.textContent = '処理中...'
+
+        const zip = new JSZip()
+        
+        // 訪問履歴を取得
+        const visits = await getAllVisits()
+        
+        if (visits.length === 0) {
+          alert('エクスポートする履歴がありません')
+          btn.disabled = false
+          btn.textContent = 'エクスポート'
+          return
+        }
+        
+        // 写真付きの履歴をカウント
+        let photoCount = 0
+        visits.forEach(visit => {
+          if (visit.nearPhoto) photoCount++
+          if (visit.farPhoto) photoCount++
+        })
+        
+        zip.file('visits.json', JSON.stringify(visits, null, 2))
+        
+        // ZIPファイル生成
+        const blob = await zip.generateAsync({ type: 'blob' })
+        
+        // ダウンロード
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `kijunten-history-${new Date().toISOString().slice(0, 10)}.zip`
+        a.click()
+        URL.revokeObjectURL(url)
+        
+        btn.disabled = false
+        btn.textContent = 'エクスポート'
+        alert(`エクスポートが完了しました\n履歴: ${visits.length}件\n写真: ${photoCount}枚`)
+      } catch (error) {
+        console.error('Export error:', error)
+        alert('エクスポートに失敗しました')
+        document.getElementById('export-btn').disabled = false
+        document.getElementById('export-btn').textContent = 'エクスポート'
+      }
+    })
+
+    // インポート
+    document.getElementById('import-file').addEventListener('change', async (e) => {
+      const file = e.target.files[0]
+      if (!file) return
+
+      try {
+        const zip = new JSZip()
+        const contents = await zip.loadAsync(file)
+        
+        // visits.jsonを読み込み
+        const visitsJson = await contents.file('visits.json').async('string')
+        const visits = JSON.parse(visitsJson)
+        
+        // 写真付きの履歴をカウント
+        let photoCount = 0
+        visits.forEach(visit => {
+          if (visit.nearPhoto) photoCount++
+          if (visit.farPhoto) photoCount++
+        })
+        
+        // IndexedDBにインポート
+        await importVisits(visits)
+        
+        alert(`インポートが完了しました\n履歴: ${visits.length}件\n写真: ${photoCount}枚`)
+        e.target.value = ''
+      } catch (error) {
+        console.error('Import error:', error)
+        alert('インポートに失敗しました')
+        e.target.value = ''
+      }
+    })
+
+    // 訪問履歴を取得
+    function getAllVisits() {
+      return new Promise((resolve, reject) => {
+        // バージョン指定なしで現在のバージョンを開く
+        const request = indexedDB.open('visitHistoryDB')
+
+        request.onerror = () => reject(new Error('データベースを開けませんでした'))
+
+        request.onsuccess = (event) => {
+          const db = event.target.result
+
+          if (!db.objectStoreNames.contains('visits')) {
+            db.close()
+            resolve([])
+            return
+          }
+
+          const transaction = db.transaction(['visits'], 'readonly')
+          const store = transaction.objectStore('visits')
+          const getRequest = store.getAll()
+
+          getRequest.onsuccess = () => {
+            db.close()
+            resolve(getRequest.result || [])
+          }
+
+          getRequest.onerror = () => {
+            db.close()
+            reject(new Error('データの取得に失敗しました'))
+          }
+        }
+      })
+    }
+
+    // 訪問履歴をインポート
+    function importVisits(visits) {
+      return new Promise((resolve, reject) => {
+        // まずデータベースを開いて状態を確認
+        const checkRequest = indexedDB.open('visitHistoryDB')
+        
+        checkRequest.onsuccess = (event) => {
+          const db = event.target.result
+          const needsUpgrade = !db.objectStoreNames.contains('visits')
+          const currentVersion = db.version
+          db.close()
+          
+          // オブジェクトストアが必要な場合はバージョンを上げて再作成
+          const targetVersion = needsUpgrade ? currentVersion + 1 : currentVersion
+          const request = indexedDB.open('visitHistoryDB', targetVersion)
+          
+          request.onerror = () => reject(new Error('データベースを開けませんでした'))
+          
+          request.onupgradeneeded = (event) => {
+            const db = event.target.result
+            if (!db.objectStoreNames.contains('visits')) {
+              const objectStore = db.createObjectStore('visits', { keyPath: 'visitId', autoIncrement: true })
+              objectStore.createIndex('baseId', 'baseId', { unique: false })
+              objectStore.createIndex('visitDate', 'visitDate', { unique: false })
+            }
+          }
+          
+          request.onsuccess = (event) => {
+            const db = event.target.result
+            const transaction = db.transaction(['visits'], 'readwrite')
+            const store = transaction.objectStore('visits')
+
+            visits.forEach(visit => {
+              const { visitId, ...visitData } = visit
+              store.add(visitData)
+            })
+
+            transaction.oncomplete = () => {
+              db.close()
+              resolve()
+            }
+
+            transaction.onerror = () => {
+              db.close()
+              reject(new Error('インポートに失敗しました'))
+            }
+          }
+        }
+        
+        checkRequest.onerror = () => {
+          // データベースが存在しない場合は新規作成
+          const request = indexedDB.open('visitHistoryDB', 1)
+          
+          request.onerror = () => reject(new Error('データベースを開けませんでした'))
+          
+          request.onupgradeneeded = (event) => {
+            const db = event.target.result
+            if (!db.objectStoreNames.contains('visits')) {
+              const objectStore = db.createObjectStore('visits', { keyPath: 'visitId', autoIncrement: true })
+              objectStore.createIndex('baseId', 'baseId', { unique: false })
+              objectStore.createIndex('visitDate', 'visitDate', { unique: false })
+            }
+          }
+          
+          request.onsuccess = (event) => {
+            const db = event.target.result
+            const transaction = db.transaction(['visits'], 'readwrite')
+            const store = transaction.objectStore('visits')
+
+            visits.forEach(visit => {
+              const { visitId, ...visitData } = visit
+              store.add(visitData)
+            })
+
+            transaction.oncomplete = () => {
+              db.close()
+              resolve()
+            }
+
+            transaction.onerror = () => {
+              db.close()
+              reject(new Error('インポートに失敗しました'))
+            }
+          }
+        }
+      })
+    }
+  </script>
 </body>
 </html>

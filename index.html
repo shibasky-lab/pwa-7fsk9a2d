@@ -530,6 +530,9 @@
       try {
         const size = await db.getSize()
         
+        // 訪問履歴数を取得
+        const visitCount = await getVisitCount()
+        
         if (size.bases === 0) {
           dbStatus.innerHTML = '<p style="color: #FF9800;">⚠️ データがまだダウンロードされていません</p>'
         } else {
@@ -537,11 +540,45 @@
         }
 
         document.getElementById('stat-bases').textContent = size.bases.toLocaleString()
-        document.getElementById('stat-visits').textContent = size.visits
+        document.getElementById('stat-visits').textContent = visitCount.toLocaleString()
         dbStats.style.display = 'grid'
       } catch (error) {
         console.error('Error updating DB status:', error)
       }
+    }
+
+    // 訪問履歴数を取得
+    function getVisitCount() {
+      return new Promise((resolve) => {
+        // バージョン指定なしで現在のバージョンを開く
+        const request = indexedDB.open('visitHistoryDB')
+        
+        request.onsuccess = (event) => {
+          const db = event.target.result
+          
+          if (!db.objectStoreNames.contains('visits')) {
+            db.close()
+            resolve(0)
+            return
+          }
+          
+          const transaction = db.transaction(['visits'], 'readonly')
+          const store = transaction.objectStore('visits')
+          const countRequest = store.count()
+          
+          countRequest.onsuccess = () => {
+            db.close()
+            resolve(countRequest.result)
+          }
+          
+          countRequest.onerror = () => {
+            db.close()
+            resolve(0)
+          }
+        }
+        
+        request.onerror = () => resolve(0)
+      })
     }
 
     // 初期化

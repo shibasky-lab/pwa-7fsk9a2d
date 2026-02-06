@@ -86,9 +86,11 @@
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
       padding: 1rem;
+      padding-right: 60px;
       border-radius: 8px;
       margin-bottom: 1rem;
       box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      position: relative;
     }
 
     .info-card h2 {
@@ -155,46 +157,10 @@
       font-size: 0.95rem;
       color: #333;
     }
-
-    .action-buttons {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.7rem;
-      margin-top: 1.5rem;
-    }
-
-    .action-btn {
-      display: block;
-      padding: 0.7rem;
-      text-align: center;
-      border-radius: 8px;
-      text-decoration: none;
-      font-weight: 600;
-      font-size: 0.9rem;
-      transition: all 0.2s;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    .action-btn.primary {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-    }
-
-    .action-btn.secondary {
-      background: linear-gradient(135deg, #999 0%, #777 100%);
-      color: white;
-    }
-
-    .action-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    }
-
     #map {
       width: 100%;
-      height: 300px;
+      height: 400px;
       border-radius: 8px;
-      margin-top: 1rem;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       position: relative;
     }
@@ -227,6 +193,236 @@
       border-color: #4CAF50;
       color: white;
     }
+
+    .visit-btn {
+      position: absolute;
+      top: 0.8rem;
+      right: 0.8rem;
+      background: rgba(255, 255, 255, 0.95);
+      color: #667eea;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      padding: 0.5rem 0.8rem;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .visit-btn:hover {
+      background: white;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .tab-navigation {
+      display: flex;
+      gap: 0;
+      margin-bottom: 1rem;
+      border-bottom: 2px solid #e0e0e0;
+      width: 100%;
+    }
+
+    .tab-btn {
+      flex: 1;
+      background: none;
+      border: none;
+      padding: 0.5rem 0.5rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #666;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+      position: relative;
+      bottom: -2px;
+    }
+
+    .tab-btn:hover {
+      color: #667eea;
+    }
+
+    .tab-btn.active {
+      color: #667eea;
+      border-bottom-color: #667eea;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    .visit-history-card {
+      background: white;
+      padding: 1.2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .visit-status {
+      display: inline-block;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+
+    .visit-status.found {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+
+    .visit-status.not-found {
+      background: #ffebee;
+      color: #c62828;
+    }
+
+    .visit-photos {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+
+    .visit-photo {
+      text-align: center;
+    }
+
+    .visit-photo-label {
+      font-size: 0.85rem;
+      color: #666;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+
+    .visit-photo img {
+      width: 100%;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .visit-photo img:hover {
+      transform: scale(1.02);
+    }
+
+    .visit-photo-none {
+      background: #f5f5f5;
+      border: 2px dashed #ddd;
+      border-radius: 8px;
+      padding: 2rem 1rem;
+      color: #999;
+      font-size: 0.9rem;
+    }
+
+    .visit-memo {
+      background: #f8f9fa;
+      padding: 1rem;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+      margin-top: 1rem;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .visit-date {
+      font-size: 1rem;
+      color: #666;
+      margin-bottom: 1rem;
+      font-weight: 600;
+    }
+
+    .no-visit-message {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: #999;
+      min-height: 300px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .no-visit-message p {
+      margin: 0.5rem 0;
+    }
+
+    #visit-history-container {
+      min-height: 400px;
+    }
+
+    /* 写真ポップアップモーダル */
+    .photo-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.95);
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .photo-modal.show {
+      display: flex;
+    }
+
+    .photo-modal-content {
+      position: relative;
+      max-width: 90vw;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .photo-modal-image {
+      max-width: 100%;
+      max-height: 85vh;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+
+    .photo-modal-close {
+      position: absolute;
+      top: -40px;
+      right: 0;
+      background: rgba(255, 255, 255, 0.9);
+      color: #333;
+      border: none;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      font-size: 1.5rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      transition: all 0.2s;
+    }
+
+    .photo-modal-close:hover {
+      background: white;
+      transform: scale(1.1);
+    }
+
+    .photo-modal-label {
+      margin-top: 1rem;
+      color: white;
+      font-size: 1rem;
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
@@ -244,12 +440,18 @@
         </div>
         <div id="error" class="error" style="display:none;"></div>
         <div id="content" style="display:none;"></div>
-        <div id="map" style="display:none;">
-          <button id="location-btn" class="location-btn" title="現在地を表示">📍</button>
-        </div>
       </section>
     </div>
   </main>
+
+  <!-- 写真ポップアップモーダル -->
+  <div class="photo-modal" id="photo-modal">
+    <div class="photo-modal-content">
+      <button class="photo-modal-close" onclick="closePhotoModal()">×</button>
+      <img id="photo-modal-image" class="photo-modal-image" alt="">
+      <div id="photo-modal-label" class="photo-modal-label"></div>
+    </div>
+  </div>
 
   <script type="module">
     import KijuntenDB from './src/db.js'
@@ -259,13 +461,14 @@
     const loading = document.getElementById('loading')
     const error = document.getElementById('error')
     const content = document.getElementById('content')
-    const mapElement = document.getElementById('map')
     const isOnline = navigator.onLine
 
     let map = null
+    let mapElement = null
     let currentLocationMarker = null
     let locationWatchId = null
     let isLocationEnabled = false
+    let baseLatLon = null // 基準点の緯度経度を保存
 
     const params = new URLSearchParams(window.location.search)
     const baseId = params.get('id')
@@ -308,11 +511,10 @@
         loading.style.display = 'none'
         content.style.display = 'block'
         
-        if (isOnline) {
-          loadLeafletAndShowMap(base.lat, base.lon, base.name)
-        } else {
-          mapElement.style.display = 'none'
-        }
+        // 基準点の緯度経度を保存
+        baseLatLon = { lat: base.lat, lon: base.lon, name: base.name }
+        
+        // 地図タブに切り替わった時に地図を読み込むためのイベントリスナーを後で設定
       } catch (err) {
         console.error('Error loading base detail:', err)
         loading.style.display = 'none'
@@ -366,6 +568,7 @@
 
       content.innerHTML = `
         <div class="info-card">
+          <a href="#" id="visit-btn" class="visit-btn">📝 履歴入力</a>
           <div class="subtitle" style="margin-bottom: 0.3rem; color: white;">${shortRank} / ${prefName}</div>
           <div class="code" style="margin-bottom: 0.3rem; color: white;">${base.id}</div>
           ${abbrevNoDisplay ? `<div style="font-size: 0.9rem; margin-bottom: 0.3rem; color: white;">${abbrevNoDisplay}</div>` : ''}
@@ -374,7 +577,14 @@
           ${resultDivisionLabel ? `<div style="font-size: 0.9rem; color: white;">${resultDivisionLabel}</div>` : ''}
         </div>
 
-        <div class="detail-grid">
+        <div class="tab-navigation">
+          <button class="tab-btn active" data-tab="detail">📋 詳細</button>
+          <button class="tab-btn" data-tab="history">🗺️ 履歴</button>
+          <button class="tab-btn" data-tab="map">📍 地図</button>
+        </div>
+
+        <div class="tab-content active" id="tab-detail">
+          <div class="detail-grid">
           ${base.u_code ? `<div class="detail-item" style="grid-column: 1 / -1;"><div class="detail-label">ICタグ</div><div class="detail-value"><code>${base.u_code}</code></div></div>` : ''}
           
           ${base.fig20_name || base.fig5_name ? `
@@ -419,15 +629,39 @@
             <div class="detail-label">現況地目</div>
             <div class="detail-value">${landTypeLabel || 'データなし'}</div>
           </div>
+          </div>
         </div>
 
-        <div class="action-buttons">
-          <a href="#" id="visit-btn" class="action-btn primary">📝 訪問記録</a>
-          <button onclick="history.back()" class="action-btn secondary" style="cursor: pointer;">← 検索に戻る</button>
+        <div class="tab-content" id="tab-history">
+          <div id="visit-history-container">
+            <div class="no-visit-message">
+              <p>📝 探索履歴がありません</p>
+              <p>右上のボタンから履歴を登録できます</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-content" id="tab-map">
+          <div id="map">
+            <button id="location-btn" class="location-btn" title="現在地を表示">📍</button>
+          </div>
         </div>
       `
       
-      // 履歴があるかチェック
+      // タブ切り替えイベントを設定
+      setupTabs()
+      
+      // URLパラメータでタブを指定されている場合は切り替え
+      const urlParams = new URLSearchParams(window.location.search)
+      const tabParam = urlParams.get('tab')
+      if (tabParam) {
+        const targetBtn = document.querySelector(`.tab-btn[data-tab="${tabParam}"]`)
+        if (targetBtn) {
+          targetBtn.click()
+        }
+      }
+      
+      // 履歴があるかチェックして表示
       checkVisitHistory(base.id)
     }
     
@@ -436,8 +670,8 @@
       if (!visitBtn) return
       
       try {
-        // IndexedDBから履歴を取得
-        const request = indexedDB.open('visitHistoryDB', 1)
+        // IndexedDBから履歴を取得（バージョン指定なし）
+        const request = indexedDB.open('visitHistoryDB')
         
         request.onerror = () => {
           // DBエラーの場合は入力画面へ
@@ -459,22 +693,27 @@
           const transaction = db.transaction(['visits'], 'readonly')
           const store = transaction.objectStore('visits')
           const index = store.index('baseId')
-          const countRequest = index.count(baseId)
+          const getAllRequest = index.getAll(baseId)
           
-          countRequest.onsuccess = () => {
-            if (countRequest.result > 0) {
-              // 履歴がある場合は確認画面へ
-              visitBtn.textContent = '📝 訪問記録'
-              visitBtn.href = `visit.html?id=${baseId}`
-            } else {
+          getAllRequest.onsuccess = () => {
+            const visits = getAllRequest.result || []
+            
+            if (visits.length === 0) {
               // 履歴がない場合は入力画面へ
               visitBtn.textContent = '📝 履歴入力'
               visitBtn.href = `add-visit.html?id=${baseId}`
+            } else {
+              // 履歴がある場合は編集画面へ（最初の1件のみ使用）
+              visitBtn.textContent = '📝 履歴編集'
+              visitBtn.href = `add-visit.html?id=${baseId}&visitId=${visits[0].visitId}`
+              
+              // 履歴タブに表示
+              displayVisitHistory(visits[0])
             }
             db.close()
           }
           
-          countRequest.onerror = () => {
+          getAllRequest.onerror = () => {
             visitBtn.textContent = '📝 履歴入力'
             visitBtn.href = `add-visit.html?id=${baseId}`
             db.close()
@@ -493,6 +732,80 @@
         visitBtn.textContent = '📝 履歴入力'
         visitBtn.href = `add-visit.html?id=${baseId}`
       }
+    }
+
+    function setupTabs() {
+      const tabBtns = document.querySelectorAll('.tab-btn')
+      const tabContents = document.querySelectorAll('.tab-content')
+      
+      // タブボタンのクリックイベント
+      tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          switchTab(btn.dataset.tab)
+        })
+      })
+      
+      function switchTab(targetTab) {
+        // すべてのタブボタンとコンテンツの active を削除
+        tabBtns.forEach(b => b.classList.remove('active'))
+        tabContents.forEach(c => c.classList.remove('active'))
+        
+        // 指定されたタブをアクティブに
+        const targetBtn = document.querySelector(`.tab-btn[data-tab="${targetTab}"]`)
+        if (targetBtn) {
+          targetBtn.classList.add('active')
+          document.getElementById(`tab-${targetTab}`).classList.add('active')
+          
+          // 地図タブに切り替わった時、まだ地図が初期化されていなければ初期化
+          if (targetTab === 'map' && !map && isOnline && baseLatLon) {
+            mapElement = document.getElementById('map')
+            if (mapElement) {
+              loadLeafletAndShowMap(baseLatLon.lat, baseLatLon.lon, baseLatLon.name)
+            }
+          }
+        }
+      }
+    }
+
+    function displayVisitHistory(visit) {
+      const container = document.getElementById('visit-history-container')
+      if (!container) return
+      
+      const foundStatus = visit.found ? 
+        '<span class="visit-status found">✓ 発見した</span>' : 
+        '<span class="visit-status not-found">✗ 発見できなかった</span>'
+      
+      const nearPhotoHtml = visit.nearPhoto ? 
+        `<img src="${visit.nearPhoto}" alt="近景写真" onclick="showPhotoModal(this.src, '📷 近景')">` : 
+        '<div class="visit-photo-none">写真なし</div>'
+      
+      const farPhotoHtml = visit.farPhoto ? 
+        `<img src="${visit.farPhoto}" alt="遠景写真" onclick="showPhotoModal(this.src, '🏞️ 遠景')">` : 
+        '<div class="visit-photo-none">写真なし</div>'
+      
+      const memoHtml = visit.memo ? 
+        `<div class="visit-memo">${visit.memo}</div>` : 
+        ''
+      
+      container.innerHTML = `
+        <div class="visit-history-card">
+          <div class="visit-date">📅 探索日: ${visit.visitDate}</div>
+          ${foundStatus}
+          
+          <div class="visit-photos">
+            <div class="visit-photo">
+              <div class="visit-photo-label">📷 近景</div>
+              ${nearPhotoHtml}
+            </div>
+            <div class="visit-photo">
+              <div class="visit-photo-label">🏞️ 遠景</div>
+              ${farPhotoHtml}
+            </div>
+          </div>
+          
+          ${memoHtml}
+        </div>
+      `
     }
 
     function loadLeafletAndShowMap(lat, lon, name) {
@@ -633,6 +946,35 @@
         currentLocationMarker = null
       }
     }
+
+    // 写真モーダル表示
+    window.showPhotoModal = function(src, label) {
+      const modal = document.getElementById('photo-modal')
+      const image = document.getElementById('photo-modal-image')
+      const labelEl = document.getElementById('photo-modal-label')
+      
+      image.src = src
+      labelEl.textContent = label
+      modal.classList.add('show')
+    }
+
+    // 写真モーダル閉じる
+    window.closePhotoModal = function() {
+      const modal = document.getElementById('photo-modal')
+      modal.classList.remove('show')
+    }
+
+    // モーダル背景クリックで閉じる
+    document.addEventListener('DOMContentLoaded', () => {
+      const modal = document.getElementById('photo-modal')
+      if (modal) {
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) {
+            closePhotoModal()
+          }
+        })
+      }
+    })
   </script>
 </body>
 </html>

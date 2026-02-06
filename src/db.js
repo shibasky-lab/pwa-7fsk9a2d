@@ -204,6 +204,15 @@ class KijuntenDB {
     })
   }
 
+  async clearBases() {
+    const tx = this._transaction([STORES.BASES], 'readwrite')
+    return new Promise((resolve, reject) => {
+      const request = tx.objectStore(STORES.BASES).clear()
+      request.onerror = () => reject(request.error)
+      request.onsuccess = () => resolve()
+    })
+  }
+
   // ===== 訪問履歴操作 =====
 
   async addVisit(visitData) {
