@@ -184,10 +184,11 @@
 
     .detail-link {
       position: absolute;
-      top: 0.8rem;
+      top: 50%;
+      transform: translateY(-50%);
       right: 0.8rem;
-      width: 40px;
-      height: 56px;
+      width: 36px;
+      height: 36px;
       background: white;
       color: #1976D2;
       border-radius: 6px;
@@ -201,7 +202,7 @@
     }
 
     .detail-link:hover {
-      transform: scale(1.05);
+      transform: translateY(-50%) scale(1.05);
       box-shadow: 0 4px 10px rgba(25, 118, 210, 0.4);
     }
 
