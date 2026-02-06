@@ -184,7 +184,7 @@
 
     .detail-link {
       position: absolute;
-      top: 50%;
+      top: 2.5rem;
       transform: translateY(-50%);
       right: 0.8rem;
       width: 36px;
@@ -692,8 +692,8 @@
       // 位置情報の監視を開始
       startLocationWatch()
       
-      // デバイスの向きを監視開始
-      startOrientationWatch()
+      // 位置情報のheadingを使用するのでデバイスの向き監視は不要
+      // startOrientationWatch()
       
       // レーダー描画開始
       drawRadar()
@@ -900,6 +900,11 @@
             accuracy: position.coords.accuracy
           }
           
+          // 位置情報のheadingを取得
+          if (position.coords.heading !== null && position.coords.heading !== undefined) {
+            deviceHeading = position.coords.heading
+          }
+          
           document.getElementById('gps-status-text').textContent = '取得中'
           document.getElementById('gps-status').className = 'status-indicator status-active'
           document.getElementById('current-pos').textContent = 
@@ -1090,20 +1095,9 @@
           centerY + Math.sin(angle - Math.PI/2) * scale
         )
         ctx.stroke()
-
-        // 方位ラベル（黒）
-        const labelRadius = scale + 20
-        const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
-        ctx.fillStyle = '#000000'
-        ctx.font = 'bold 16px sans-serif'
-        ctx.textAlign = 'center'
-        ctx.textBaseline = 'middle'
-        ctx.fillText(
-          directions[i],
-          centerX + Math.cos(angle - Math.PI/2) * labelRadius,
-          centerY + Math.sin(angle - Math.PI/2) * labelRadius
-        )
       }
+
+      // 方位ラベルは後で描画（回転を打ち消した後）
 
       // 中心点は表示しない
       // ctx.fillStyle = '#4CAF50'
@@ -1188,6 +1182,40 @@
 
       // 回転を元に戻す
       ctx.restore()
+
+      // 距離ラベルを回転しないように描画
+      circles.forEach((radius) => {
+        const r = (radius / maxRadius) * scale
+        // ヘディングアップモードでは、ラベル位置も回転させる
+        const labelAngle = northUp ? -Math.PI/2 : (-Math.PI/2 - deviceHeading * Math.PI / 180)
+        const labelX = centerX + Math.cos(labelAngle) * r
+        const labelY = centerY + Math.sin(labelAngle) * r + 20
+        
+        ctx.fillStyle = '#000000'
+        ctx.font = '14px sans-serif'
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillText(`${radius}m`, labelX, labelY)
+      })
+
+      // 方位ラベルを回転しないように描画
+      const labelRadius = scale + 20
+      const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
+      for (let i = 0; i < 8; i++) {
+        // ヘディングアップモードでは、ラベル位置も回転させる
+        const baseAngle = (i * 45) * Math.PI / 180
+        const labelAngle = northUp ? baseAngle : (baseAngle - deviceHeading * Math.PI / 180)
+        
+        ctx.fillStyle = '#000000'
+        ctx.font = 'bold 16px sans-serif'
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.fillText(
+          directions[i],
+          centerX + Math.cos(labelAngle - Math.PI/2) * labelRadius,
+          centerY + Math.sin(labelAngle - Math.PI/2) * labelRadius
+        )
+      }
 
       // アニメーションループ
       requestAnimationFrame(drawRadar)

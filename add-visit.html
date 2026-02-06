@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>履歴入力</title>
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+
+    header {
+      background: white;
+      padding: 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 1rem;
+      border-radius: 8px;
+      position: relative;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+      color: #333;
+    }
+
+    .home-btn {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 45px;
+      height: 45px;
+      background: white;
+      color: #2196F3;
+      border: 2px solid #2196F3;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      transition: all 0.2s;
+    }
+
+    .home-btn:hover {
+      background: #2196F3;
+      color: white;
+      transform: translateY(-50%) scale(1.05);
+      box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+    }
+
+    .base-info {
+      background: white;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 1rem;
+    }
+
+    .base-info .rank {
+      color: #666;
+      font-size: 0.9rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .base-info .name {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .form-section {
+      background: white;
+      padding: 1.2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 1rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-label {
+      display: block;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 0.75rem;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: #2196F3;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+    }
+
+    .checkbox-group label {
+      font-size: 1rem;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .photo-section {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .photo-item {
+      border: 2px dashed #ddd;
+      border-radius: 8px;
+      padding: 1rem;
+      transition: border-color 0.2s;
+    }
+
+    .photo-item.has-photo {
+      border-style: solid;
+      border-color: #4CAF50;
+    }
+
+    .photo-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .photo-label {
+      font-weight: bold;
+      color: #333;
+    }
+
+    .photo-btn {
+      padding: 0.5rem 1rem;
+      background: #2196F3;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: background 0.2s;
+    }
+
+    .photo-btn:hover {
+      background: #1976D2;
+    }
+
+    .photo-preview {
+      display: none;
+      position: relative;
+      margin-top: 0.5rem;
+    }
+
+    .photo-preview.show {
+      display: block;
+    }
+
+    .photo-preview img {
+      width: 100%;
+      max-width: 360px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .photo-preview .remove-btn {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      background: rgba(244, 67, 54, 0.9);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      cursor: pointer;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+
+    .photo-preview .remove-btn:hover {
+      background: rgba(244, 67, 54, 1);
+    }
+
+    textarea.form-input {
+      min-height: 120px;
+      resize: vertical;
+      font-family: inherit;
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 1rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .submit-btn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(102, 126, 234, 0.6);
+    }
+
+    .submit-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .loading, .error {
+      text-align: center;
+      padding: 2rem;
+      color: white;
+    }
+
+    .error {
+      background: rgba(244, 67, 54, 0.9);
+      border-radius: 8px;
+      margin-bottom: 1rem;
+    }
+
+    /* トリミングモーダル */
+    .crop-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 1000;
+      padding: 1rem;
+    }
+
+    .crop-modal.show {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .crop-container {
+      max-width: 90vw;
+      max-height: 70vh;
+      position: relative;
+      background: #000;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .crop-canvas {
+      max-width: 100%;
+      max-height: 100%;
+      display: block;
+    }
+
+    .crop-controls {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .crop-controls button {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .crop-controls .confirm-btn {
+      background: #4CAF50;
+      color: white;
+    }
+
+    .crop-controls .confirm-btn:hover {
+      background: #45a049;
+    }
+
+    .crop-controls .cancel-btn {
+      background: #f44336;
+      color: white;
+    }
+
+    .crop-controls .cancel-btn:hover {
+      background: #da190b;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .photo-info {
+      font-size: 0.85rem;
+      color: #666;
+      margin-top: 0.25rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>📝 履歴入力</h1>
+      <a href="detail.html" id="back-btn" class="home-btn">←</a>
+    </header>
+
+    <div id="loading" class="loading">
+      <p>読み込み中...</p>
+    </div>
+
+    <div id="error" class="error" style="display: none;"></div>
+
+    <div id="content" style="display: none;">
+      <div class="base-info">
+        <div class="rank" id="base-rank"></div>
+        <div class="name" id="base-name"></div>
+      </div>
+
+      <form id="visit-form" class="form-section">
+        <div class="form-group">
+          <label class="form-label" for="visit-date">探索日</label>
+          <input type="date" id="visit-date" class="form-input" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">探索結果</label>
+          <div class="checkbox-group">
+            <input type="checkbox" id="found" checked>
+            <label for="found">基準点を発見した</label>
+          </div>
+          <div class="photo-info">※ チェックなし = 見つけられなかった</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">写真登録</label>
+          <div class="photo-section">
+            <!-- 近景 -->
+            <div class="photo-item" id="near-photo-item">
+              <div class="photo-header">
+                <span class="photo-label">📷 近景</span>
+                <button type="button" class="photo-btn" onclick="selectPhoto('near')">写真を選択</button>
+              </div>
+              <div class="photo-info">縦長 3:4 に自動調整されます</div>
+              <div class="photo-preview" id="near-preview">
+                <img id="near-preview-img" alt="近景プレビュー">
+                <button type="button" class="remove-btn" onclick="removePhoto('near')">×</button>
+              </div>
+            </div>
+
+            <!-- 遠景 -->
+            <div class="photo-item" id="far-photo-item">
+              <div class="photo-header">
+                <span class="photo-label">🏞️ 遠景</span>
+                <button type="button" class="photo-btn" onclick="selectPhoto('far')">写真を選択</button>
+              </div>
+              <div class="photo-info">縦長 3:4 に自動調整されます</div>
+              <div class="photo-preview" id="far-preview">
+                <img id="far-preview-img" alt="遠景プレビュー">
+                <button type="button" class="remove-btn" onclick="removePhoto('far')">×</button>
+              </div>
+            </div>
+          </div>
+          <input type="file" id="photo-input" accept="image/*" onchange="handlePhotoSelect(event)">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="memo">メモ</label>
+          <textarea id="memo" class="form-input" placeholder="探索時の状況や気づいたことを記録"></textarea>
+        </div>
+
+        <button type="submit" class="submit-btn">💾 登録する</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- トリミングモーダル -->
+  <div class="crop-modal" id="crop-modal">
+    <div class="crop-container">
+      <canvas id="crop-canvas" class="crop-canvas"></canvas>
+    </div>
+    <div class="crop-controls">
+      <button type="button" class="confirm-btn" onclick="confirmCrop()">✓ 確定</button>
+      <button type="button" class="cancel-btn" onclick="cancelCrop()">× キャンセル</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import KijuntenDB from './src/db.js'
+    import { getLabel, ensureMasterDataLoaded } from './src/metadata.js'
+    const db = new KijuntenDB()
+    
+    let currentPhotoType = null // 'near' or 'far'
+    let currentImage = null
+    let nearPhotoData = null
+    let farPhotoData = null
+    let baseData = null
+
+    const loading = document.getElementById('loading')
+    const error = document.getElementById('error')
+    const content = document.getElementById('content')
+    const cropModal = document.getElementById('crop-modal')
+    const cropCanvas = document.getElementById('crop-canvas')
+    const cropCtx = cropCanvas.getContext('2d')
+
+    // URLパラメータから基準点IDを取得
+    const params = new URLSearchParams(window.location.search)
+    const baseId = params.get('id')
+
+    if (!baseId) {
+      error.textContent = 'エラー: 基準点IDが指定されていません'
+      error.style.display = 'block'
+      loading.style.display = 'none'
+    } else {
+      loadBaseData()
+    }
+
+    // 今日の日付をデフォルトにセット
+    document.getElementById('visit-date').valueAsDate = new Date()
+
+    // 戻るボタンのリンクを設定
+    document.getElementById('back-btn').href = `detail.html?id=${baseId}`
+
+    async function loadBaseData() {
+      try {
+        await db.init()
+        await ensureMasterDataLoaded()
+
+        baseData = await db.getBase(baseId)
+
+        if (!baseData) {
+          error.textContent = 'エラー: 基準点が見つかりません'
+          error.style.display = 'block'
+          loading.style.display = 'none'
+          return
+        }
+
+        // 点種別の取得
+        const rankLabel = getLabel('rank_ids', baseData.rank_id) || '不明'
+        let shortRank = rankLabel
+        if (rankLabel.includes('電子')) shortRank = '電子基準点'
+        else if (rankLabel.includes('一等')) shortRank = '一等三角点'
+        else if (rankLabel.includes('二等')) shortRank = '二等三角点'
+        else if (rankLabel.includes('三等')) shortRank = '三等三角点'
+        else if (rankLabel.includes('四等')) shortRank = '四等三角点'
+
+        document.getElementById('base-rank').textContent = shortRank
+        document.getElementById('base-name').textContent = baseData.name || '名称不明'
+
+        loading.style.display = 'none'
+        content.style.display = 'block'
+      } catch (err) {
+        console.error('Error loading base data:', err)
+        error.textContent = 'エラー: データの読み込みに失敗しました'
+        error.style.display = 'block'
+        loading.style.display = 'none'
+      }
+    }
+
+    function selectPhoto(type) {
+      currentPhotoType = type
+      document.getElementById('photo-input').click()
+    }
+
+    function handlePhotoSelect(event) {
+      const file = event.target.files[0]
+      if (!file) return
+
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const img = new Image()
+        img.onload = () => {
+          currentImage = img
+          showCropModal()
+        }
+        img.src = e.target.result
+      }
+      reader.readAsDataURL(file)
+
+      // ファイル入力をリセット（同じファイルを再選択可能に）
+      event.target.value = ''
+    }
+
+    function showCropModal() {
+      cropModal.classList.add('show')
+      
+      // 画像を縦長3:4の比率でトリミング
+      const img = currentImage
+      const targetRatio = 3 / 4 // 幅:高さ = 3:4
+      
+      let cropWidth, cropHeight, offsetX, offsetY
+
+      const imgRatio = img.width / img.height
+
+      if (imgRatio > targetRatio) {
+        // 画像が横長すぎる場合、高さ基準でトリミング
+        cropHeight = img.height
+        cropWidth = img.height * targetRatio
+        offsetX = (img.width - cropWidth) / 2
+        offsetY = 0
+      } else {
+        // 画像が縦長すぎる場合、幅基準でトリミング
+        cropWidth = img.width
+        cropHeight = img.width / targetRatio
+        offsetX = 0
+        offsetY = (img.height - cropHeight) / 2
+      }
+
+      // キャンバスサイズを設定（表示用）
+      const displayWidth = Math.min(360, window.innerWidth - 40)
+      const displayHeight = displayWidth / targetRatio
+
+      cropCanvas.width = displayWidth
+      cropCanvas.height = displayHeight
+
+      // トリミング領域を描画
+      cropCtx.drawImage(
+        img,
+        offsetX, offsetY, cropWidth, cropHeight,
+        0, 0, displayWidth, displayHeight
+      )
+    }
+
+    function confirmCrop() {
+      // キャンバスから360x480の画像を作成
+      const finalCanvas = document.createElement('canvas')
+      finalCanvas.width = 360
+      finalCanvas.height = 480
+      const finalCtx = finalCanvas.getContext('2d')
+
+      // 現在のキャンバスの内容を360x480にリサイズ
+      finalCtx.drawImage(cropCanvas, 0, 0, 360, 480)
+
+      // Data URLとして保存
+      const dataUrl = finalCanvas.toDataURL('image/jpeg', 0.85)
+
+      if (currentPhotoType === 'near') {
+        nearPhotoData = dataUrl
+        document.getElementById('near-preview-img').src = dataUrl
+        document.getElementById('near-preview').classList.add('show')
+        document.getElementById('near-photo-item').classList.add('has-photo')
+      } else if (currentPhotoType === 'far') {
+        farPhotoData = dataUrl
+        document.getElementById('far-preview-img').src = dataUrl
+        document.getElementById('far-preview').classList.add('show')
+        document.getElementById('far-photo-item').classList.add('has-photo')
+      }
+
+      cancelCrop()
+    }
+
+    function cancelCrop() {
+      cropModal.classList.remove('show')
+      currentImage = null
+      currentPhotoType = null
+    }
+
+    function removePhoto(type) {
+      if (type === 'near') {
+        nearPhotoData = null
+        document.getElementById('near-preview').classList.remove('show')
+        document.getElementById('near-photo-item').classList.remove('has-photo')
+      } else if (type === 'far') {
+        farPhotoData = null
+        document.getElementById('far-preview').classList.remove('show')
+        document.getElementById('far-photo-item').classList.remove('has-photo')
+      }
+    }
+
+    // フォーム送信処理
+    document.getElementById('visit-form').addEventListener('submit', async (e) => {
+      e.preventDefault()
+
+      const submitBtn = e.target.querySelector('.submit-btn')
+      submitBtn.disabled = true
+      submitBtn.textContent = '保存中...'
+
+      try {
+        const visitData = {
+          baseId: baseId,
+          baseName: baseData.name,
+          baseRank: document.getElementById('base-rank').textContent,
+          visitDate: document.getElementById('visit-date').value,
+          found: document.getElementById('found').checked,
+          nearPhoto: nearPhotoData,
+          farPhoto: farPhotoData,
+          memo: document.getElementById('memo').value.trim(),
+          createdAt: new Date().toISOString()
+        }
+
+        // IndexedDBに保存
+        await saveVisitHistory(visitData)
+
+        alert('探索履歴を登録しました')
+        window.location.href = `detail.html?id=${baseId}`
+      } catch (err) {
+        console.error('Error saving visit history:', err)
+        alert('保存に失敗しました: ' + err.message)
+        submitBtn.disabled = false
+        submitBtn.textContent = '💾 登録する'
+      }
+    })
+
+    function saveVisitHistory(visitData) {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open('visitHistoryDB', 1)
+
+        request.onerror = () => reject(new Error('データベースを開けませんでした'))
+
+        request.onsuccess = (event) => {
+          const db = event.target.result
+          const transaction = db.transaction(['visits'], 'readwrite')
+          const store = transaction.objectStore('visits')
+          const addRequest = store.add(visitData)
+
+          addRequest.onsuccess = () => {
+            db.close()
+            resolve()
+          }
+
+          addRequest.onerror = () => {
+            db.close()
+            reject(new Error('データの保存に失敗しました'))
+          }
+        }
+
+        request.onupgradeneeded = (event) => {
+          const db = event.target.result
+          if (!db.objectStoreNames.contains('visits')) {
+            const objectStore = db.createObjectStore('visits', { keyPath: 'visitId', autoIncrement: true })
+            objectStore.createIndex('baseId', 'baseId', { unique: false })
+            objectStore.createIndex('visitDate', 'visitDate', { unique: false })
+          }
+        }
+      })
+    }
+  </script>
+</body>
+</html>

@@ -422,10 +422,77 @@
         </div>
 
         <div class="action-buttons">
-          <a href="visit.html?id=${base.id}" class="action-btn primary">📝 訪問記録</a>
+          <a href="#" id="visit-btn" class="action-btn primary">📝 訪問記録</a>
           <button onclick="history.back()" class="action-btn secondary" style="cursor: pointer;">← 検索に戻る</button>
         </div>
       `
+      
+      // 履歴があるかチェック
+      checkVisitHistory(base.id)
+    }
+    
+    async function checkVisitHistory(baseId) {
+      const visitBtn = document.getElementById('visit-btn')
+      if (!visitBtn) return
+      
+      try {
+        // IndexedDBから履歴を取得
+        const request = indexedDB.open('visitHistoryDB', 1)
+        
+        request.onerror = () => {
+          // DBエラーの場合は入力画面へ
+          visitBtn.textContent = '📝 履歴入力'
+          visitBtn.href = `add-visit.html?id=${baseId}`
+        }
+        
+        request.onsuccess = (event) => {
+          const db = event.target.result
+          
+          if (!db.objectStoreNames.contains('visits')) {
+            // ストアがない場合は入力画面へ
+            visitBtn.textContent = '📝 履歴入力'
+            visitBtn.href = `add-visit.html?id=${baseId}`
+            db.close()
+            return
+          }
+          
+          const transaction = db.transaction(['visits'], 'readonly')
+          const store = transaction.objectStore('visits')
+          const index = store.index('baseId')
+          const countRequest = index.count(baseId)
+          
+          countRequest.onsuccess = () => {
+            if (countRequest.result > 0) {
+              // 履歴がある場合は確認画面へ
+              visitBtn.textContent = '📝 訪問記録'
+              visitBtn.href = `visit.html?id=${baseId}`
+            } else {
+              // 履歴がない場合は入力画面へ
+              visitBtn.textContent = '📝 履歴入力'
+              visitBtn.href = `add-visit.html?id=${baseId}`
+            }
+            db.close()
+          }
+          
+          countRequest.onerror = () => {
+            visitBtn.textContent = '📝 履歴入力'
+            visitBtn.href = `add-visit.html?id=${baseId}`
+            db.close()
+          }
+        }
+        
+        request.onupgradeneeded = (event) => {
+          const db = event.target.result
+          if (!db.objectStoreNames.contains('visits')) {
+            const objectStore = db.createObjectStore('visits', { keyPath: 'visitId', autoIncrement: true })
+            objectStore.createIndex('baseId', 'baseId', { unique: false })
+          }
+        }
+      } catch (err) {
+        console.error('Error checking visit history:', err)
+        visitBtn.textContent = '📝 履歴入力'
+        visitBtn.href = `add-visit.html?id=${baseId}`
+      }
     }
 
     function loadLeafletAndShowMap(lat, lon, name) {
