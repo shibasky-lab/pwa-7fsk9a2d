@@ -82,6 +82,31 @@
       box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
     }
 
+    .list-btn {
+      position: absolute;
+      right: 7rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 40px;
+      height: 40px;
+      background: white;
+      color: #667eea;
+      border: none;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      transition: all 0.2s;
+    }
+
+    .list-btn:hover {
+      transform: translateY(-50%) scale(1.05);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
     .orientation-btn {
       position: absolute;
       right: 10px;
@@ -513,6 +538,7 @@
 
   <header>
     <h1>🎯 測設モード</h1>
+    <button id="list-btn" class="list-btn" title="近隣点リスト">📋</button>
     <button id="edit-btn" class="edit-btn" title="座標を入力">✏️</button>
     <a href="index.html" class="home-btn" title="メニューに戻る">🏠</a>
   </header>
@@ -594,6 +620,9 @@
         
         // 編集ボタンのイベントリスナー
         document.getElementById('edit-btn').addEventListener('click', showCoordPopup)
+        
+        // リストボタンのイベントリスナー
+        document.getElementById('list-btn').addEventListener('click', showNearbyList)
         
         // 目標点を決定
         if (targetId) {
@@ -721,7 +750,7 @@
         
         // キャンセルボタン
         cancelBtn.addEventListener('click', () => {
-          window.location.href = 'index.html'
+          popup.classList.add('hidden')
         })
         
       } catch (error) {
