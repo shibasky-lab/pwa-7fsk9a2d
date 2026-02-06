@@ -186,8 +186,8 @@
       position: absolute;
       top: 0.8rem;
       right: 0.8rem;
-      width: 32px;
-      height: 32px;
+      width: 40px;
+      height: 56px;
       background: white;
       color: #1976D2;
       border-radius: 6px;
@@ -201,7 +201,7 @@
     }
 
     .detail-link:hover {
-      transform: scale(1.1);
+      transform: scale(1.05);
       box-shadow: 0 4px 10px rgba(25, 118, 210, 0.4);
     }
 
@@ -1009,11 +1009,7 @@
       }
 
       // 方位表示
-      const directions = ['北', '北北東', '北東', '東北東', '東', '東南東', '南東', '南南東',
-                         '南', '南南西', '南西', '西南西', '西', '西北西', '北西', '北北西']
-      const index = Math.round(bearing / 22.5) % 16
-      document.getElementById('bearing').textContent = 
-        `${bearing.toFixed(1)}° (${directions[index]})`
+      document.getElementById('bearing').textContent = `${bearing.toFixed(1)}°`
     }
 
     // 方向モード切替
@@ -1108,14 +1104,14 @@
         )
       }
 
-      // 中心点（現在地：緑）
-      ctx.fillStyle = '#4CAF50'
-      ctx.beginPath()
-      ctx.arc(centerX, centerY, 8, 0, 2 * Math.PI)
-      ctx.fill()
-      ctx.strokeStyle = 'white'
-      ctx.lineWidth = 2
-      ctx.stroke()
+      // 中心点は表示しない
+      // ctx.fillStyle = '#4CAF50'
+      // ctx.beginPath()
+      // ctx.arc(centerX, centerY, 8, 0, 2 * Math.PI)
+      // ctx.fill()
+      // ctx.strokeStyle = 'white'
+      // ctx.lineWidth = 2
+      // ctx.stroke()
 
       // 目標点を描画
       if (currentPosition && targetBase) {
@@ -1172,16 +1168,16 @@
           // 矢印（赤）
           ctx.fillStyle = '#ff5252'
           ctx.strokeStyle = 'white'
-          ctx.lineWidth = 2
+          ctx.lineWidth = 3
           ctx.beginPath()
           ctx.moveTo(arrowX, arrowY)
           ctx.lineTo(
-            arrowX - Math.cos(angle - Math.PI/2 - 0.4) * 15,
-            arrowY - Math.sin(angle - Math.PI/2 - 0.4) * 15
+            arrowX - Math.cos(angle - Math.PI/2 - 0.4) * 25,
+            arrowY - Math.sin(angle - Math.PI/2 - 0.4) * 25
           )
           ctx.lineTo(
-            arrowX - Math.cos(angle - Math.PI/2 + 0.4) * 15,
-            arrowY - Math.sin(angle - Math.PI/2 + 0.4) * 15
+            arrowX - Math.cos(angle - Math.PI/2 + 0.4) * 25,
+            arrowY - Math.sin(angle - Math.PI/2 + 0.4) * 25
           )
           ctx.closePath()
           ctx.fill()
