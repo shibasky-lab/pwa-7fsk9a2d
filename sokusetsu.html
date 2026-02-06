@@ -59,7 +59,7 @@
 
     .edit-btn {
       position: absolute;
-      right: 3.5rem;
+      right: 4rem;
       top: 50%;
       transform: translateY(-50%);
       width: 40px;
@@ -376,8 +376,8 @@
       background: white;
       border-radius: 12px;
       padding: 1.5rem;
-      max-width: 500px;
-      width: 90%;
+      max-width: 450px;
+      width: 85%;
       max-height: 80vh;
       display: flex;
       flex-direction: column;
@@ -416,6 +416,10 @@
       margin-bottom: 0.5rem;
       cursor: pointer;
       transition: all 0.2s;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
     }
 
     .nearby-item:hover {
@@ -426,20 +430,23 @@
     .nearby-item-name {
       font-weight: bold;
       color: #333;
-      margin-bottom: 0.3rem;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .nearby-item-info {
       font-size: 0.85rem;
       color: #666;
-      font-family: monospace;
+      white-space: nowrap;
     }
 
     .nearby-item-distance {
       font-size: 0.9rem;
       color: #667eea;
       font-weight: bold;
-      margin-top: 0.3rem;
+      white-space: nowrap;
     }
   </style>
 </head>
@@ -666,7 +673,7 @@
         listDiv.innerHTML = nearbyBases.map(base => `
           <div class="nearby-item" data-id="${base.id}">
             <div class="nearby-item-name">${base.name || '名称不明'}</div>
-            <div class="nearby-item-info">${base.id}</div>
+            <div class="nearby-item-info">${base.kbn_cd || '未設定'}</div>
             <div class="nearby-item-distance">
               ${base.distance < 1000 ? `${base.distance.toFixed(1)}m` : `${(base.distance / 1000).toFixed(2)}km`}
             </div>
@@ -716,7 +723,7 @@
       
       // キャンセルボタン
       document.getElementById('coord-cancel').addEventListener('click', () => {
-        window.location.href = 'index.html'
+        popup.classList.add('hidden')
       })
       
       // OKボタン
