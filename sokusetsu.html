@@ -57,6 +57,31 @@
       box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
     }
 
+    .edit-btn {
+      position: absolute;
+      right: 3.5rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 40px;
+      height: 40px;
+      background: white;
+      color: #667eea;
+      border: none;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      transition: all 0.2s;
+    }
+
+    .edit-btn:hover {
+      transform: translateY(-50%) scale(1.05);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
     .orientation-btn {
       position: absolute;
       right: 10px;
@@ -328,6 +353,94 @@
       color: #999;
       margin-top: 0.3rem;
     }
+
+    /* 近隣点リストポップアップ */
+    #nearby-popup {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+    }
+
+    #nearby-popup.hidden {
+      display: none;
+    }
+
+    .nearby-content {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+
+    .nearby-loading {
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 1rem;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .nearby-list {
+      overflow-y: auto;
+      margin-top: 1rem;
+    }
+
+    .nearby-item {
+      padding: 0.8rem;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .nearby-item:hover {
+      background: #f5f5f5;
+      border-color: #667eea;
+    }
+
+    .nearby-item-name {
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 0.3rem;
+    }
+
+    .nearby-item-info {
+      font-size: 0.85rem;
+      color: #666;
+      font-family: monospace;
+    }
+
+    .nearby-item-distance {
+      font-size: 0.9rem;
+      color: #667eea;
+      font-weight: bold;
+      margin-top: 0.3rem;
+    }
   </style>
 </head>
 <body>
@@ -378,8 +491,22 @@
 
   <header>
     <h1>🎯 測設モード</h1>
+    <button id="edit-btn" class="edit-btn" title="座標を入力">✏️</button>
     <a href="index.html" class="home-btn" title="メニューに戻る">🏠</a>
   </header>
+
+  <!-- 近隣点リストポップアップ -->
+  <div id="nearby-popup" class="hidden">
+    <div class="nearby-content">
+      <div class="popup-title">📍 近隣の基準点</div>
+      <div id="nearby-loading" class="nearby-loading">
+        <div class="spinner"></div>
+        <p>近隣の基準点を検索中...</p>
+      </div>
+      <div id="nearby-list" class="nearby-list" style="display: none;"></div>
+      <button class="btn-cancel" id="nearby-cancel" style="margin-top: 1rem; display: none;">キャンセル</button>
+    </div>
+  </div>
 
   <div class="target-info">
     <div class="target-name" id="target-name">読み込み中...</div>
@@ -442,6 +569,9 @@
       try {
         await db.init()
         
+        // 編集ボタンのイベントリスナー
+        document.getElementById('edit-btn').addEventListener('click', showCoordPopup)
+        
         // 目標点を決定
         if (targetId) {
           // detail.htmlから遷移した場合
@@ -449,8 +579,8 @@
           localStorage.setItem('last_sokusetsu_target', targetId)
           startSokusetsu()
         } else {
-          // メニューから開いた場合：座標入力ポップアップを表示
-          showCoordPopup()
+          // メニューから開いた場合：近隣点リストを表示
+          showNearbyList()
         }
       } catch (error) {
         console.error('初期化エラー:', error)
@@ -488,6 +618,80 @@
       // 方向モード切替ボタン
       document.getElementById('orientation-btn').addEventListener('click', toggleOrientationMode)
       updateOrientationButton()
+    }
+
+    // 近隣点リストを表示
+    async function showNearbyList() {
+      const popup = document.getElementById('nearby-popup')
+      const loading = document.getElementById('nearby-loading')
+      const listDiv = document.getElementById('nearby-list')
+      const cancelBtn = document.getElementById('nearby-cancel')
+      
+      popup.classList.remove('hidden')
+      loading.style.display = 'block'
+      listDiv.style.display = 'none'
+      cancelBtn.style.display = 'none'
+      
+      try {
+        // 現在位置を取得
+        const position = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+          })
+        })
+        
+        const currentLat = position.coords.latitude
+        const currentLon = position.coords.longitude
+        
+        // 全基準点を取得
+        const allBases = await db.getAllBases()
+        
+        // 距離を計算してソート
+        const basesWithDistance = allBases.map(base => ({
+          ...base,
+          distance: calculateDistance(currentLat, currentLon, base.lat, base.lon)
+        }))
+        
+        basesWithDistance.sort((a, b) => a.distance - b.distance)
+        
+        // 上位30点を表示
+        const nearbyBases = basesWithDistance.slice(0, 30)
+        
+        loading.style.display = 'none'
+        listDiv.style.display = 'block'
+        cancelBtn.style.display = 'block'
+        
+        listDiv.innerHTML = nearbyBases.map(base => `
+          <div class="nearby-item" data-id="${base.id}">
+            <div class="nearby-item-name">${base.name || '名称不明'}</div>
+            <div class="nearby-item-info">${base.id}</div>
+            <div class="nearby-item-distance">
+              ${base.distance < 1000 ? `${base.distance.toFixed(1)}m` : `${(base.distance / 1000).toFixed(2)}km`}
+            </div>
+          </div>
+        `).join('')
+        
+        // 各アイテムにクリックイベント
+        listDiv.querySelectorAll('.nearby-item').forEach(item => {
+          item.addEventListener('click', async () => {
+            const baseId = item.dataset.id
+            targetBase = await db.getBase(baseId)
+            popup.classList.add('hidden')
+            startSokusetsu()
+          })
+        })
+        
+        // キャンセルボタン
+        cancelBtn.addEventListener('click', () => {
+          window.location.href = 'index.html'
+        })
+        
+      } catch (error) {
+        console.error('近隣点取得エラー:', error)
+        loading.innerHTML = '<p style="color: #f44336;">位置情報の取得に失敗しました</p><button class="btn-cancel" onclick="window.location.href=\'index.html\'">戻る</button>'
+      }
     }
 
     // 座標入力ポップアップを表示
