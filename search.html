@@ -69,8 +69,8 @@
             </tbody>
           </table>
 
-          <div id="no-results" style="text-align: center; padding: 2rem; color: #999;">
-            検索条件を入力して検索してください
+          <div id="no-results" style="text-align: center; padding: 2rem;">
+            <button id="nearby-btn" class="nearby-search-btn">&#128269;近傍20点</button>
           </div>
         </div>
 
@@ -193,6 +193,35 @@
     .checkbox-group input[type="checkbox"] {
       width: auto;
       margin-right: 0.4rem;
+    }
+
+    /* 付近検索ボタン */
+    .nearby-search-btn {
+      padding: 0.4rem 0.6rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      font-weight: normal;
+      cursor: pointer;
+      transition: all 0.2s;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+      white-space: nowrap;
+    }
+
+    .nearby-search-btn:hover {
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.5);
+    }
+
+    .nearby-search-btn:active {
+      transform: translateY(1px);
+    }
+
+    .nearby-search-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
     }
 
     /* ボタングループ */
@@ -402,6 +431,7 @@
     let searchResults = []
     let allBases = []
     let prefNames = {} // 都道府県マスタ
+    let searchMode = 'normal' // 'normal' or 'nearby'
 
     await db.init()
 
@@ -434,6 +464,7 @@
     const prefSelect = document.getElementById('pref-select')
     const rankFilters = document.querySelectorAll('.rank-filter')
     const searchBtn = document.getElementById('search-btn')
+    const nearbyBtn = document.getElementById('nearby-btn')
     const clearBtn = document.getElementById('clear-btn')
     const resultsTable = document.getElementById('results-table')
     const resultsTbody = document.getElementById('results-tbody')
@@ -443,7 +474,21 @@
     const prevBtn = document.getElementById('prev-btn')
     const nextBtn = document.getElementById('next-btn')
 
+    // Haversine距離計算関数 (km単位で返す)
+    function calcDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371 // 地球の半径 (km)
+      const dLat = (lat2 - lat1) * Math.PI / 180
+      const dLon = (lon2 - lon1) * Math.PI / 180
+      const a = 
+        Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon/2) * Math.sin(dLon/2)
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
+      return R * c
+    }
+
     searchBtn.addEventListener('click', async () => {
+      searchMode = 'normal'
       let rankIds = Array.from(rankFilters)
         .filter(cb => cb.checked)
         .map(cb => cb.value)
@@ -489,7 +534,84 @@
       })
     }
 
+    nearbyBtn.addEventListener('click', async () => {
+      searchMode = 'nearby'
+      
+      // 位置情報を取得
+      if (!navigator.geolocation) {
+        alert('お使いのブラウザは位置情報に対応していません。')
+        return
+      }
+
+      nearbyBtn.disabled = true
+      nearbyBtn.innerHTML = '&#128269;取得中...'
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const userLat = position.coords.latitude
+          const userLon = position.coords.longitude
+
+          // チェックされている点種別を取得
+          let rankIds = Array.from(rankFilters)
+            .filter(cb => cb.checked)
+            .map(cb => cb.value)
+          
+          // TR4が選択されている場合、EK0も自動的に含める
+          if (rankIds.includes('TR4') && !rankIds.includes('EK0')) {
+            rankIds.push('EK0')
+          }
+          // EK0が選択されている場合、TR4も自動的に含める
+          if (rankIds.includes('EK0') && !rankIds.includes('TR4')) {
+            rankIds.push('TR4')
+          }
+
+          // 基準点をフィルタリング（チェックがあればその種別のみ、なければ全て）
+          let targetBases = allBases
+          if (rankIds.length > 0) {
+            targetBases = allBases.filter(base => rankIds.includes(base.rank_id))
+          }
+
+          // 距離を計算して追加
+          searchResults = targetBases.map(base => {
+            const distance = calcDistance(userLat, userLon, base.lat, base.lon)
+            return { ...base, distance }
+          })
+
+          // 距離でソート（昇順）
+          searchResults.sort((a, b) => a.distance - b.distance)
+
+          // 上位20件のみ取得
+          searchResults = searchResults.slice(0, 20)
+
+          currentPage = 1
+          displayResults()
+
+          nearbyBtn.disabled = false
+          nearbyBtn.innerHTML = '&#128269;近傍20点'
+        },
+        (error) => {
+          let message = '位置情報の取得に失敗しました。'
+          if (error.code === error.PERMISSION_DENIED) {
+            message = '位置情報の使用が許可されていません。ブラウザの設定を確認してください。'
+          } else if (error.code === error.POSITION_UNAVAILABLE) {
+            message = '位置情報が利用できません。'
+          } else if (error.code === error.TIMEOUT) {
+            message = '位置情報の取得がタイムアウトしました。'
+          }
+          alert(message)
+          nearbyBtn.disabled = false
+          nearbyBtn.innerHTML = '&#128269;近傍20点'
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0
+        }
+      )
+    })
+
     clearBtn.addEventListener('click', () => {
+      searchMode = 'normal'
       rankFilters.forEach(cb => cb.checked = false)
       nameSearchInput.value = ''
       prefSelect.value = ''
@@ -537,6 +659,26 @@
       resultsCount.textContent = `検索結果: ${searchResults.length}件`
       resultsHeader.style.display = 'flex'
 
+      // テーブルヘッダーを動的に変更
+      const tableHead = resultsTable.querySelector('thead tr')
+      if (searchMode === 'nearby') {
+        tableHead.innerHTML = `
+          <th>種別</th>
+          <th>点名</th>
+          <th>距離</th>
+          <th>都道府県</th>
+          <th>詳細</th>
+        `
+      } else {
+        tableHead.innerHTML = `
+          <th>種別</th>
+          <th>点名</th>
+          <th>基準点コード</th>
+          <th>都道府県</th>
+          <th>詳細</th>
+        `
+      }
+
       resultsTbody.innerHTML = pageResults.map(base => {
         const prefName = prefNames[base.pref_id] || '-'
         // 種別を短縮表示
@@ -548,15 +690,36 @@
         else if (rankLabel.includes('三等')) shortRank = '三等'
         else if (rankLabel.includes('四等')) shortRank = '四等'
         
-        return `
-        <tr>
-          <td>${shortRank}</td>
-          <td>${base.name || '-'}</td>
-          <td><code style="font-size: 0.75rem;">${base.id}</code></td>
-          <td>${prefName}</td>
-          <td><a href="detail.html?id=${base.id}" class="detail-btn" title="詳細を表示">📖</a></td>
-        </tr>
-      `}).join('')
+        // nearbyモードの場合は距離を計算して表示
+        if (searchMode === 'nearby' && base.distance !== undefined) {
+          let distanceText = ''
+          if (base.distance < 1) {
+            distanceText = `${Math.round(base.distance * 1000)}m`
+          } else {
+            distanceText = `${base.distance.toFixed(2)}km`
+          }
+          
+          return `
+          <tr>
+            <td>${shortRank}</td>
+            <td>${base.name || '-'}</td>
+            <td>${distanceText}</td>
+            <td>${prefName}</td>
+            <td><a href="detail.html?id=${base.id}" class="detail-btn" title="詳細を表示">📖</a></td>
+          </tr>
+        `
+        } else {
+          return `
+          <tr>
+            <td>${shortRank}</td>
+            <td>${base.name || '-'}</td>
+            <td><code style="font-size: 0.75rem;">${base.id}</code></td>
+            <td>${prefName}</td>
+            <td><a href="detail.html?id=${base.id}" class="detail-btn" title="詳細を表示">📖</a></td>
+          </tr>
+        `
+        }
+      }).join('')
 
       pageInfo.textContent = `${currentPage}/${maxPage}（全${searchResults.length}件）`
 

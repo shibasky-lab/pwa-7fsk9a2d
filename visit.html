@@ -107,15 +107,9 @@
       box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
     }
 
-    /* リストが開いたときのボタン位置 */
-    .map-list-btn.shifted {
-      right: calc(80% + 10px);
-    }
-
-    @media (min-width: 350px) {
-      .map-list-btn.shifted {
-        right: 290px;
-      }
+    /* リストが開いたときはボタンを非表示 */
+    .map-list-btn.hidden {
+      display: none;
     }
 
     /* リストパネル */
@@ -468,8 +462,8 @@
         // 都道府県リストを生成
         await populatePrefList()
 
-        // リストを更新
-        updateList(allVisits)
+        // リストを更新（初回は探索日順でソート）
+        filterAndSort()
 
         // 地図を全マーカーが見えるように調整
         if (markers.length > 0) {
@@ -707,7 +701,9 @@
           })
 
           // パネルを閉じる
-          document.getElementById('list-panel').classList.remove('show')
+          const panel = document.getElementById('list-panel')
+          panel.classList.remove('show')
+          document.getElementById('list-btn').classList.remove('hidden')
         })
       })
     }
@@ -763,20 +759,20 @@
     listBtn.addEventListener('click', (e) => {
       e.stopPropagation()
       listPanel.classList.toggle('show')
-      listBtn.classList.toggle('shifted')
+      listBtn.classList.toggle('hidden')
     })
 
     // 地図をクリックしたときにリストを閉じる
     document.getElementById('map').addEventListener('click', () => {
       listPanel.classList.remove('show')
-      listBtn.classList.remove('shifted')
+      listBtn.classList.remove('hidden')
     })
 
     // パネル外をクリックで閉じる
     listPanel.addEventListener('click', (e) => {
       if (e.target.id === 'list-panel') {
         listPanel.classList.remove('show')
-        listBtn.classList.remove('shifted')
+        listBtn.classList.remove('hidden')
       }
     })
 
