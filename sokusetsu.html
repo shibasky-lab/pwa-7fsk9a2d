@@ -512,6 +512,16 @@
       white-space: nowrap;
       flex-shrink: 0;
     }
+
+    /* 訪問済みハイライト */
+    .nearby-item.visited {
+      background-color: #e8f5e9 !important;
+      border-color: #4caf50;
+    }
+
+    .nearby-item.visited:hover {
+      background-color: #c8e6c9 !important;
+    }
   </style>
 </head>
 <body>
@@ -630,6 +640,7 @@
     let deviceHeading = 0 // デバイスの向き（度）
     let northUp = false // false=ヘディングアップ、true=ノースアップ
     let has5mSoundPlayed = false // 5m以内の音声再生済みフラグ
+    let visitedBaseIds = new Set() // 訪問済み基準点IDのセット
 
     // 音声オブジェクト
     const sound5m = new Audio('assets/audio/5m.mp3')
@@ -646,6 +657,9 @@
     async function init() {
       try {
         await db.init()
+        
+        // 訪問履歴を読み込んで訪問済みIDを取得
+        await loadVisitedBaseIds()
         
         // 編集ボタンのイベントリスナー
         document.getElementById('edit-btn').addEventListener('click', showCoordPopup)
@@ -710,6 +724,50 @@
       updateOrientationButton()
     }
 
+    // 訪問履歴から訪問済み基準点IDを取得
+    async function loadVisitedBaseIds() {
+      try {
+        const visits = await getAllVisits()
+        visitedBaseIds = new Set(visits.map(v => v.baseId))
+        console.log(`訪問済み基準点: ${visitedBaseIds.size}件`)
+      } catch (error) {
+        console.warn('訪問履歴の読み込みに失敗:', error)
+      }
+    }
+
+    // IndexedDBから全訪問履歴を取得
+    function getAllVisits() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open('visitHistoryDB')
+
+        request.onerror = () => reject(new Error('データベースを開けませんでした'))
+
+        request.onsuccess = (event) => {
+          const db = event.target.result
+
+          if (!db.objectStoreNames.contains('visits')) {
+            db.close()
+            resolve([])
+            return
+          }
+
+          const transaction = db.transaction(['visits'], 'readonly')
+          const store = transaction.objectStore('visits')
+          const getRequest = store.getAll()
+
+          getRequest.onsuccess = () => {
+            db.close()
+            resolve(getRequest.result || [])
+          }
+
+          getRequest.onerror = () => {
+            db.close()
+            reject(new Error('データの取得に失敗しました'))
+          }
+        }
+      })
+    }
+
     // 近隣点リストを表示
     async function showNearbyList() {
       const popup = document.getElementById('nearby-popup')
@@ -763,8 +821,11 @@
           else if (rankLabel.includes('三等')) shortRank = '三等'
           else if (rankLabel.includes('四等')) shortRank = '四等'
           
+          // 訪問済みクラス
+          const visitedClass = visitedBaseIds.has(base.id) ? ' visited' : ''
+          
           return `
-            <div class="nearby-item" data-id="${base.id}">
+            <div class="nearby-item${visitedClass}" data-id="${base.id}">
               <div class="nearby-item-left">
                 <span class="nearby-item-rank">${shortRank}</span>
                 <span class="nearby-item-name">　　${base.name || '名称不明'}</span>

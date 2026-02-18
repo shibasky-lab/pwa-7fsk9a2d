@@ -263,6 +263,27 @@
         <label class="file-label" for="import-file">インポート</label>
         <input type="file" id="import-file" accept=".zip">
       </div>
+
+      <div class="setting-item" style="flex-direction: column; align-items: flex-start; background: #f8f9fa; padding: 1rem; border-radius: 8px; border: 1px solid #e0e0e0;">
+        <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+          <div>
+            <div class="setting-label">キャッシュ使用量</div>
+            <div class="setting-description">オフライン用のキャッシュサイズ</div>
+          </div>
+          <button class="btn btn-primary" id="refresh-cache-size-btn" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;">更新</button>
+        </div>
+        <div id="cache-size-info" style="width: 100%; font-size: 0.9rem; color: #666;">
+          <div style="margin-bottom: 0.3rem;">📦 計算中...</div>
+        </div>
+      </div>
+
+      <div class="setting-item">
+        <div>
+          <div class="setting-label">キャッシュのクリア</div>
+          <div class="setting-description">オフライン用のキャッシュを削除</div>
+        </div>
+        <button class="btn btn-danger" id="clear-cache-btn">クリア</button>
+      </div>
     </div>
 
     <!-- 音声設定 -->
@@ -297,6 +318,134 @@
       soundToggle.classList.toggle('active')
       const enabled = soundToggle.classList.contains('active')
       localStorage.setItem('sokusetsuSoundEnabled', enabled)
+    })
+
+    // キャッシュサイズを計算して表示
+    async function updateCacheSize() {
+      const cacheInfoElement = document.getElementById('cache-size-info')
+      
+      try {
+        if (!('caches' in window)) {
+          cacheInfoElement.innerHTML = '<div style="color: #999;">⚠️ キャッシュAPIが利用できません</div>'
+          return
+        }
+
+        const cacheNames = await caches.keys()
+        
+        if (cacheNames.length === 0) {
+          cacheInfoElement.innerHTML = '<div style="color: #999;">📦 キャッシュなし (0 KB)</div>'
+          return
+        }
+
+        let totalSize = 0
+        const cacheDetails = []
+
+        for (const cacheName of cacheNames) {
+          const cache = await caches.open(cacheName)
+          const requests = await cache.keys()
+          let cacheSize = 0
+
+          for (const request of requests) {
+            const response = await cache.match(request)
+            if (response) {
+              const blob = await response.blob()
+              cacheSize += blob.size
+            }
+          }
+
+          totalSize += cacheSize
+          cacheDetails.push({
+            name: cacheName,
+            size: cacheSize,
+            count: requests.length
+          })
+        }
+
+        // サイズをフォーマット
+        const formatSize = (bytes) => {
+          if (bytes < 1024) return bytes + ' B'
+          if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB'
+          return (bytes / (1024 * 1024)).toFixed(2) + ' MB'
+        }
+
+        let html = `<div style="font-weight: bold; margin-bottom: 0.5rem; color: #333;">📦 合計: ${formatSize(totalSize)}</div>`
+        
+        cacheDetails.forEach(detail => {
+          const shortName = detail.name.replace('kijunten-', '')
+          html += `<div style="padding: 0.3rem 0; border-top: 1px solid #e0e0e0; display: flex; justify-content: space-between;">
+            <span style="color: #666;">${shortName}</span>
+            <span style="font-weight: 600; color: #333;">${formatSize(detail.size)} (${detail.count}件)</span>
+          </div>`
+        })
+
+        cacheInfoElement.innerHTML = html
+      } catch (error) {
+        console.error('Cache size calculation error:', error)
+        cacheInfoElement.innerHTML = '<div style="color: #f44336;">❌ エラーが発生しました</div>'
+      }
+    }
+
+    // キャッシュサイズ更新ボタン
+    document.getElementById('refresh-cache-size-btn').addEventListener('click', async () => {
+      const btn = document.getElementById('refresh-cache-size-btn')
+      btn.disabled = true
+      btn.textContent = '計算中...'
+      await updateCacheSize()
+      btn.disabled = false
+      btn.textContent = '更新'
+    })
+
+    // 初回表示
+    updateCacheSize()
+
+    // キャッシュクリア
+    document.getElementById('clear-cache-btn').addEventListener('click', async () => {
+      if (!confirm('キャッシュを完全にクリアしますか？\nすべてのキャッシュとService Workerが削除されます。\n次回アクセス時に再度キャッシュされます。')) {
+        return
+      }
+
+      try {
+        const btn = document.getElementById('clear-cache-btn')
+        btn.disabled = true
+        btn.textContent = '削除中...'
+
+        // すべてのキャッシュを削除
+        if ('caches' in window) {
+          const cacheNames = await caches.keys()
+          console.log('[Cache Clear] Found caches:', cacheNames)
+          await Promise.all(
+            cacheNames.map(cacheName => {
+              console.log('[Cache Clear] Deleting:', cacheName)
+              return caches.delete(cacheName)
+            })
+          )
+          console.log('[Cache Clear] All caches deleted')
+        }
+
+        // Service Workerを完全に削除（再登録しない）
+        if ('serviceWorker' in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations()
+          console.log('[SW Clear] Found registrations:', registrations.length)
+          for (const registration of registrations) {
+            const result = await registration.unregister()
+            console.log('[SW Clear] Unregistered:', result)
+          }
+          console.log('[SW Clear] All service workers unregistered')
+        }
+
+        btn.disabled = false
+        btn.textContent = 'クリア'
+        alert('キャッシュとService Workerを完全に削除しました。\nページを再読み込みすると、再度Service Workerが登録されキャッシュが作成されます。')
+        
+        // キャッシュサイズ表示を更新
+        updateCacheSize()
+      } catch (error) {
+        console.error('Cache clear error:', error)
+        alert('キャッシュのクリアに失敗しました: ' + error.message)
+        const btn = document.getElementById('clear-cache-btn')
+        btn.disabled = false
+        btn.textContent = 'クリア'
+      }
     })
 
     // エクスポート

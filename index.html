@@ -394,10 +394,58 @@
       navigator.serviceWorker.register('./sw.js')
         .then(registration => {
           console.log('Service Worker registered:', registration.scope)
+          
+          // 初回アクセス時に全HTMLをプリキャッシュ
+          precacheResources()
         })
         .catch(err => {
           console.error('Service Worker registration failed:', err)
         })
+    }
+
+    // 全リソースをプリキャッシュ
+    async function precacheResources() {
+      if (!('caches' in window)) return
+      
+      try {
+        const cache = await caches.open('kijunten-pwa-v14')
+        
+        // キャッシュするリソースのリスト
+        const resourcesToCache = [
+          './',
+          './index.html',
+          './search.html',
+          './detail.html',
+          './add-visit.html',
+          './sokusetsu.html',
+          './setting.html',
+          './css/style.css',
+          './src/db.js',
+          './src/metadata.js',
+          './icon-192.png',
+          './icon-512.png',
+          './manifest.json'
+        ]
+        
+        // 既にキャッシュされているか確認
+        const cachedUrls = await cache.keys()
+        const cachedPaths = cachedUrls.map(req => new URL(req.url).pathname)
+        
+        // まだキャッシュされていないリソースのみ追加
+        for (const resource of resourcesToCache) {
+          const resourcePath = new URL(resource, location.origin).pathname
+          if (!cachedPaths.some(path => path.endsWith(resourcePath))) {
+            try {
+              await cache.add(resource)
+              console.log('[Cache] Added:', resource)
+            } catch (err) {
+              console.warn('[Cache] Failed to add:', resource, err)
+            }
+          }
+        }
+      } catch (error) {
+        console.error('[Cache] Precache failed:', error)
+      }
     }
 
     // DB初期化

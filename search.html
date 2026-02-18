@@ -13,6 +13,7 @@
 <body>
   <header>
     <h1>📍 基準点検索</h1>
+    <button id="bookmark-list-btn" class="bookmark-list-btn" title="ブックマーク">★</button>
     <a href="index.html" class="home-btn" title="メニューに戻る">🏠</a>
   </header>
 
@@ -35,7 +36,7 @@
         <div class="form-group">
           <label>除外オプション</label>
           <div class="checkbox-group">
-            <label><input type="checkbox" id="exclude-school" checked> 学校用地を除外</label>
+            <label><input type="checkbox" id="exclude-school"> 学校用地を除外</label>
           </div>
         </div>
 
@@ -100,7 +101,7 @@
 
     .home-btn {
       position: absolute;
-      right: 1rem;
+      right: 9rem;
       top: 50%;
       transform: translateY(-50%);
       width: 45px;
@@ -122,6 +123,198 @@
       color: white;
       transform: translateY(-50%) scale(1.05);
       box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+    }
+
+    .bookmark-list-btn {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 45px;
+      height: 45px;
+      background: white;
+      color: #FFC107;
+      border: none;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      transition: all 0.2s;
+    }
+
+    .bookmark-list-btn:hover {
+      background: #FFC107;
+      color: white;
+      transform: translateY(-50%) scale(1.05);
+      box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
+    }
+
+    /* ブックマークポップアップ */
+    .bookmark-popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 90%;
+      max-width: 500px;
+      max-height: 80vh;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      z-index: 10000;
+      display: none;
+      flex-direction: column;
+    }
+
+    .bookmark-popup.show {
+      display: flex;
+      animation: popupShow 0.3s ease;
+    }
+
+    @keyframes popupShow {
+      from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+
+    .bookmark-popup-header {
+      background: linear-gradient(135deg, #FFC107 0%, #FF9800 100%);
+      color: white;
+      padding: 1rem;
+      border-radius: 12px 12px 0 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .bookmark-popup-header h3 {
+      margin: 0;
+      font-size: 1.2rem;
+    }
+
+    .bookmark-popup-close {
+      background: rgba(255,255,255,0.3);
+      border: none;
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      min-width: 32px;
+      min-height: 32px;
+      max-width: 32px;
+      max-height: 32px;
+      font-size: 1.2rem;
+      line-height: 32px;
+      padding: 0;
+      margin: 0;
+      color: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-sizing: border-box;
+      transition: all 0.2s;
+    }
+
+    .bookmark-popup-close:hover {
+      background: rgba(255,255,255,0.5);
+      transform: scale(1.1);
+    }
+
+    .bookmark-popup-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1rem;
+    }
+
+    .bookmark-item {
+      position: relative;
+      padding: 0.8rem;
+      padding-right: 2.5rem;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .bookmark-item:hover {
+      background: #fff8e1;
+      border-color: #FFC107;
+    }
+
+    .bookmark-item-left {
+      flex: 1;
+      min-width: 0;
+      pointer-events: none;
+    }
+
+    .bookmark-item-rank {
+      font-size: 0.75rem;
+      color: #666;
+      margin-bottom: 0.2rem;
+    }
+
+    .bookmark-item-name {
+      font-weight: bold;
+      color: #333;
+      font-size: 0.95rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .bookmark-delete-btn {
+      position: absolute;
+      top: 0.5rem;
+      right: 0.5rem;
+      background: #999;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      min-width: 24px;
+      min-height: 24px;
+      max-width: 24px;
+      max-height: 24px;
+      font-size: 0.9rem;
+      line-height: 24px;
+      padding: 0;
+      margin: 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-sizing: border-box;
+      transition: all 0.2s;
+      pointer-events: auto;
+    }
+
+    .bookmark-delete-btn:hover {
+      background: #666;
+      transform: scale(1.1);
+    }
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .bookmark-empty {
+      text-align: center;
+      padding: 2rem;
+      color: #999;
     }
 
     /* 検索セクション装飾 */
@@ -427,6 +620,15 @@
         overflow: hidden;
         box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       }
+
+      /* 訪問済みハイライト */
+      .visited-row {
+        background-color: #e8f5e9 !important;
+      }
+
+      .visited-row:hover {
+        background-color: #c8e6c9 !important;
+      }
   </style>
 
   <script type="module">
@@ -440,8 +642,12 @@
     let allBases = []
     let prefNames = {} // 都道府県マスタ
     let searchMode = 'normal' // 'normal' or 'nearby'
+    let visitedBaseIds = new Set() // 訪問済み基準点IDのセット
 
     await db.init()
+
+    // 訪問履歴を読み込んで訪問済みIDを取得
+    await loadVisitedBaseIds()
 
     // 都道府県マスタをロード
     try {
@@ -483,6 +689,50 @@
     const prevBtn = document.getElementById('prev-btn')
     const nextBtn = document.getElementById('next-btn')
 
+    // 訪問履歴から訪問済み基準点IDを取得
+    async function loadVisitedBaseIds() {
+      try {
+        const visits = await getAllVisits()
+        visitedBaseIds = new Set(visits.map(v => v.baseId))
+        console.log(`訪問済み基準点: ${visitedBaseIds.size}件`)
+      } catch (error) {
+        console.warn('訪問履歴の読み込みに失敗:', error)
+      }
+    }
+
+    // IndexedDBから全訪問履歴を取得
+    function getAllVisits() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open('visitHistoryDB')
+
+        request.onerror = () => reject(new Error('データベースを開けませんでした'))
+
+        request.onsuccess = (event) => {
+          const db = event.target.result
+
+          if (!db.objectStoreNames.contains('visits')) {
+            db.close()
+            resolve([])
+            return
+          }
+
+          const transaction = db.transaction(['visits'], 'readonly')
+          const store = transaction.objectStore('visits')
+          const getRequest = store.getAll()
+
+          getRequest.onsuccess = () => {
+            db.close()
+            resolve(getRequest.result || [])
+          }
+
+          getRequest.onerror = () => {
+            db.close()
+            reject(new Error('データの取得に失敗しました'))
+          }
+        }
+      })
+    }
+
     // Haversine距離計算関数 (km単位で返す)
     function calcDistance(lat1, lon1, lat2, lon2) {
       const R = 6371 // 地球の半径 (km)
@@ -523,9 +773,22 @@
 
       searchResults = await db.searchBases(filters)
       
+      // デバッグ: 最初の数件のland_type_idを確認
+      if (searchResults.length > 0) {
+        console.log('検索結果サンプル（最初の5件）:')
+        searchResults.slice(0, 5).forEach((base, i) => {
+          console.log(`  ${i + 1}. ${base.name || base.id}: land_type_id = ${base.land_type_id} (型: ${typeof base.land_type_id})`)
+        })
+      }
+      
       // 学校用地を除外
       if (excludeSchoolCheckbox.checked) {
-        searchResults = searchResults.filter(base => base.land_type_id !== '23')
+        const beforeCount = searchResults.length
+        searchResults = searchResults.filter(base => {
+          // 数値23と文字列'23'の両方に対応
+          return base.land_type_id !== '23' && base.land_type_id !== 23
+        })
+        console.log(`学校用地除外: ${beforeCount}件 → ${searchResults.length}件（${beforeCount - searchResults.length}件除外）`)
       }
       
       // 都道府県コード順、点種別順でソート
@@ -588,7 +851,10 @@
 
           // 学校用地を除外
           if (excludeSchoolCheckbox.checked) {
-            targetBases = targetBases.filter(base => base.land_type_id !== '23')
+            targetBases = targetBases.filter(base => {
+              // 数値23と文字列'23'の両方に対応
+              return base.land_type_id !== '23' && base.land_type_id !== 23
+            })
           }
 
           // 距離を計算して追加
@@ -633,7 +899,7 @@
     clearBtn.addEventListener('click', () => {
       searchMode = 'normal'
       rankFilters.forEach(cb => cb.checked = false)
-      excludeSchoolCheckbox.checked = true
+      excludeSchoolCheckbox.checked = false
       nameSearchInput.value = ''
       prefSelect.value = ''
       searchResults = []
@@ -720,8 +986,11 @@
             distanceText = `${base.distance.toFixed(2)}km`
           }
           
+          // 訪問済みハイライト
+          const visitedClass = visitedBaseIds.has(base.id) ? ' class="visited-row"' : ''
+          
           return `
-          <tr>
+          <tr${visitedClass}>
             <td>${shortRank}</td>
             <td>${base.name || '-'}</td>
             <td>${distanceText}</td>
@@ -730,8 +999,11 @@
           </tr>
         `
         } else {
+          // 訪問済みハイライト
+          const visitedClass = visitedBaseIds.has(base.id) ? ' class="visited-row"' : ''
+          
           return `
-          <tr>
+          <tr${visitedClass}>
             <td>${shortRank}</td>
             <td>${base.name || '-'}</td>
             <td><code style="font-size: 0.75rem;">${base.id}</code></td>
@@ -750,6 +1022,171 @@
 
       prevBtn.disabled = currentPage === 1
       nextBtn.disabled = currentPage === maxPage
+    }
+
+    // ===== ブックマーク機能 =====
+    const bookmarkListBtn = document.getElementById('bookmark-list-btn')
+
+    // ブックマークポップアップを表示
+    bookmarkListBtn.addEventListener('click', async () => {
+      const bookmarks = await getBookmarks()
+      showBookmarkPopup(bookmarks)
+    })
+
+    // ブックマークポップアップ表示
+    function showBookmarkPopup(bookmarks) {
+      // ポップアップHTML作成
+      let popupHTML = `
+        <div class="bookmark-popup show" id="bookmark-popup">
+          <div class="bookmark-popup-header">
+            <h3>⭐ ブックマーク</h3>
+            <button class="bookmark-popup-close" onclick="closeBookmarkPopup()">×</button>
+          </div>
+          <div class="bookmark-popup-content" id="bookmark-popup-content">
+      `
+      
+      if (bookmarks.length === 0) {
+        popupHTML += '<div class="bookmark-empty">ブックマークはまだありません</div>'
+      } else {
+        bookmarks.forEach((bookmark) => {
+          const rankLabel = getLabel('rank_ids', bookmark.rank_id)
+          let shortRank = rankLabel
+          if (rankLabel.includes('電子')) shortRank = '電子'
+          else if (rankLabel.includes('一等')) shortRank = '一等'
+          else if (rankLabel.includes('二等')) shortRank = '二等'
+          else if (rankLabel.includes('三等')) shortRank = '三等'
+          else if (rankLabel.includes('四等')) shortRank = '四等'
+          
+          popupHTML += `
+            <div class="bookmark-item" data-id="${bookmark.id}">
+              <div class="bookmark-item-left">
+                <div class="bookmark-item-rank">${shortRank}</div>
+                <div class="bookmark-item-name">${bookmark.name || '名称不明'}</div>
+              </div>
+              <button class="bookmark-delete-btn" data-id="${bookmark.id}" title="削除">×</button>
+            </div>
+          `
+        })
+      }
+      
+      popupHTML += '</div></div>'
+      
+      // 既存のポップアップがあれば削除
+      const existingPopup = document.getElementById('bookmark-popup')
+      if (existingPopup) {
+        existingPopup.remove()
+      }
+      
+      // ポップアップを追加
+      document.body.insertAdjacentHTML('beforeend', popupHTML)
+      
+      // クリックイベント追加
+      document.querySelectorAll('.bookmark-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const baseId = item.dataset.id
+          window.location.href = `detail.html?id=${baseId}`
+        })
+      })
+      
+      // 削除ボタンのイベント
+      document.querySelectorAll('.bookmark-delete-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          e.stopPropagation() // 親要素のクリックイベントを阻止
+          const baseId = btn.dataset.id
+          
+          if (confirm('このブックマークを削除しますか？')) {
+            const bookmarks = await getBookmarks()
+            const newBookmarks = bookmarks.filter(b => b.id !== baseId)
+            await saveBookmarks(newBookmarks)
+            
+            // リストを再表示
+            showBookmarkPopup(newBookmarks)
+          }
+        })
+      })
+    }
+
+    // ブックマークポップアップを閉じる
+    window.closeBookmarkPopup = function() {
+      const popup = document.getElementById('bookmark-popup')
+      if (popup) {
+        popup.classList.remove('show')
+        setTimeout(() => popup.remove(), 300)
+      }
+    }
+
+    // ブックマーク取得
+    function getBookmarks() {
+      return new Promise((resolve) => {
+        const request = indexedDB.open('bookmarkDB', 1)
+        
+        request.onerror = () => resolve([])
+        
+        request.onsuccess = (event) => {
+          const db = event.target.result
+          
+          if (!db.objectStoreNames.contains('bookmarks')) {
+            db.close()
+            resolve([])
+            return
+          }
+          
+          const transaction = db.transaction(['bookmarks'], 'readonly')
+          const store = transaction.objectStore('bookmarks')
+          const getRequest = store.get('list')
+          
+          getRequest.onsuccess = () => {
+            db.close()
+            resolve(getRequest.result?.bookmarks || [])
+          }
+          
+          getRequest.onerror = () => {
+            db.close()
+            resolve([])
+          }
+        }
+        
+        request.onupgradeneeded = (event) => {
+          const db = event.target.result
+          if (!db.objectStoreNames.contains('bookmarks')) {
+            db.createObjectStore('bookmarks', { keyPath: 'key' })
+          }
+        }
+      })
+    }
+
+    // ブックマーク保存
+    function saveBookmarks(bookmarks) {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open('bookmarkDB', 1)
+        
+        request.onerror = () => reject(new Error('データベースを開けませんでした'))
+        
+        request.onsuccess = (event) => {
+          const db = event.target.result
+          const transaction = db.transaction(['bookmarks'], 'readwrite')
+          const store = transaction.objectStore('bookmarks')
+          
+          const putRequest = store.put({ key: 'list', bookmarks })
+          
+          putRequest.onsuccess = () => {
+            db.close()
+            resolve()
+          }
+          
+          putRequest.onerror = () => {
+            db.close()
+            reject(new Error('保存に失敗しました'))
+          }
+        }
+        
+        request.onupgradeneeded = (event) => {
+          const db = event.target.result
+          if (!db.objectStoreNames.contains('bookmarks')) {
+            db.createObjectStore('bookmarks', { keyPath: 'key' })
+          }
+        }
+      })
     }
   </script>
 </body>
