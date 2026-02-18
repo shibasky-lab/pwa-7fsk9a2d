@@ -31,6 +31,14 @@
           </div>
         </div>
 
+        <!-- 除外オプション -->
+        <div class="form-group">
+          <label>除外オプション</label>
+          <div class="checkbox-group">
+            <label><input type="checkbox" id="exclude-school" checked> 学校用地を除外</label>
+          </div>
+        </div>
+
         <!-- 検索入力 -->
         <div class="form-group">
           <label for="pref-select">都道府県</label>
@@ -463,6 +471,7 @@
     const nameSearchInput = document.getElementById('name-search')
     const prefSelect = document.getElementById('pref-select')
     const rankFilters = document.querySelectorAll('.rank-filter')
+    const excludeSchoolCheckbox = document.getElementById('exclude-school')
     const searchBtn = document.getElementById('search-btn')
     const nearbyBtn = document.getElementById('nearby-btn')
     const clearBtn = document.getElementById('clear-btn')
@@ -513,6 +522,12 @@
       }
 
       searchResults = await db.searchBases(filters)
+      
+      // 学校用地を除外
+      if (excludeSchoolCheckbox.checked) {
+        searchResults = searchResults.filter(base => base.land_type_id !== '23')
+      }
+      
       // 都道府県コード順、点種別順でソート
       sortResults()
       currentPage = 1
@@ -571,6 +586,11 @@
             targetBases = allBases.filter(base => rankIds.includes(base.rank_id))
           }
 
+          // 学校用地を除外
+          if (excludeSchoolCheckbox.checked) {
+            targetBases = targetBases.filter(base => base.land_type_id !== '23')
+          }
+
           // 距離を計算して追加
           searchResults = targetBases.map(base => {
             const distance = calcDistance(userLat, userLon, base.lat, base.lon)
@@ -613,6 +633,7 @@
     clearBtn.addEventListener('click', () => {
       searchMode = 'normal'
       rankFilters.forEach(cb => cb.checked = false)
+      excludeSchoolCheckbox.checked = true
       nameSearchInput.value = ''
       prefSelect.value = ''
       searchResults = []
