@@ -13,8 +13,8 @@
 <body>
   <header>
     <h1>📍 基準点検索</h1>
-    <button id="bookmark-list-btn" class="bookmark-list-btn" title="ブックマーク">★</button>
     <a href="index.html" class="home-btn" title="メニューに戻る">🏠</a>
+    <button id="bookmark-list-btn" class="bookmark-list-btn" title="ブックマーク">★</button>
   </header>
 
   <main>
@@ -204,23 +204,22 @@
       background: rgba(255,255,255,0.3);
       border: none;
       border-radius: 50%;
-      width: 32px;
-      height: 32px;
-      min-width: 32px;
-      min-height: 32px;
-      max-width: 32px;
-      max-height: 32px;
+      width: 30px;
+      height: 30px;
+      min-width: 30px;
+      min-height: 30px;
+      max-width: 30px;
+      max-height: 30px;
       font-size: 1.2rem;
-      line-height: 32px;
-      padding: 0;
-      margin: 0;
+      line-height: 1;
       color: white;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: 0;
       flex-shrink: 0;
-      box-sizing: border-box;
+      aspect-ratio: 1;
       transition: all 0.2s;
     }
 
@@ -236,9 +235,7 @@
     }
 
     .bookmark-item {
-      position: relative;
       padding: 0.8rem;
-      padding-right: 2.5rem;
       border: 2px solid #e0e0e0;
       border-radius: 8px;
       margin-bottom: 0.5rem;
@@ -247,6 +244,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
+      position: relative;
     }
 
     .bookmark-item:hover {
@@ -254,10 +252,42 @@
       border-color: #FFC107;
     }
 
+    .bookmark-item-remove {
+      position: absolute;
+      top: 0.3rem;
+      right: 0.3rem;
+      background: rgba(255,255,255,0.9);
+      border: none;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      min-width: 24px;
+      min-height: 24px;
+      max-width: 24px;
+      max-height: 24px;
+      font-size: 1rem;
+      line-height: 1;
+      color: #666;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      flex-shrink: 0;
+      aspect-ratio: 1;
+      transition: all 0.2s;
+      z-index: 10;
+    }
+
+    .bookmark-item-remove:hover {
+      background: #f44336;
+      color: white;
+      transform: scale(1.1);
+    }
+
     .bookmark-item-left {
       flex: 1;
       min-width: 0;
-      pointer-events: none;
     }
 
     .bookmark-item-rank {
@@ -271,42 +301,6 @@
       color: #333;
       font-size: 0.95rem;
       white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .bookmark-delete-btn {
-      position: absolute;
-      top: 0.5rem;
-      right: 0.5rem;
-      background: #999;
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 24px;
-      height: 24px;
-      min-width: 24px;
-      min-height: 24px;
-      max-width: 24px;
-      max-height: 24px;
-      font-size: 0.9rem;
-      line-height: 24px;
-      padding: 0;
-      margin: 0;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      box-sizing: border-box;
-      transition: all 0.2s;
-      pointer-events: auto;
-    }
-
-    .bookmark-delete-btn:hover {
-      background: #666;
-      transform: scale(1.1);
-    }
       overflow: hidden;
       text-overflow: ellipsis;
     }
@@ -629,6 +623,31 @@
       .visited-row:hover {
         background-color: #c8e6c9 !important;
       }
+
+      /* ブックマーク済みハイライト */
+      .bookmarked-row {
+        background-color: #fff8e1 !important;
+      }
+
+      .bookmarked-row:hover {
+        background-color: #ffecb3 !important;
+      }
+
+      /* ブックマークポップアップオーバーレイ */
+      .bookmark-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 9999;
+        display: none;
+      }
+
+      .bookmark-overlay.show {
+        display: block;
+      }
   </style>
 
   <script type="module">
@@ -643,11 +662,15 @@
     let prefNames = {} // 都道府県マスタ
     let searchMode = 'normal' // 'normal' or 'nearby'
     let visitedBaseIds = new Set() // 訪問済み基準点IDのセット
+    let bookmarkedBaseIds = new Set() // ブックマーク済み基準点IDのセット
 
     await db.init()
 
     // 訪問履歴を読み込んで訪問済みIDを取得
     await loadVisitedBaseIds()
+
+    // ブックマークを読み込んでブックマーク済みIDを取得
+    await loadBookmarkedBaseIds()
 
     // 都道府県マスタをロード
     try {
@@ -697,6 +720,17 @@
         console.log(`訪問済み基準点: ${visitedBaseIds.size}件`)
       } catch (error) {
         console.warn('訪問履歴の読み込みに失敗:', error)
+      }
+    }
+
+    // ブックマークからブックマーク済み基準点IDを取得
+    async function loadBookmarkedBaseIds() {
+      try {
+        const bookmarks = await getBookmarks()
+        bookmarkedBaseIds = new Set(bookmarks.map(b => b.id))
+        console.log(`ブックマーク済み基準点: ${bookmarkedBaseIds.size}件`)
+      } catch (error) {
+        console.warn('ブックマークの読み込みに失敗:', error)
       }
     }
 
@@ -986,11 +1020,17 @@
             distanceText = `${base.distance.toFixed(2)}km`
           }
           
-          // 訪問済みハイライト
-          const visitedClass = visitedBaseIds.has(base.id) ? ' class="visited-row"' : ''
+          // 訪問済み・ブックマーク済みハイライト（訪問済み優先）
+          const classes = []
+          if (visitedBaseIds.has(base.id)) {
+            classes.push('visited-row')
+          } else if (bookmarkedBaseIds.has(base.id)) {
+            classes.push('bookmarked-row')
+          }
+          const classAttr = classes.length > 0 ? ` class="${classes.join(' ')}"` : ''
           
           return `
-          <tr${visitedClass}>
+          <tr${classAttr}>
             <td>${shortRank}</td>
             <td>${base.name || '-'}</td>
             <td>${distanceText}</td>
@@ -999,11 +1039,17 @@
           </tr>
         `
         } else {
-          // 訪問済みハイライト
-          const visitedClass = visitedBaseIds.has(base.id) ? ' class="visited-row"' : ''
+          // 訪問済み・ブックマーク済みハイライト（訪問済み優先）
+          const classes = []
+          if (visitedBaseIds.has(base.id)) {
+            classes.push('visited-row')
+          } else if (bookmarkedBaseIds.has(base.id)) {
+            classes.push('bookmarked-row')
+          }
+          const classAttr = classes.length > 0 ? ` class="${classes.join(' ')}"` : ''
           
           return `
-          <tr${visitedClass}>
+          <tr${classAttr}>
             <td>${shortRank}</td>
             <td>${base.name || '-'}</td>
             <td><code style="font-size: 0.75rem;">${base.id}</code></td>
@@ -1035,6 +1081,13 @@
 
     // ブックマークポップアップ表示
     function showBookmarkPopup(bookmarks) {
+      // オーバーレイを作成
+      const overlay = document.createElement('div')
+      overlay.className = 'bookmark-overlay show'
+      overlay.id = 'bookmark-overlay'
+      overlay.onclick = closeBookmarkPopup
+      document.body.appendChild(overlay)
+
       // ポップアップHTML作成
       let popupHTML = `
         <div class="bookmark-popup show" id="bookmark-popup">
@@ -1059,11 +1112,11 @@
           
           popupHTML += `
             <div class="bookmark-item" data-id="${bookmark.id}">
+              <button class="bookmark-item-remove" data-bookmark-id="${bookmark.id}" onclick="removeBookmarkItem(event, '${bookmark.id}')">×</button>
               <div class="bookmark-item-left">
                 <div class="bookmark-item-rank">${shortRank}</div>
                 <div class="bookmark-item-name">${bookmark.name || '名称不明'}</div>
               </div>
-              <button class="bookmark-delete-btn" data-id="${bookmark.id}" title="削除">×</button>
             </div>
           `
         })
@@ -1087,31 +1140,48 @@
           window.location.href = `detail.html?id=${baseId}`
         })
       })
-      
-      // 削除ボタンのイベント
-      document.querySelectorAll('.bookmark-delete-btn').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-          e.stopPropagation() // 親要素のクリックイベントを阻止
-          const baseId = btn.dataset.id
-          
-          if (confirm('このブックマークを削除しますか？')) {
-            const bookmarks = await getBookmarks()
-            const newBookmarks = bookmarks.filter(b => b.id !== baseId)
-            await saveBookmarks(newBookmarks)
-            
-            // リストを再表示
-            showBookmarkPopup(newBookmarks)
-          }
-        })
-      })
     }
 
     // ブックマークポップアップを閉じる
     window.closeBookmarkPopup = function() {
       const popup = document.getElementById('bookmark-popup')
+      const overlay = document.getElementById('bookmark-overlay')
+      
       if (popup) {
         popup.classList.remove('show')
         setTimeout(() => popup.remove(), 300)
+      }
+      
+      if (overlay) {
+        overlay.classList.remove('show')
+        setTimeout(() => overlay.remove(), 300)
+      }
+    }
+
+    // ブックマークアイテムを削除
+    window.removeBookmarkItem = async function(event, baseId) {
+      event.stopPropagation() // 親要素のクリックイベントを防ぐ
+      
+      if (!confirm('ブックマークから解除しますか？')) {
+        return
+      }
+      
+      try {
+        const bookmarks = await getBookmarks()
+        const newBookmarks = bookmarks.filter(b => b.id !== baseId)
+        await saveBookmarks(newBookmarks)
+        
+        // リストを再表示
+        closeBookmarkPopup()
+        setTimeout(async () => {
+          const updatedBookmarks = await getBookmarks()
+          bookmarkedBaseIds = new Set(updatedBookmarks.map(b => b.id))
+          showBookmarkPopup(updatedBookmarks)
+          displayResults() // 検索結果も更新
+        }, 200)
+      } catch (error) {
+        console.error('Bookmark removal failed:', error)
+        alert('ブックマークの解除に失敗しました')
       }
     }
 

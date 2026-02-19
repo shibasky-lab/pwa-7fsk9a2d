@@ -234,6 +234,43 @@
       transform: translateY(-2px);
       box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
     }
+
+    /* データベース状況スタッツ */
+    .db-stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.7rem;
+      margin: 0.8rem 0 0 0;
+    }
+
+    .stat-item {
+      text-align: center;
+      background: #f8f9fa;
+      padding: 1rem;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+    }
+
+    .stat-value {
+      font-size: 1.8rem;
+      font-weight: bold;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: #666;
+      margin-top: 0.3rem;
+    }
+
+    @media (max-width: 768px) {
+      .db-stats {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
@@ -298,6 +335,41 @@
         <div class="toggle-switch active" id="sound-toggle"></div>
       </div>
     </div>
+
+    <!-- データベース状況 -->
+    <div class="setting-section">
+      <h2>📋 データベース状況</h2>
+      <div id="db-status" style="margin-bottom: 1rem;">
+        <p>初期化中...</p>
+      </div>
+      <div class="db-stats" id="db-stats" style="display:none;">
+        <div class="stat-item">
+          <div class="stat-value" id="stat-bases">-</div>
+          <div class="stat-label">基準点情報</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="stat-visits">-</div>
+          <div class="stat-label">訪問履歴</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- このアプリについて -->
+    <div class="setting-section">
+      <h2>📱 このアプリについて</h2>
+      <p style="margin: 0 0 1rem 0; line-height: 1.6;">国土地理院が公開する基準点データを使用して、電子基準点・三角点の検索、探索記録が可能です。</p>
+      <ul style="margin: 0 0 1rem 0; padding-left: 1.3rem; line-height: 1.8;">
+        <li>📍 全国の基準点情報（電子基準点、一等～四等三角点）</li>
+        <li>💾 初回ダウンロード後、オフラインでも使用可能</li>
+        <li>📝 探索履歴と写真を記録</li>
+        <li>🗺️ 地理院地図でロケーション確認</li>
+        <li>🎯 GPS機能で測設モード対応</li>
+      </ul>
+      <p style="font-size: 0.85rem; color: #666; margin: 0; line-height: 1.5;">
+        出典：国土地理院（基準点成果等閲覧サービス）<br>
+        <a href="https://service.gsi.go.jp/kijunten/" target="_blank" style="color: #1976D2; text-decoration: none; word-break: break-all;">https://service.gsi.go.jp/kijunten/</a>
+      </p>
+    </div>
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -305,6 +377,62 @@
     import KijuntenDB from './src/db.js'
     const db = new KijuntenDB()
     await db.init()
+
+    // データベース状況の更新
+    const dbStatus = document.getElementById('db-status')
+    const dbStats = document.getElementById('db-stats')
+    await updateDBStatus()
+
+    async function updateDBStatus() {
+      try {
+        const size = await db.getSize()
+        const visitCount = await getVisitCount()
+        
+        if (size.bases === 0) {
+          dbStatus.innerHTML = '<p style="color: #FF9800;">⚠️ データがまだダウンロードされていません</p>'
+        } else {
+          dbStatus.innerHTML = '<p style="color: #4CAF50;">✓ データは利用可能です</p>'
+        }
+
+        document.getElementById('stat-bases').textContent = size.bases.toLocaleString()
+        document.getElementById('stat-visits').textContent = visitCount.toLocaleString()
+        dbStats.style.display = 'grid'
+      } catch (error) {
+        console.error('Error updating DB status:', error)
+      }
+    }
+
+    function getVisitCount() {
+      return new Promise((resolve) => {
+        const request = indexedDB.open('visitHistoryDB')
+        
+        request.onsuccess = (event) => {
+          const db = event.target.result
+          
+          if (!db.objectStoreNames.contains('visits')) {
+            db.close()
+            resolve(0)
+            return
+          }
+          
+          const transaction = db.transaction(['visits'], 'readonly')
+          const store = transaction.objectStore('visits')
+          const countRequest = store.count()
+          
+          countRequest.onsuccess = () => {
+            db.close()
+            resolve(countRequest.result)
+          }
+          
+          countRequest.onerror = () => {
+            db.close()
+            resolve(0)
+          }
+        }
+        
+        request.onerror = () => resolve(0)
+      })
+    }
 
     // 音声設定の読み込み
     const soundToggle = document.getElementById('sound-toggle')

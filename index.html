@@ -258,10 +258,6 @@
       .menu-grid {
         grid-template-columns: 1fr;
       }
-
-      .db-stats {
-        grid-template-columns: 1fr;
-      }
     }
   </style>
 </head>
@@ -279,19 +275,9 @@
     <div class="container">
       <section>
         <div class="status-box">
-          <h3>📊 データベース状況</h3>
+          <h3>📋 ステータス</h3>
           <div id="db-status">
             <p>初期化中...</p>
-          </div>
-          <div class="db-stats" id="db-stats" style="display:none;">
-            <div class="stat-item">
-              <div class="stat-value" id="stat-bases">-</div>
-              <div class="stat-label">基準点情報</div>
-            </div>
-            <div class="stat-item">
-              <div class="stat-value" id="stat-visits">-</div>
-              <div class="stat-label">訪問履歴</div>
-            </div>
           </div>
         </div>
 
@@ -304,6 +290,10 @@
             <span class="menu-icon">📝</span>
             訪問履歴
           </a>
+          <a href="stats.html" class="menu-card">
+            <span class="menu-icon">📊</span>
+            統計情報
+          </a>
           <a href="sokusetsu.html" class="menu-card">
             <span class="menu-icon">🎯</span>
             測設モード
@@ -312,31 +302,6 @@
             <span class="menu-icon">⚙️</span>
             設定
           </a>
-        </div>
-
-        <div class="info-box" id="install-prompt" style="display: none; background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);">
-          <h3 style="color: #2e7d32;">📱 このアプリをインストール</h3>
-          <p>ホーム画面に追加して、アプリのように使えます。オフラインでも利用可能です。</p>
-          <div style="display: flex; gap: 0.5rem; margin-top: 0.8rem;">
-            <button id="install-btn" style="flex: 1; padding: 0.7rem; background: #4CAF50; color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">インストール</button>
-            <button id="install-cancel-btn" style="padding: 0.7rem 1.2rem; background: white; color: #666; border: 1px solid #ddd; border-radius: 6px; cursor: pointer;">後で</button>
-          </div>
-        </div>
-
-        <div class="info-box">
-          <h3>📱 このアプリについて</h3>
-          <p>国土地理院が公開する基準点データを使用して、電子基準点・三角点の検索、探索記録が可能です。</p>
-          <ul>
-            <li>📍 全国の基準点情報（電子基準点、一等～四等三角点）</li>
-            <li>💾 初回ダウンロード後、オフラインでも使用可能</li>
-            <li>📝 探索履歴と写真を記録</li>
-            <li>🗺️ 地理院地図でロケーション確認</li>
-            <li>🎯 GPS機能で測設モード対応</li>
-          </ul>
-          <p style="font-size: 0.8rem; color: #666; margin: 0.8rem 0 0 0;">
-            出典：国土地理院（基準点成果等閲覧サービス）<br>
-            <a href="https://service.gsi.go.jp/kijunten/" target="_blank">https://service.gsi.go.jp/kijunten/</a>
-          </p>
         </div>
       </section>
     </div>
@@ -347,47 +312,6 @@
 
     const db = new KijuntenDB()
     const dbStatus = document.getElementById('db-status')
-    const dbStats = document.getElementById('db-stats')
-
-    // PWAインストールプロンプト
-    let deferredPrompt = null
-    const installPrompt = document.getElementById('install-prompt')
-    const installBtn = document.getElementById('install-btn')
-    const installCancelBtn = document.getElementById('install-cancel-btn')
-
-    window.addEventListener('beforeinstallprompt', (e) => {
-      // デフォルトのインストールプロンプトを抑制
-      e.preventDefault()
-      deferredPrompt = e
-      
-      // カスタムインストールプロンプトを表示
-      installPrompt.style.display = 'block'
-    })
-
-    installBtn.addEventListener('click', async () => {
-      if (!deferredPrompt) return
-      
-      // インストールプロンプトを表示
-      deferredPrompt.prompt()
-      
-      // ユーザーの選択結果を待つ
-      const { outcome } = await deferredPrompt.userChoice
-      console.log(`User response to the install prompt: ${outcome}`)
-      
-      // プロンプトを非表示
-      installPrompt.style.display = 'none'
-      deferredPrompt = null
-    })
-
-    installCancelBtn.addEventListener('click', () => {
-      installPrompt.style.display = 'none'
-    })
-
-    // インストール済みの場合はプロンプトを表示しない
-    window.addEventListener('appinstalled', () => {
-      installPrompt.style.display = 'none'
-      deferredPrompt = null
-    })
 
     // Service Worker の登録
     if ('serviceWorker' in navigator) {
@@ -578,55 +502,14 @@
       try {
         const size = await db.getSize()
         
-        // 訪問履歴数を取得
-        const visitCount = await getVisitCount()
-        
         if (size.bases === 0) {
           dbStatus.innerHTML = '<p style="color: #FF9800;">⚠️ データがまだダウンロードされていません</p>'
         } else {
           dbStatus.innerHTML = '<p style="color: #4CAF50;">✓ データは利用可能です</p>'
         }
-
-        document.getElementById('stat-bases').textContent = size.bases.toLocaleString()
-        document.getElementById('stat-visits').textContent = visitCount.toLocaleString()
-        dbStats.style.display = 'grid'
       } catch (error) {
         console.error('Error updating DB status:', error)
       }
-    }
-
-    // 訪問履歴数を取得
-    function getVisitCount() {
-      return new Promise((resolve) => {
-        // バージョン指定なしで現在のバージョンを開く
-        const request = indexedDB.open('visitHistoryDB')
-        
-        request.onsuccess = (event) => {
-          const db = event.target.result
-          
-          if (!db.objectStoreNames.contains('visits')) {
-            db.close()
-            resolve(0)
-            return
-          }
-          
-          const transaction = db.transaction(['visits'], 'readonly')
-          const store = transaction.objectStore('visits')
-          const countRequest = store.count()
-          
-          countRequest.onsuccess = () => {
-            db.close()
-            resolve(countRequest.result)
-          }
-          
-          countRequest.onerror = () => {
-            db.close()
-            resolve(0)
-          }
-        }
-        
-        request.onerror = () => resolve(0)
-      })
     }
 
     // 初期化
