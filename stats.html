@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>統計情報</title>
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: #f5f5f5;
+    }
+
+    header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      position: relative;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+
+    .back-btn {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 45px;
+      height: 45px;
+      background: white;
+      color: #667eea;
+      border: none;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      transition: all 0.2s;
+    }
+
+    .back-btn:hover {
+      transform: translateY(-50%) scale(1.05);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+
+    .stats-section {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .stats-section h2 {
+      margin: 0 0 1rem 0;
+      font-size: 1.2rem;
+      color: #333;
+      border-bottom: 2px solid #f0f0f0;
+      padding-bottom: 0.5rem;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      padding: 1.5rem;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .stat-card.primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .stat-card.success {
+      background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+      color: white;
+    }
+
+    .stat-card.warning {
+      background: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%);
+      color: white;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: bold;
+      margin-bottom: 0.3rem;
+    }
+
+    .stat-label {
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+
+    .rank-stats {
+      display: grid;
+      gap: 0.5rem;
+    }
+
+    .rank-item {
+      display: flex;
+      align-items: center;
+      padding: 0.8rem;
+      background: #f8f9fa;
+      border-radius: 6px;
+      border-left: 4px solid #667eea;
+    }
+
+    .rank-name {
+      flex: 1;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .rank-count {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #667eea;
+      margin-right: 0.5rem;
+    }
+
+    .rank-bar {
+      flex: 2;
+      height: 20px;
+      background: #e0e0e0;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-left: 1rem;
+    }
+
+    .rank-bar-fill {
+      height: 100%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      transition: width 0.5s ease;
+    }
+
+    .pref-stats {
+      display: grid;
+      gap: 0.5rem;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .rank-filter-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      padding: 1rem;
+      background: #f8f9fa;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      align-items: center;
+    }
+
+    .rank-filter-label {
+      font-weight: 600;
+      color: #333;
+      margin-right: 0.5rem;
+    }
+
+    .rank-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      cursor: pointer;
+    }
+
+    .rank-checkbox input[type="checkbox"] {
+      cursor: pointer;
+      width: 18px;
+      height: 18px;
+    }
+
+    .rank-checkbox label {
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: #555;
+      user-select: none;
+    }
+
+    .rank-toggle-buttons {
+      display: flex;
+      gap: 0.5rem;
+      margin-left: auto;
+    }
+
+    .rank-toggle-btn {
+      padding: 0.4rem 0.8rem;
+      background: #e0e0e0;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.2s;
+      font-weight: 500;
+    }
+
+    .rank-toggle-btn:hover {
+      background: #d0d0d0;
+    }
+
+    .sort-button-container {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.3rem 1rem;
+      background: #fff;
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .sort-button-label {
+      font-weight: 600;
+      color: #333;
+      margin-right: 0.5rem;
+    }
+
+    .sort-btn {
+      padding: 0.5rem 1rem;
+      background: #e0e0e0;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+      font-weight: 500;
+    }
+
+    .sort-btn:hover {
+      background: #d0d0d0;
+    }
+
+    .sort-btn.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .pref-item {
+      display: flex;
+      flex-wrap: wrap;
+      padding: 0.6rem;
+      background: #f8f9fa;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      gap: 0.5rem;
+    }
+
+    .pref-header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.3rem;
+    }
+
+    .pref-name {
+      font-weight: 600;
+      color: #333;
+    }
+
+    .pref-count {
+      font-size: 0.85rem;
+      color: #667eea;
+      font-weight: 600;
+    }
+
+    .pref-bar-container {
+      width: 100%;
+    }
+
+    .pref-bar {
+      width: 100%;
+      height: 24px;
+      background: #e0e0e0;
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+    }
+
+    .pref-bar-segment {
+      height: 100%;
+      transition: width 0.5s ease, opacity 0.2s;
+      cursor: pointer;
+    }
+
+    .pref-bar-segment:hover {
+      opacity: 0.8;
+    }
+
+    /* 種別ごとの色定義 */
+    .rank-el0-unvisited { background: #2d5016; } /* 電子 暗緑 */
+    .rank-el0-visited { background: #66bb6a; } /* 電子 明緑 */
+    .rank-tr1-unvisited { background: #7f0000; } /* 一等 暗赤 */
+    .rank-tr1-visited { background: #ef5350; } /* 一等 明赤 */
+    .rank-tr2-unvisited { background: #b8860b; } /* 二等 暗黄 */
+    .rank-tr2-visited { background: #ffeb3b; } /* 二等 明黄 */
+    .rank-tr3-unvisited { background: #003366; } /* 三等 暗青 */
+    .rank-tr3-visited { background: #42a5f5; } /* 三等 明青 */
+    .rank-tr4-unvisited { background: #4a148c; } /* 四等 暗紫 */
+    .rank-tr4-visited { background: #ab47bc; } /* 四等 明紫 */
+
+    /* セグメント詳細ツールチップ */
+    .segment-tooltip {
+      display: none;
+      position: fixed;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 8px;
+      padding: 0.8rem 1rem;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+      z-index: 10000;
+      pointer-events: none;
+      font-size: 0.85rem;
+      min-width: 180px;
+    }
+
+    .segment-tooltip.show {
+      display: block;
+    }
+
+    .segment-tooltip-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.3rem 0;
+      gap: 1rem;
+    }
+
+    .segment-tooltip-row:not(:last-child) {
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .segment-tooltip-label {
+      font-weight: 600;
+      color: #555;
+      white-space: nowrap;
+    }
+
+    .segment-tooltip-value {
+      color: #667eea;
+      font-weight: bold;
+      text-align: right;
+    }
+
+    .segment-color-indicator {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border-radius: 3px;
+      vertical-align: middle;
+      margin-left: 0.3rem;
+      border: 1px solid rgba(0, 0, 0, 0.2);
+    }
+
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: #666;
+    }
+
+    @media (max-width: 768px) {
+      .stat-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .rank-item {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .rank-bar {
+        width: 100%;
+        margin-left: 0;
+        margin-top: 0.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>📊 統計情報</h1>
+    <a href="index.html" class="back-btn" title="メニューに戻る">🏠</a>
+  </header>
+
+  <div class="container">
+    <div id="loading" class="loading">
+      <p>統計情報を読み込み中...</p>
+    </div>
+
+    <div id="stats-content" style="display: none;">
+      <!-- 基本統計 -->
+      <div class="stats-section">
+        <h2>📍 基本統計</h2>
+        <div class="stat-grid">
+          <div class="stat-card primary">
+            <div class="stat-value" id="total-bases">-</div>
+            <div class="stat-label">総基準点数</div>
+          </div>
+          <div class="stat-card success">
+            <div class="stat-value" id="total-visits">-</div>
+            <div class="stat-label">訪問数</div>
+          </div>
+          <div class="stat-card warning">
+            <div class="stat-value" id="visit-rate">-</div>
+            <div class="stat-label">訪問率</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 種別ごとの統計 -->
+      <div class="stats-section">
+        <h2>📋 種別ごとの統計</h2>
+        <div class="rank-stats" id="rank-stats"></div>
+      </div>
+
+      <!-- 訪問統計 -->
+      <div class="stats-section">
+        <h2>✅ 訪問統計</h2>
+        <div class="stat-grid">
+          <div class="stat-card success">
+            <div class="stat-value" id="found-count">-</div>
+            <div class="stat-label">発見した</div>
+          </div>
+          <div class="stat-card" style="background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%); color: white;">
+            <div class="stat-value" id="not-found-count">-</div>
+            <div class="stat-label">発見できなかった</div>
+          </div>
+          <div class="stat-card primary">
+            <div class="stat-value" id="found-rate">-</div>
+            <div class="stat-label">発見率</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 都道府県ごとの統計 -->
+      <div class="stats-section">
+        <h2>🗾 都道府県ごとの訪問状況</h2>
+        
+        <!-- 点種別フィルタ -->
+        <div class="rank-filter-container">
+          <span class="rank-filter-label">点種別:</span>
+          <div class="rank-checkbox">
+            <input type="checkbox" id="filter-el0" value="EL0" checked>
+            <label for="filter-el0">電子基準点</label>
+          </div>
+          <div class="rank-checkbox">
+            <input type="checkbox" id="filter-tr1" value="TR1" checked>
+            <label for="filter-tr1">一等三角点</label>
+          </div>
+          <div class="rank-checkbox">
+            <input type="checkbox" id="filter-tr2" value="TR2" checked>
+            <label for="filter-tr2">二等三角点</label>
+          </div>
+          <div class="rank-checkbox">
+            <input type="checkbox" id="filter-tr3" value="TR3" checked>
+            <label for="filter-tr3">三等三角点</label>
+          </div>
+          <div class="rank-checkbox">
+            <input type="checkbox" id="filter-tr4" value="TR4" checked>
+            <label for="filter-tr4">四等三角点</label>
+          </div>
+          <div class="rank-toggle-buttons">
+            <button class="rank-toggle-btn" id="rank-all-on">すべてオン</button>
+            <button class="rank-toggle-btn" id="rank-all-off">すべてオフ</button>
+          </div>
+        </div>
+        
+        <!-- ソートボタン -->
+        <div class="sort-button-container">
+          <button class="sort-btn active" data-sort="rate">訪問率</button>
+          <button class="sort-btn" data-sort="visited">訪問数</button>
+          <button class="sort-btn" data-sort="total">総点数</button>
+        </div>
+        
+        <div class="pref-stats" id="pref-stats"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- セグメント詳細ツールチップ -->
+  <div class="segment-tooltip" id="segment-tooltip">
+    <!-- 動的に生成 -->
+  </div>
+
+  <script type="module">
+    import KijuntenDB from './src/db.js'
+    import { getLabel } from './src/metadata.js'
+
+    const db = new KijuntenDB()
+    const loading = document.getElementById('loading')
+    const statsContent = document.getElementById('stats-content')
+
+    await db.init()
+
+    // 現在のソート順を保持
+    let currentSort = 'rate' // 'rate', 'visited', 'total'
+
+    // 統計情報を読み込み
+    await loadStatistics()
+    
+    // 点種別フィルタのイベントリスナー
+    document.querySelectorAll('.rank-checkbox input[type="checkbox"]').forEach(checkbox => {
+      checkbox.addEventListener('change', async () => {
+        const allBases = await db.getAllBases()
+        await renderPrefStats(allBases)
+      })
+    })
+    
+    // すべてオン/オフボタンのイベントリスナー
+    document.getElementById('rank-all-on').addEventListener('click', async () => {
+      document.querySelectorAll('.rank-checkbox input[type="checkbox"]').forEach(cb => {
+        cb.checked = true
+      })
+      const allBases = await db.getAllBases()
+      await renderPrefStats(allBases)
+    })
+    
+    document.getElementById('rank-all-off').addEventListener('click', async () => {
+      document.querySelectorAll('.rank-checkbox input[type="checkbox"]').forEach(cb => {
+        cb.checked = false
+      })
+      const allBases = await db.getAllBases()
+      await renderPrefStats(allBases)
+    })
+    
+    // ソートボタンのイベントリスナー
+    document.querySelectorAll('.sort-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        // アクティブ状態の切り替え
+        document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'))
+        btn.classList.add('active')
+        
+        // ソート順を更新
+        currentSort = btn.dataset.sort
+        
+        // 再描画
+        const allBases = await db.getAllBases()
+        await renderPrefStats(allBases)
+      })
+    })
+
+    async function loadStatistics() {
+      try {
+        // 基準点データを取得
+        const size = await db.getSize()
+        const allBases = await db.getAllBases()
+        
+        // 訪問履歴を取得
+        const visits = await getAllVisits()
+        const uniqueVisitedBases = new Set(visits.map(v => v.baseId))
+        
+        // ブックマークを取得
+        const bookmarks = await getBookmarks()
+        
+        // 基本統計
+        document.getElementById('total-bases').textContent = size.bases.toLocaleString()
+        document.getElementById('total-visits').textContent = visits.length.toLocaleString()
+        
+        const visitRate = size.bases > 0 ? ((uniqueVisitedBases.size / size.bases) * 100).toFixed(3) : '0.000'
+        document.getElementById('visit-rate').textContent = `${visitRate}%`
+        
+        // 訪問統計
+        const foundCount = visits.filter(v => v.found).length
+        const notFoundCount = visits.filter(v => !v.found).length
+        document.getElementById('found-count').textContent = foundCount.toLocaleString()
+        document.getElementById('not-found-count').textContent = notFoundCount.toLocaleString()
+        
+        const foundRate = visits.length > 0 ? ((foundCount / visits.length) * 100).toFixed(1) : 0
+        document.getElementById('found-rate').textContent = `${foundRate}%`
+        
+        // 種別ごとの統計
+        await renderRankStats(allBases, uniqueVisitedBases)
+        
+        // 都道府県ごとの統計
+        await renderPrefStats(allBases)
+        
+        // 表示切り替え
+        loading.style.display = 'none'
+        statsContent.style.display = 'block'
+      } catch (error) {
+        console.error('統計情報の読み込みに失敗:', error)
+        loading.innerHTML = '<p style="color: #f44336;">統計情報の読み込みに失敗しました</p>'
+      }
+    }
+
+    async function renderRankStats(allBases, visitedBaseIds) {
+      const rankStats = {}
+      const rankOrder = ['EL0', 'TR1', 'TR2', 'TR3', 'TR4']
+      
+      // 種別ごとに集計
+      allBases.forEach(base => {
+        if (!rankStats[base.rank_id]) {
+          rankStats[base.rank_id] = { total: 0, visited: 0 }
+        }
+        rankStats[base.rank_id].total++
+        if (visitedBaseIds.has(base.id)) {
+          rankStats[base.rank_id].visited++
+        }
+      })
+      
+      const maxCount = Math.max(...Object.values(rankStats).map(s => s.total))
+      const container = document.getElementById('rank-stats')
+      
+      rankOrder.forEach(rankId => {
+        if (rankStats[rankId]) {
+          const stat = rankStats[rankId]
+          const rankLabel = getLabel('rank_ids', rankId)
+          const percentage = (stat.total / maxCount) * 100
+          const visitPercentage = stat.total > 0 ? ((stat.visited / stat.total) * 100).toFixed(3) : '0.000'
+          
+          const item = document.createElement('div')
+          item.className = 'rank-item'
+          item.innerHTML = `
+            <div class="rank-name">${rankLabel}</div>
+            <div class="rank-count">${stat.total.toLocaleString()}点</div>
+            <div style="margin-left: 1rem; color: #56ab2f; font-weight: bold;">訪問: ${stat.visited}点 (${visitPercentage}%)</div>
+          `
+          container.appendChild(item)
+        }
+      })
+    }
+
+    // 選択された点種別を取得
+    function getSelectedRanks() {
+      const checkboxes = document.querySelectorAll('.rank-checkbox input[type="checkbox"]')
+      return Array.from(checkboxes)
+        .filter(cb => cb.checked)
+        .map(cb => cb.value)
+    }
+
+    // セグメントツールチップの表示
+    function showSegmentTooltip(data, event) {
+      const tooltip = document.getElementById('segment-tooltip')
+      
+      const rankLabels = {
+        'EL0': '電子基準点',
+        'TR1': '一等三角点',
+        'TR2': '二等三角点',
+        'TR3': '三等三角点',
+        'TR4': '四等三角点'
+      }
+      
+      const statusText = data.isVisited ? '訪問済み' : '未訪問'
+      const statusColor = data.isVisited ? '#66bb6a' : '#999'
+      
+      tooltip.innerHTML = `
+        <div class="segment-tooltip-row">
+          <span class="segment-tooltip-label">点種別</span>
+          <span class="segment-tooltip-value">
+            ${rankLabels[data.rank] || data.rank}
+            <span class="segment-color-indicator" style="background: ${data.color};"></span>
+          </span>
+        </div>
+        <div class="segment-tooltip-row">
+          <span class="segment-tooltip-label">訪問状態</span>
+          <span class="segment-tooltip-value" style="color: ${statusColor};">${statusText}</span>
+        </div>
+        <div class="segment-tooltip-row">
+          <span class="segment-tooltip-label">該当件数</span>
+          <span class="segment-tooltip-value">${data.count.toLocaleString()}件</span>
+        </div>
+        <div class="segment-tooltip-row">
+          <span class="segment-tooltip-label">割合</span>
+          <span class="segment-tooltip-value">${data.percentage.toFixed(1)}%</span>
+        </div>
+      `
+      
+      tooltip.classList.add('show')
+    }
+
+    // セグメントツールチップを閉じる
+    function hideSegmentTooltip() {
+      const tooltip = document.getElementById('segment-tooltip')
+      tooltip.classList.remove('show')
+    }
+
+    // ツールチップの位置を更新
+    function updateTooltipPosition(event) {
+      const tooltip = document.getElementById('segment-tooltip')
+      if (!tooltip.classList.contains('show')) return
+      
+      const offsetX = 15
+      const offsetY = 15
+      
+      let x = event.clientX + offsetX
+      let y = event.clientY + offsetY
+      
+      // 画面の右端を超えないように調整
+      const tooltipRect = tooltip.getBoundingClientRect()
+      if (x + tooltipRect.width > window.innerWidth) {
+        x = event.clientX - tooltipRect.width - offsetX
+      }
+      
+      // 画面の下端を超えないように調整
+      if (y + tooltipRect.height > window.innerHeight) {
+        y = event.clientY - tooltipRect.height - offsetY
+      }
+      
+      tooltip.style.left = x + 'px'
+      tooltip.style.top = y + 'px'
+    }
+
+    // 都道府県統計を描画
+    async function renderPrefStats(allBases) {
+      // 都道府県マスタを読み込み
+      let prefNames = {}
+      try {
+        const res = await fetch('data/pref_ids.json')
+        if (res.ok) {
+          prefNames = await res.json()
+        }
+      } catch (err) {
+        console.warn('都道府県マスタの読み込みに失敗:', err)
+      }
+      
+      // 訪問履歴を取得
+      const visits = await getAllVisits()
+      const visitedIds = new Set(visits.map(v => v.baseId))
+      
+      // 選択された種別でフィルタ
+      const selectedRanks = getSelectedRanks()
+      const filteredBases = allBases.filter(base => selectedRanks.includes(base.rank_id))
+      
+      // 都道府県×種別×訪問状態ごとに集計
+      const prefStats = {}
+      
+      filteredBases.forEach(base => {
+        const prefId = base.pref_id
+        const rank = base.rank_id || 'unknown'
+        const isVisited = visitedIds.has(base.id)
+        
+        if (!prefStats[prefId]) {
+          prefStats[prefId] = { total: 0, visited: 0, byRank: {} }
+        }
+        
+        prefStats[prefId].total++
+        if (isVisited) {
+          prefStats[prefId].visited++
+        }
+        
+        const key = `${rank}-${isVisited ? 'visited' : 'unvisited'}`
+        prefStats[prefId].byRank[key] = (prefStats[prefId].byRank[key] || 0) + 1
+      })
+      
+      // ソート順に応じて並び替え
+      const sortedPrefs = Object.entries(prefStats)
+        .map(([prefId, stats]) => {
+          const visitRate = stats.total > 0 ? (stats.visited / stats.total) * 100 : 0
+          return [prefId, prefNames[prefId] || `都道府県${prefId}`, stats, visitRate]
+        })
+        .sort((a, b) => {
+          switch (currentSort) {
+            case 'rate':
+              return b[3] - a[3] // 訪問率降順
+            case 'visited':
+              return b[2].visited - a[2].visited // 訪問数降順
+            case 'total':
+              return b[2].total - a[2].total // 総点数降順
+            default:
+              return a[1].localeCompare(b[1], 'ja') // 都道府県名（五十音順）
+          }
+        })
+      
+      const container = document.getElementById('pref-stats')
+      container.innerHTML = '' // クリア
+      
+      sortedPrefs.forEach(([prefId, prefName, stats, visitRate]) => {
+        // 10セグメントのHTML生成（種別×訪問状態）
+        const segments = []
+        const rankOrder = ['EL0', 'TR1', 'TR2', 'TR3', 'TR4']
+        
+        rankOrder.forEach(rank => {
+          if (!selectedRanks.includes(rank)) return
+          
+          const unvisited = stats.byRank[`${rank}-unvisited`] || 0
+          const visited = stats.byRank[`${rank}-visited`] || 0
+          
+          if (unvisited > 0) {
+            const percentage = (unvisited / stats.total) * 100
+            const segmentData = {
+              prefName: prefName,
+              rank: rank,
+              isVisited: false,
+              count: unvisited,
+              percentage: percentage,
+              color: getComputedStyle(document.documentElement).getPropertyValue('--temp') // 後で実際の色を取得
+            }
+            segments.push({
+              html: `<div class="pref-bar-segment rank-${rank.toLowerCase()}-unvisited" style="width: ${percentage}%"></div>`,
+              data: segmentData,
+              className: `rank-${rank.toLowerCase()}-unvisited`
+            })
+          }
+          
+          if (visited > 0) {
+            const percentage = (visited / stats.total) * 100
+            const segmentData = {
+              prefName: prefName,
+              rank: rank,
+              isVisited: true,
+              count: visited,
+              percentage: percentage,
+              color: getComputedStyle(document.documentElement).getPropertyValue('--temp')
+            }
+            segments.push({
+              html: `<div class="pref-bar-segment rank-${rank.toLowerCase()}-visited" style="width: ${percentage}%"></div>`,
+              data: segmentData,
+              className: `rank-${rank.toLowerCase()}-visited`
+            })
+          }
+        })
+        
+        // 訪問率を表示用にフォーマット
+        const visitRateDisplay = visitRate.toFixed(3)
+        
+        const item = document.createElement('div')
+        item.className = 'pref-item'
+        item.innerHTML = `
+          <div class="pref-header">
+            <div class="pref-name">${prefName} (${visitRateDisplay}%)</div>
+            <div class="pref-count">${stats.visited.toLocaleString()} / ${stats.total.toLocaleString()}</div>
+          </div>
+          <div class="pref-bar-container">
+            <div class="pref-bar"></div>
+          </div>
+        `
+        
+        const barContainer = item.querySelector('.pref-bar')
+        
+        // セグメントを動的に追加してイベントリスナーを設定
+        segments.forEach(segmentInfo => {
+          const segmentDiv = document.createElement('div')
+          segmentDiv.className = `pref-bar-segment ${segmentInfo.className}`
+          segmentDiv.style.width = `${segmentInfo.data.percentage}%`
+          
+          // 実際の背景色を取得
+          barContainer.appendChild(segmentDiv)
+          const computedColor = window.getComputedStyle(segmentDiv).backgroundColor
+          segmentInfo.data.color = computedColor
+          
+          // ホバーイベントを追加
+          segmentDiv.addEventListener('mouseenter', (e) => {
+            showSegmentTooltip(segmentInfo.data, e)
+            updateTooltipPosition(e)
+          })
+          
+          segmentDiv.addEventListener('mousemove', (e) => {
+            updateTooltipPosition(e)
+          })
+          
+          segmentDiv.addEventListener('mouseleave', () => {
+            hideSegmentTooltip()
+          })
+        })
+        
+        container.appendChild(item)
+      })
+    }
+
+    // 訪問履歴を取得
+    function getAllVisits() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open('visitHistoryDB')
+        
+        request.onerror = () => resolve([])
+        
+        request.onsuccess = (event) => {
+          const db = event.target.result
+          
+          if (!db.objectStoreNames.contains('visits')) {
+            db.close()
+            resolve([])
+            return
+          }
+          
+          const transaction = db.transaction(['visits'], 'readonly')
+          const store = transaction.objectStore('visits')
+          const getAllRequest = store.getAll()
+          
+          getAllRequest.onsuccess = () => {
+            db.close()
+            resolve(getAllRequest.result || [])
+          }
+          
+          getAllRequest.onerror = () => {
+            db.close()
+            resolve([])
+          }
+        }
+      })
+    }
+
+    // ブックマークを取得
+    function getBookmarks() {
+      return new Promise((resolve) => {
+        const request = indexedDB.open('bookmarkDB', 1)
+        
+        request.onerror = () => resolve([])
+        
+        request.onsuccess = (event) => {
+          const db = event.target.result
+          
+          if (!db.objectStoreNames.contains('bookmarks')) {
+            db.close()
+            resolve([])
+            return
+          }
+          
+          const transaction = db.transaction(['bookmarks'], 'readonly')
+          const store = transaction.objectStore('bookmarks')
+          const getRequest = store.get('list')
+          
+          getRequest.onsuccess = () => {
+            db.close()
+            resolve(getRequest.result?.bookmarks || [])
+          }
+          
+          getRequest.onerror = () => {
+            db.close()
+            resolve([])
+          }
+        }
+        
+        request.onupgradeneeded = (event) => {
+          const db = event.target.result
+          if (!db.objectStoreNames.contains('bookmarks')) {
+            db.createObjectStore('bookmarks', { keyPath: 'key' })
+          }
+        }
+      })
+    }
+  </script>
+</body>
+</html>
