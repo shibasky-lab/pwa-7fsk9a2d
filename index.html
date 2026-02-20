@@ -318,58 +318,40 @@
       navigator.serviceWorker.register('./sw.js')
         .then(registration => {
           console.log('Service Worker registered:', registration.scope)
-          
-          // 初回アクセス時に全HTMLをプリキャッシュ
-          precacheResources()
+
+          // 新しいSWが見つかったときに更新バナーを表示
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                showUpdateBanner()
+              }
+            })
+          })
         })
         .catch(err => {
           console.error('Service Worker registration failed:', err)
         })
     }
 
-    // 全リソースをプリキャッシュ
-    async function precacheResources() {
-      if (!('caches' in window)) return
-      
-      try {
-        const cache = await caches.open('kijunten-pwa-v14')
-        
-        // キャッシュするリソースのリスト
-        const resourcesToCache = [
-          './',
-          './index.html',
-          './search.html',
-          './detail.html',
-          './add-visit.html',
-          './sokusetsu.html',
-          './setting.html',
-          './css/style.css',
-          './src/db.js',
-          './src/metadata.js',
-          './icon-192.png',
-          './icon-512.png',
-          './manifest.json'
-        ]
-        
-        // 既にキャッシュされているか確認
-        const cachedUrls = await cache.keys()
-        const cachedPaths = cachedUrls.map(req => new URL(req.url).pathname)
-        
-        // まだキャッシュされていないリソースのみ追加
-        for (const resource of resourcesToCache) {
-          const resourcePath = new URL(resource, location.origin).pathname
-          if (!cachedPaths.some(path => path.endsWith(resourcePath))) {
-            try {
-              await cache.add(resource)
-              console.log('[Cache] Added:', resource)
-            } catch (err) {
-              console.warn('[Cache] Failed to add:', resource, err)
-            }
-          }
-        }
-      } catch (error) {
-        console.error('[Cache] Precache failed:', error)
-      }
+    function showUpdateBanner() {
+      const banner = document.createElement('div')
+      banner.style.cssText = [
+        'position:fixed', 'bottom:0', 'left:0', 'right:0',
+        'background:#1565c0', 'color:white',
+        'padding:0.9rem 1.2rem',
+        'display:flex', 'align-items:center', 'justify-content:space-between',
+        'z-index:99999', 'font-size:0.9rem',
+        'box-shadow:0 -2px 12px rgba(0,0,0,0.25)'
+      ].join(';')
+      banner.innerHTML = `
+        <span>🆕 アプリが更新されました</span>
+        <button onclick="window.location.reload()" style="
+          background:white;color:#1565c0;border:none;border-radius:6px;
+          padding:0.45rem 1rem;font-weight:bold;font-size:0.9rem;cursor:pointer;
+        ">更新する</button>
+      `
+      document.body.appendChild(banner)
     }
 
     // DB初期化
@@ -515,5 +497,5 @@
     // 初期化
     await initDB()
   </script>
+  <script src="./src/toast.js"></script>
 </body>
-</html>

@@ -452,7 +452,7 @@
 
         if (allVisits.length === 0) {
           document.getElementById('loading').classList.add('hidden')
-          alert('訪問履歴がありません')
+          showToast('訪問履歴がありません', 'info')
           return
         }
 
@@ -475,7 +475,7 @@
       } catch (error) {
         console.error('初期化エラー:', error)
         document.getElementById('loading').classList.add('hidden')
-        alert('データの読み込みに失敗しました')
+        showToast('データの読み込みに失敗しました', 'error')
       }
     }
 
@@ -792,5 +792,5 @@
     // 初期化実行
     init()
   </script>
+  <script src="./src/toast.js"></script>
 </body>
-</html>

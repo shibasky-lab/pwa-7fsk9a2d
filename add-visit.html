@@ -503,7 +503,7 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label">探索結果</label>
+          <span class="form-label">探索結果</span>
           <div class="checkbox-group">
             <input type="checkbox" id="found" checked>
             <label for="found">基準点を発見した</label>
@@ -512,7 +512,7 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label">写真登録</label>
+          <span class="form-label">写真登録</span>
           <div class="photo-section">
             <!-- 近景 -->
             <div class="photo-item" id="near-photo-item">
@@ -1064,11 +1064,11 @@
     async function confirmDelete() {
       try {
         await deleteVisitHistory(parseInt(visitId))
-        alert('探索履歴を削除しました')
-        window.location.href = `detail.html?id=${baseId}`
+        showToast('探索履歴を削除しました', 'success')
+        setTimeout(() => { window.location.href = `detail.html?id=${baseId}` }, 1200)
       } catch (err) {
         console.error('Error deleting visit history:', err)
-        alert('削除に失敗しました: ' + err.message)
+        showToast('削除に失敗しました: ' + err.message, 'error')
       }
       closeDeleteModal()
     }
@@ -1135,11 +1135,11 @@
         // IndexedDBに保存
         await saveVisitHistory(visitData, isEditMode)
 
-        alert(isEditMode ? '探索履歴を更新しました' : '探索履歴を登録しました')
-        window.location.href = `detail.html?id=${baseId}`
+        showToast(isEditMode ? '探索履歴を更新しました' : '探索履歴を登録しました', 'success')
+        setTimeout(() => { window.location.href = `detail.html?id=${baseId}` }, 1200)
       } catch (err) {
         console.error('Error saving visit history:', err)
-        alert('保存に失敗しました: ' + err.message)
+        showToast('保存に失敗しました: ' + err.message, 'error')
         submitBtn.disabled = false
         submitBtn.textContent = isEditMode ? '💾 更新する' : '💾 登録する'
       }
@@ -1227,5 +1227,6 @@
       })
     }
   </script>
+  <script src="./src/toast.js"></script>
 </body>
 </html>

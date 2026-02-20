@@ -1,5 +1,5 @@
-const CACHE_NAME = 'kijunten-pwa-v15'
-const RUNTIME_CACHE = 'kijunten-runtime-v15'
+const CACHE_NAME = 'kijunten-pwa-v21'
+const RUNTIME_CACHE = 'kijunten-runtime-v21'
 const RUNTIME_CACHE_MAX_SIZE = 50 // Runtime Cacheの最大アイテム数
 
 // キャッシュするリソース（必要最小限）
@@ -15,6 +15,7 @@ const CACHE_URLS = [
   './css/style.css',
   './src/db.js',
   './src/metadata.js',
+  './src/toast.js',
   './icon-192.png',
   './icon-512.png',
   './manifest.json'
@@ -156,30 +157,27 @@ async function networkFirst(request) {
 // Cache First戦略を使うべきか判定
 function shouldCacheFirst(url) {
   const path = url.pathname
-  // setting.htmlは除外（常に最新版を取得）
-  if (path.endsWith('setting.html')) {
+  // HTMLファイルは常に最新版を取得するためCache Firstから除外
+  if (path.endsWith('.html') || path === '/' || path.endsWith('/')) {
     return false
   }
-  // HTML, CSS, JS, 画像ファイル
-  return path.endsWith('.html') || 
-         path.endsWith('.css') || 
+  // CSS, JS, 画像ファイルはキャッシュ優先
+  return path.endsWith('.css') || 
          path.endsWith('.js') || 
          path.endsWith('.png') || 
          path.endsWith('.jpg') || 
          path.endsWith('.svg') ||
-         path.endsWith('.webp') ||
-         path === '/' ||
-         path === './index.html'
+         path.endsWith('.webp')
 }
 
 // Network First戦略を使うべきか判定
 function shouldNetworkFirst(url) {
   const path = url.pathname
-  // setting.htmlは常に最新版を取得
-  if (path.endsWith('setting.html')) {
+  // HTMLファイルは常にネットワークから取得（オフライン時はキャッシュフォールバック）
+  if (path.endsWith('.html') || path === '/' || path.endsWith('/')) {
     return true
   }
-  // manifest.jsonは最新版を取得（それ以外のデータは除外）
+  // manifest.jsonは最新版を取得
   if (path.endsWith('manifest.json')) {
     return true
   }
@@ -189,6 +187,10 @@ function shouldNetworkFirst(url) {
 // キャッシュをスキップすべきか判定（データファイルなど）
 function shouldSkipCache(url) {
   const path = url.pathname
+  // sw.js自身は絶対にキャッシュしない（古いSWが自分自身をキャッシュすると更新できなくなる）
+  if (path.endsWith('sw.js')) {
+    return true
+  }
   // /data/以下のファイルはキャッシュしない（DBデータ）
   if (path.includes('/data/')) {
     return true

@@ -538,12 +538,12 @@
       <!-- 度小数形式 -->
       <div id="decimal-inputs" style="display: none;">
         <div class="input-group">
-          <label>緯度 (Latitude)</label>
+          <label for="lat-decimal">緯度 (Latitude)</label>
           <input type="text" id="lat-decimal" placeholder="35.71772228" inputmode="decimal">
           <div class="format-hint">例: 35.71772228</div>
         </div>
         <div class="input-group">
-          <label>経度 (Longitude)</label>
+          <label for="lon-decimal">経度 (Longitude)</label>
           <input type="text" id="lon-decimal" placeholder="139.48102264" inputmode="decimal">
           <div class="format-hint">例: 139.48102264</div>
         </div>
@@ -552,12 +552,12 @@
       <!-- 度分秒形式 -->
       <div id="dms-inputs">
         <div class="input-group">
-          <label>緯度 (Latitude)</label>
+          <label for="lat-dms">緯度 (Latitude)</label>
           <input type="text" id="lat-dms" placeholder="354303.8002" inputmode="decimal">
           <div class="format-hint">例: 354303.8002 (35度43分3.8002秒)</div>
         </div>
         <div class="input-group">
-          <label>経度 (Longitude)</label>
+          <label for="lon-dms">経度 (Longitude)</label>
           <input type="text" id="lon-dms" placeholder="1392851.6815" inputmode="decimal">
           <div class="format-hint">例: 1392851.6815 (139度28分51.6815秒)</div>
         </div>
@@ -901,7 +901,7 @@
         }
         
         if (isNaN(lat) || isNaN(lon)) {
-          alert('正しい座標を入力してください')
+          showToast('正しい座標を入力してください', 'warning')
           return
         }
         
@@ -1091,6 +1091,11 @@
           sound5m.play().catch(err => {
             console.log('音声再生エラー:', err)
           })
+        }
+        // 振動設定を確認
+        const vibrateEnabled = localStorage.getItem('sokusetsuVibrateEnabled') !== 'false'
+        if (vibrateEnabled && navigator.vibrate) {
+          navigator.vibrate([100, 50, 200])
         }
       }
 
@@ -1311,5 +1316,5 @@
     // 初期化実行
     init()
   </script>
+  <script src="./src/toast.js"></script>
 </body>
-</html>

@@ -22,7 +22,7 @@
       <section id="search-section">
         <!-- フィルター -->
         <div class="form-group">
-          <label>基準点種別</label>
+          <span class="form-label">基準点種別</span>
           <div class="checkbox-group">
             <label><input type="checkbox" class="rank-filter" value="EL0"> 電子基準点</label>
             <label><input type="checkbox" class="rank-filter" value="TR1"> 一等三角点</label>
@@ -34,7 +34,7 @@
 
         <!-- 除外オプション -->
         <div class="form-group">
-          <label>除外オプション</label>
+          <span class="form-label">除外オプション</span>
           <div class="checkbox-group">
             <label><input type="checkbox" id="exclude-school"> 学校用地を除外</label>
           </div>
@@ -343,6 +343,7 @@
       border-radius: 4px;
       font-size: 0.95rem;
       transition: border-color 0.2s;
+      box-sizing: border-box;
     }
 
     .form-group input[type="text"]:focus,
@@ -851,8 +852,7 @@
       
       // 位置情報を取得
       if (!navigator.geolocation) {
-        alert('お使いのブラウザは位置情報に対応していません。')
-        return
+          showToast('お使いのブラウザは位置情報に対応していません。', 'warning')
       }
 
       nearbyBtn.disabled = true
@@ -918,7 +918,7 @@
           } else if (error.code === error.TIMEOUT) {
             message = '位置情報の取得がタイムアウトしました。'
           }
-          alert(message)
+          showToast(message, 'error')
           nearbyBtn.disabled = false
           nearbyBtn.innerHTML = '&#128269;近傍20点'
         },
@@ -1181,7 +1181,7 @@
         }, 200)
       } catch (error) {
         console.error('Bookmark removal failed:', error)
-        alert('ブックマークの解除に失敗しました')
+        showToast('ブックマークの解除に失敗しました', 'error')
       }
     }
 
@@ -1259,5 +1259,5 @@
       })
     }
   </script>
+  <script src="./src/toast.js"></script>
 </body>
-</html>

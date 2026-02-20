@@ -86,6 +86,37 @@
       z-index: 10;
     }
 
+    .terras-btn {
+      position: absolute;
+      right: 0.5rem;
+      bottom: 4.25rem;
+      width: 40px;
+      height: 40px;
+      background: white;
+      border: none;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      transition: all 0.2s;
+      z-index: 10;
+      padding: 0;
+      text-decoration: none;
+    }
+
+    .terras-btn img {
+      width: 25px;
+      height: 25px;
+      object-fit: contain;
+    }
+
+    .terras-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 12px rgba(0, 150, 200, 0.4);
+    }
+
     .bookmark-btn:hover {
       transform: scale(1.05);
       box-shadow: 0 4px 12px rgba(255, 193, 7, 0.4);
@@ -663,6 +694,7 @@
       content.innerHTML = `
         <div class="info-card">
           <a href="#" id="visit-btn" class="visit-btn">📝 履歴入力</a>
+          ${base.rank_id === 'EL0' && base.no ? `<a href="https://terras.gsi.go.jp/geo_info/genchou/${base.no}/index.html" target="_blank" class="terras-btn" title="TERRASで詳細を見る"><img src="./assets/picture/EL0.png" alt="TERRAS"></a>` : ''}
           <button id="bookmark-btn" class="bookmark-btn" title="ブックマーク">☆</button>
           <div class="subtitle" style="margin-bottom: 0.3rem; color: white;">${shortRank} / ${prefName}</div>
           <div class="code" style="margin-bottom: 0.3rem; color: white;">${base.id}</div>
@@ -963,7 +995,7 @@
     // 位置情報を有効化
     function enableLocation() {
       if (!navigator.geolocation) {
-        alert('GPS機能が利用できません')
+        showToast('GPS機能が利用できません', 'warning')
         return
       }
 
@@ -1009,7 +1041,7 @@
         },
         (error) => {
           console.error('Location error:', error)
-          alert('GPS位置情報の取得に失敗しました')
+          showToast('GPS位置情報の取得に失敗しました', 'error')
           disableLocation()
         },
         {
@@ -1226,5 +1258,5 @@
       checkBookmarkStatus()
     }
   </script>
+  <script src="./src/toast.js"></script>
 </body>
-</html>
