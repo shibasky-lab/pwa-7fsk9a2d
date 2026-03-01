@@ -1,501 +1,2270 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
   <meta name="description" content="基準点検索・探索記録アプリ">
-  <meta name="theme-color" content="#2196F3">
+  <meta name="theme-color" content="#2e7d32">
   <title>基準点検索 - PWA</title>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
   <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="css/style.css">
   <style>
-    /* メインセクション */
-    section {
-      background: white;
-      padding: 1.2rem;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    :root {
+      --primary:    #2e7d32;
+      --primary-lt: #43a047;
+      --primary-dk: #1b5e20;
+      --accent:     #66bb6a;
+      --accent-lt:  #a5d6a7;
+      --bg:         #f1f8e9;
+      --surface:    #ffffff;
+      --tab-h:      62px;
     }
-
-    /* メニューグリッド */
-    .menu-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 0.8rem;
-      margin: 1.2rem 0;
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      overscroll-behavior: none;
     }
-
-    .menu-card {
-      padding: 1.2rem;
-      text-align: center;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      border-radius: 8px;
-      text-decoration: none;
-      color: white;
-      font-weight: 600;
-      font-size: 1rem;
-      transition: all 0.2s ease;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      border: none;
+    #app-main { padding-top: 0; padding-bottom: var(--tab-h); min-height: 100vh; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+    #bottom-tab {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      height: var(--tab-h); background: var(--surface);
+      border-top: 1px solid #c8e6c9; display: flex; z-index: 900;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
     }
-
-    .menu-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+    .tab-btn {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 2px;
+      background: none; border: none; cursor: pointer;
+      color: #888; font-size: 0.65rem; transition: color 0.2s; padding: 4px 0 6px;
     }
-
-    .menu-icon {
-      font-size: 2rem;
-      display: block;
-      margin-bottom: 0.4rem;
-    }
-
-    /* データベース状況ボックス */
-    .status-box {
-      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-      padding: 1rem;
-      border-radius: 8px;
-      margin: 1rem 0;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-
-    .status-box h3 {
-      margin-top: 0;
-      margin-bottom: 0.8rem;
-      color: #333;
-      font-size: 1rem;
-    }
-
-    .db-stats {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 0.7rem;
-      margin: 0.8rem 0;
-    }
-
-    .stat-item {
-      text-align: center;
-      background: white;
-      padding: 0.8rem;
-      border-radius: 6px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-
-    .stat-value {
-      font-size: 1.5rem;
-      font-weight: bold;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .stat-label {
-      font-size: 0.85rem;
-      color: #666;
-      margin-top: 0.3rem;
-    }
-
-    /* プログレスバー */
-    .progress-bar {
-      width: 100%;
-      height: 20px;
-      background: #e0e0e0;
-      border-radius: 10px;
-      overflow: hidden;
-      margin: 0.4rem 0;
-    }
-
-    .progress-bar-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #4CAF50, #2196F3);
-      transition: width 0.3s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: bold;
-      font-size: 0.8rem;
-    }
-
-    /* アプリ紹介ボックス */
-    .info-box {
-      background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-      padding: 1rem;
-      border-radius: 8px;
-      margin-top: 1.2rem;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-
-    .info-box h3 {
-      color: #1976D2;
-      margin-top: 0;
-      margin-bottom: 0.7rem;
-      font-size: 1rem;
-    }
-
-    .info-box p {
-      font-size: 0.9rem;
-      line-height: 1.5;
-      margin: 0.5rem 0;
-    }
-
-    .info-box ul {
-      margin: 0.7rem 0;
-      padding-left: 1.3rem;
-      font-size: 0.85rem;
-      line-height: 1.6;
-    }
-
-    .info-box ul li {
-      margin-bottom: 0.3rem;
-    }
-
-    .info-box a {
-      color: #1976D2;
-      text-decoration: none;
-      word-break: break-all;
-    }
-
-    .info-box a:hover {
-      text-decoration: underline;
-    }
-
-    /* ローディングオーバーレイ */
+    .tab-btn .tab-icon { width: 1.55rem; height: 1.55rem; display: block; }
+    .tab-btn .tab-icon svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .tab-btn.active { color: var(--primary); }
+    .ic { width: 1.2em; height: 1.2em; min-width: 16px; vertical-align: -0.22em; display: inline-block; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
     #loading-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.75);
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      color: white;
-      backdrop-filter: blur(4px);
-      padding: 1rem;
-      overflow-y: auto;
+      position: fixed; inset: 0; background: rgba(0,0,0,0.78);
+      z-index: 9999; display: flex; flex-direction: column;
+      justify-content: center; align-items: center; color: white;
+      backdrop-filter: blur(4px); padding: 1rem;
     }
-
-    #loading-overlay.hidden {
-      display: none;
-    }
-
+    #loading-overlay.hidden { display: none; }
     .spinner {
-      width: 60px;
-      height: 60px;
-      border: 6px solid rgba(255, 255, 255, 0.3);
-      border-top-color: white;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-bottom: 1rem;
+      width: 56px; height: 56px;
+      border: 5px solid rgba(255,255,255,0.3); border-top-color: var(--accent);
+      border-radius: 50%; animation: spin 0.9s linear infinite; margin-bottom: 1rem;
     }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .progress-bar {
+      width: 80vw; max-width: 560px; height: 18px;
+      background: rgba(255,255,255,0.25); border-radius: 9px; overflow: hidden; margin: 0.8rem 0;
     }
-
-    #loading-overlay .progress-bar {
-      background: rgba(255, 255, 255, 0.3);
-      width: 80vw;
-      max-width: 600px;
-      margin: 1rem 0;
+    .progress-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), #aed581); transition: width 0.3s; }
+    #progress-text { font-size: 1.1rem; font-weight: bold; margin: 0.4rem 0; }
+    #file-list-container { width: 80vw; max-width: 560px; max-height: 180px; overflow-y: auto; scrollbar-width: none; font-size: 0.75rem; margin-top: 0.8rem; }
+    #file-list-container::-webkit-scrollbar { display: none; }
+    #file-list { margin: 0.3rem 0 0 1rem; padding: 0; list-style: disc; }
+    #file-list li { margin-bottom: 0.2rem; }
+    #update-banner {
+      display: none; position: fixed; bottom: var(--tab-h); left: 0; right: 0;
+      background: #1565c0; color: white; padding: 0.75rem 1rem;
+      align-items: center; justify-content: space-between; z-index: 800;
+      font-size: 0.9rem; box-shadow: 0 -2px 8px rgba(0,0,0,0.2);
     }
+    #update-banner.show { display: flex; }
+    #update-banner button { background: white; color: #1565c0; border: none; border-radius: 6px; padding: 0.4rem 0.9rem; font-weight: bold; cursor: pointer; }
+    #tab-search .container { max-width: 700px; margin: 0 auto; padding: 1rem; }
+    #search-section { margin-top: 0.8rem; }
+    .form-group { background: white; padding: 0.7rem; border-radius: 6px; margin-bottom: 0.7rem; border-left: 4px solid var(--primary-lt); box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+    .form-group label { display: block; font-weight: 600; color: #333; margin-bottom: 0.4rem; font-size: 0.9rem; }
+    .form-label { display: block; font-weight: 600; color: #333; margin-bottom: 0.4rem; font-size: 0.9rem; }
+    .form-group input[type="text"], .form-group select { width: 100%; padding: 0.6rem; border: 2px solid #ddd; border-radius: 4px; font-size: 0.95rem; transition: border-color 0.2s; box-sizing: border-box; }
+    .form-group input[type="text"]:focus, .form-group select:focus { outline: none; border-color: var(--primary-lt); box-shadow: 0 0 0 3px rgba(67,160,71,0.15); }
+    .checkbox-group { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.4rem; }
+    .checkbox-group label { display: flex; align-items: center; margin: 0; font-weight: normal; background: white; padding: 0.35rem 0.7rem; border-radius: 4px; border: 2px solid #ddd; cursor: pointer; transition: all 0.2s; font-size: 0.85rem; }
+    .checkbox-group label:hover { border-color: var(--primary-lt); background: #e8f5e9; }
+    .checkbox-group label:has(input[type="checkbox"]:checked) { background: var(--primary-lt); color: white; border-color: var(--primary-lt); }
+    .checkbox-group input[type="checkbox"] { width: auto; margin-right: 0.4rem; }
+    .button-group { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; margin-top: 0.8rem; }
+    .button-group button { padding: 0.7rem 0.5rem; font-size: 0.9rem; font-weight: 600; border-radius: 6px; border: none; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    #s-search-btn { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-lt) 100%); color: white; }
+    #s-search-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(46,125,50,0.35); }
+    #s-nearby-btn { background: linear-gradient(135deg, #558b2f 0%, #7cb342 100%); color: white; }
+    #s-nearby-btn:hover { transform: translateY(-2px); }
+    #s-nearby-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    #s-bookmark-list-btn { background: linear-gradient(135deg, #f57f17 0%, #ffb300 100%); color: white; }
+    #s-bookmark-list-btn:hover { transform: translateY(-2px); }
+    button.secondary { background: linear-gradient(135deg, #888 0%, #666 100%); color: white; }
+    button.secondary:hover { transform: translateY(-2px); }
+    .results-header { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-lt) 100%); color: white; padding: 0.6rem 0.9rem; border-radius: 6px 6px 0 0; font-weight: 600; font-size: 0.9rem; display: flex; align-items: center; gap: 0.5rem; }
+    #s-results-table { border-collapse: collapse; width: 100%; font-size: 0.9rem; table-layout: fixed; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    #s-results-table th, #s-results-table td { border: 1px solid #ddd; padding: 0.4rem 0.2rem; text-align: center; overflow: hidden; text-overflow: ellipsis; }
+    #s-results-table th:nth-child(1), #s-results-table td:nth-child(1) { width: 3em; white-space: nowrap; }
+    #s-results-table th:nth-child(2), #s-results-table td:nth-child(2) { width: auto; white-space: nowrap; }
+    #s-results-table th:nth-child(3), #s-results-table td:nth-child(3) { width: 7em; font-size: 0.8rem; }
+    #s-results-table th:nth-child(4), #s-results-table td:nth-child(4) { width: 5em; white-space: nowrap; }
+    #s-results-table th:nth-child(5), #s-results-table td:nth-child(5) { width: 3em; white-space: nowrap; }
+    #s-results-table thead tr { background: var(--primary); color: white; }
+    #s-results-table tbody tr { background: white; }
+    #s-results-table tbody tr:hover { background: #f5f5f5; }
+    .visited-row { background-color: #e8f5e9 !important; }
+    .visited-row:hover { background-color: #c8e6c9 !important; }
+    .bookmarked-row { background-color: #fff8e1 !important; }
+    .bookmarked-row:hover { background-color: #ffecb3 !important; }
+    .detail-btn { display: inline-block; padding: 0.25rem 0.35rem; background: var(--primary-lt); color: white; text-decoration: none; border-radius: 4px; font-size: 1rem; line-height: 1; }
+    .detail-btn:hover { background: var(--primary); text-decoration: none; }
+    .pagination { display: flex; align-items: center; justify-content: center; gap: 0.7rem; margin-top: 0.8rem; padding: 0.6rem; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.08); }
+    .pagination button { padding: 0.45rem 1rem; font-size: 0.85rem; border-radius: 6px; border: none; cursor: pointer; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-lt) 100%); color: white; transition: all 0.2s; }
+    .pagination button:disabled { background: #e0e0e0; color: #999; cursor: not-allowed; }
+    #s-page-info { font-weight: 600; color: #333; background: #f0f0f0; padding: 0.35rem 0.7rem; border-radius: 4px; font-size: 0.85rem; }
+    .bookmark-empty { text-align: center; padding: 2rem; color: #999; }
+    .placeholder-tab { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: calc(100vh - var(--tab-h)); padding: 2rem; text-align: center; color: #555; }
+    .placeholder-tab .ph-icon { font-size: 4rem; margin-bottom: 1rem; }
+    .placeholder-tab h2 { color: var(--primary); margin: 0 0 0.5rem; }
+    .placeholder-tab p { font-size: 0.9rem; }
+    .ph-badge { background: var(--accent-lt); color: var(--primary-dk); padding: 0.3rem 0.8rem; border-radius: 12px; font-size: 0.8rem; font-weight: bold; margin-top: 1rem; }
 
-    #loading-overlay .progress-bar-fill {
-      background: linear-gradient(90deg, #4CAF50, #2196F3);
-    }
-
-    #loading-overlay #progress-text {
-      font-size: 1.2rem;
-      font-weight: bold;
-      margin: 0.5rem 0;
-    }
-
-    #loading-overlay #file-list-container {
-      background: transparent;
-      color: white;
-      width: 80vw;
-      max-width: 600px;
-      max-height: 200px;
-      overflow-y: auto;
-      padding: 0.5rem;
-      border-radius: 8px;
-      margin-top: 1rem;
-      scrollbar-width: none; /* Firefox */
-      font-size: 0.8rem;
-    }
-
-    #loading-overlay #file-list-container::-webkit-scrollbar {
-      display: none; /* Chrome, Safari */
-    }
-
-    #loading-overlay #file-list-container strong {
-      font-size: 0.85rem;
-      color: white;
-    }
-
-    #loading-overlay #file-list {
-      margin: 0.4rem 0 0 1rem;
-      padding: 0;
-      list-style: disc;
-      font-size: 0.75rem;
-    }
-
-    #loading-overlay #file-list li {
-      margin-bottom: 0.2rem;
-    }
-
-    /* レスポンシブ */
+    /* ====== 統計タブ ====== */
+    #tab-stats .stats-container { max-width: 1000px; margin: 0 auto; padding: 1rem; }
+    .stats-section { background: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .stats-section h2 { margin: 0 0 1rem 0; font-size: 1.2rem; color: #333; border-bottom: 2px solid #f0f0f0; padding-bottom: 0.5rem; }
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .stat-card { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 1.5rem; border-radius: 8px; text-align: center; }
+    .stat-card.st-primary { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-lt) 100%); color: white; }
+    .stat-card.st-success { background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%); color: white; }
+    .stat-card.st-warning { background: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%); color: white; }
+    .stat-card.st-danger  { background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%); color: white; }
+    .stat-value { font-size: 2rem; font-weight: bold; margin-bottom: 0.3rem; }
+    .stat-label { font-size: 0.9rem; opacity: 0.9; }
+    .rank-stats { display: grid; gap: 0.5rem; }
+    .rank-item { display: flex; align-items: center; padding: 0.8rem; background: #f8f9fa; border-radius: 6px; border-left: 4px solid var(--primary); }
+    .rank-name { flex: 1; font-weight: 600; color: #333; }
+    .rank-count { font-size: 1.2rem; font-weight: bold; color: var(--primary); margin-right: 0.5rem; }
+    .rank-visit-detail { font-size: 0.9rem; color: var(--primary-lt); font-weight: bold; margin-left: 1rem; }
+    .pref-stats { display: grid; gap: 0.5rem; max-height: 400px; overflow-y: auto; }
+    .rank-filter-container { display: flex; flex-wrap: wrap; gap: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 8px; margin-bottom: 1rem; align-items: center; }
+    .rank-filter-label { font-weight: 600; color: #333; margin-right: 0.5rem; }
+    .rank-checkbox { display: flex; align-items: center; gap: 0.3rem; cursor: pointer; }
+    .rank-checkbox input[type="checkbox"] { cursor: pointer; width: 18px; height: 18px; }
+    .rank-checkbox label { cursor: pointer; font-size: 0.9rem; color: #555; user-select: none; }
+    .rank-toggle-buttons { display: flex; gap: 0.5rem; margin-left: auto; }
+    .rank-toggle-btn { padding: 0.4rem 0.8rem; background: #e0e0e0; border: none; border-radius: 4px; cursor: pointer; font-size: 0.8rem; transition: all 0.2s; font-weight: 500; }
+    .rank-toggle-btn:hover { background: #d0d0d0; }
+    .sort-button-container { display: flex; gap: 0.5rem; padding: 0.3rem 1rem; background: #fff; border-radius: 8px; margin-bottom: 0.5rem; align-items: center; justify-content: center; }
+    .sort-btn { padding: 0.5rem 1rem; background: #e0e0e0; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; transition: all 0.2s; font-weight: 500; }
+    .sort-btn:hover { background: #d0d0d0; }
+    .sort-btn.active { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-lt) 100%); color: white; }
+    .pref-item { display: flex; flex-wrap: wrap; padding: 0.6rem; background: #f8f9fa; border-radius: 6px; font-size: 0.9rem; gap: 0.5rem; }
+    .pref-header { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem; }
+    .pref-name { font-weight: 600; color: #333; }
+    .pref-count { font-size: 0.85rem; color: var(--primary); font-weight: 600; }
+    .pref-bar-container { width: 100%; }
+    .pref-bar { width: 100%; height: 24px; background: #e0e0e0; border-radius: 12px; overflow: hidden; display: flex; }
+    .pref-bar-segment { height: 100%; transition: width 0.5s ease, opacity 0.2s; cursor: pointer; }
+    .pref-bar-segment:hover { opacity: 0.8; }
+    .rank-el0-unvisited { background: #2d5016; }
+    .rank-el0-visited   { background: #66bb6a; }
+    .rank-tr1-unvisited { background: #7f0000; }
+    .rank-tr1-visited   { background: #ef5350; }
+    .rank-tr2-unvisited { background: #b8860b; }
+    .rank-tr2-visited   { background: #ffeb3b; }
+    .rank-tr3-unvisited { background: #003366; }
+    .rank-tr3-visited   { background: #42a5f5; }
+    .rank-tr4-unvisited { background: #4a148c; }
+    .rank-tr4-visited   { background: #ab47bc; }
+    .segment-tooltip { display: none; position: fixed; background: rgba(255,255,255,0.95); border-radius: 8px; padding: 0.8rem 1rem; box-shadow: 0 2px 12px rgba(0,0,0,0.2); z-index: 10000; pointer-events: none; font-size: 0.85rem; min-width: 180px; }
+    .segment-tooltip.show { display: block; }
+    .segment-tooltip-row { display: flex; justify-content: space-between; padding: 0.3rem 0; gap: 1rem; }
+    .segment-tooltip-row:not(:last-child) { border-bottom: 1px solid rgba(0,0,0,0.1); }
+    .segment-tooltip-label { font-weight: 600; color: #555; white-space: nowrap; }
+    .segment-tooltip-value { color: var(--primary); font-weight: bold; text-align: right; }
+    .segment-color-indicator { display: inline-block; width: 16px; height: 16px; border-radius: 3px; vertical-align: middle; margin-left: 0.3rem; border: 1px solid rgba(0,0,0,0.2); }
+    #stats-loading { text-align: center; padding: 2rem; color: #666; }
     @media (max-width: 768px) {
-      .menu-grid {
-        grid-template-columns: 1fr;
-      }
+      .stat-grid { grid-template-columns: 1fr; }
+      .rank-item { flex-direction: column; align-items: flex-start; }
     }
+
+    /* ====== 地図タブ ====== */
+    .vmap-wrap { position: relative; height: calc(100vh - var(--tab-h)); overflow: hidden; }
+    #visit-map { height: 100%; width: 100%; }
+    .vmap-loading { position: absolute; inset: 0; background: rgba(255,255,255,0.9); display: flex; align-items: center; justify-content: center; z-index: 3000; }
+    .vmap-loading.hidden { display: none !important; }
+    .map-list-btn { position: absolute; top: 10px; right: 10px; width: 45px; height: 45px; background: white; color: var(--primary); border: 2px solid #333; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.3); z-index: 2100; transition: all 0.2s; }
+    .map-list-btn.hidden { display: none; }
+    .vmap-list-panel { position: absolute; top: 0; right: -100%; width: 80%; max-width: 280px; height: 100%; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: -2px 0 8px rgba(0,0,0,0.2); z-index: 2000; transition: right 0.3s; display: flex; flex-direction: column; }
+    .vmap-list-panel.show { right: 0; }
+    .vmap-list-header { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-lt) 100%); color: white; padding: 1rem; display: flex; align-items: center; justify-content: space-between; }
+    .vmap-list-header h2 { font-size: 1.1rem; margin: 0; }
+    .vmap-list-header-close { background: rgba(255,255,255,0.3); border: none; border-radius: 50%; width: 28px; height: 28px; font-size: 1.1rem; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .vmap-list-controls { padding: 0.8rem; border-bottom: 1px solid #e0e0e0; }
+    .vmap-search-box { width: 100%; padding: 0.6rem; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 0.95rem; margin-bottom: 0.5rem; box-sizing: border-box; }
+    .vmap-search-box:focus { outline: none; border-color: var(--primary); }
+    .vmap-sort-buttons { display: flex; gap: 0.5rem; }
+    .vmap-sort-btn { flex: 1; padding: 0.5rem; border: 2px solid #e0e0e0; background: white; border-radius: 6px; font-size: 0.8rem; cursor: pointer; transition: all 0.2s; }
+    .vmap-sort-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+    .vmap-list-content { flex: 1; overflow-y: auto; padding: 0.75rem; }
+    .vmap-list-item { background: rgba(249,249,249,0.7); border: 2px solid rgba(224,224,224,0.8); border-radius: 8px; padding: 0.6rem; margin-bottom: 0.6rem; cursor: pointer; transition: all 0.2s; }
+    .vmap-list-item:hover { background: rgba(240,240,240,0.9); border-color: var(--primary); }
+    .vmap-list-item-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.3rem; gap: 0.5rem; }
+    .vmap-list-item-name { font-weight: bold; color: #333; font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+    .vmap-list-item-rank { font-size: 0.7rem; color: #666; background: #e0e0e0; padding: 0.15rem 0.4rem; border-radius: 4px; white-space: nowrap; flex-shrink: 0; }
+    .vmap-list-item-info { display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.75rem; color: #666; }
+    .vmap-list-item-date { color: var(--primary); font-weight: 600; }
+    .vmap-no-results { text-align: center; padding: 2rem; color: #999; }
+    .leaflet-popup-content-wrapper { border-radius: 8px; padding: 0 !important; }
+    .popup-content { padding: 0.75rem; min-width: 190px; }
+    .popup-rank { font-size: 0.75rem; color: #666; margin-bottom: 0.25rem; }
+    .popup-name { font-size: 1rem; font-weight: bold; color: #333; margin-bottom: 0.5rem; }
+    .popup-info { font-size: 0.85rem; color: #666; margin-bottom: 0.75rem; }
+    .popup-btn { display: block; width: 100%; padding: 0.6rem; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-lt) 100%); color: white !important; text-align: center; text-decoration: none; border-radius: 6px; font-weight: bold; }
+
+    /* ====== 測設タブ ====== */
+    .sk-wrap { position: relative; height: calc(100vh - var(--tab-h)); overflow: hidden; background: #fff; }
+    .sk-popup { position: absolute; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 200; }
+    .sk-popup.hidden { display: none; }
+    .sk-popup-content { background: white; border-radius: 12px; padding: 1.5rem; max-width: 450px; width: 85%; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+    .sk-popup-title { font-size: 1.3rem; font-weight: bold; color: var(--primary); margin-bottom: 1rem; text-align: center; }
+    .sk-format-toggle { display: flex; gap: 0.5rem; margin-bottom: 1rem; background: #f0f0f0; padding: 0.3rem; border-radius: 8px; }
+    .sk-format-toggle button { flex: 1; padding: 0.5rem; border: none; background: transparent; border-radius: 6px; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; }
+    .sk-format-toggle button.active { background: white; color: var(--primary); font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .sk-input-group { margin-bottom: 1rem; }
+    .sk-input-group label { display: block; font-size: 0.9rem; font-weight: 600; color: #666; margin-bottom: 0.3rem; }
+    .sk-input-group input { width: 100%; padding: 0.7rem; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem; font-family: monospace; box-sizing: border-box; }
+    .sk-input-group input:focus { outline: none; border-color: var(--primary); }
+    .sk-format-hint { font-size: 0.8rem; color: #999; margin-top: 0.3rem; }
+    .sk-popup-buttons { display: flex; gap: 0.5rem; margin-top: 1.5rem; }
+    .sk-popup-buttons button { flex: 1; padding: 0.8rem; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; transition: all 0.2s; }
+    .sk-btn-cancel { background: #e0e0e0; color: #666; }
+    .sk-btn-ok { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-lt) 100%); color: white; }
+    .sk-nearby-content { background: white; border-radius: 12px; padding: 1.5rem; max-width: 450px; width: 85%; max-height: 80vh; display: flex; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
+    .sk-nearby-list { overflow-y: auto; margin-top: 1rem; }
+    .sk-nearby-item { padding: 0.8rem; border: 2px solid #e0e0e0; border-radius: 8px; margin-bottom: 0.5rem; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 0.5rem; }
+    .sk-nearby-item:hover { background: #f5f5f5; border-color: var(--primary); }
+    .sk-nearby-item.visited { background-color: #e8f5e9 !important; border-color: #4caf50; }
+    .sk-nearby-item-left { flex: 1; display: flex; align-items: center; gap: 0.5rem; min-width: 0; }
+    .sk-nearby-item-rank { font-size: 0.85rem; color: #666; white-space: nowrap; flex-shrink: 0; }
+    .sk-nearby-item-name { font-weight: bold; color: #333; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sk-nearby-item-distance { font-size: 0.9rem; color: var(--primary); font-weight: bold; white-space: nowrap; flex-shrink: 0; }
+    #sk-radar-container { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: #fff; }
+    #sk-radar { display: block; max-width: 100%; max-height: 100%; }
+    .sk-toolbar { position: absolute; top: 10px; right: 10px; z-index: 70; display: flex; gap: 0.5rem; }
+    .sk-toolbar-btn { width: 40px; height: 40px; background: white; color: var(--primary); border: none; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.15); transition: all 0.2s; }
+    .sk-orientation-btn { position: absolute; right: 10px; bottom: 10px; width: 50px; height: 50px; background: white; color: var(--primary); border: 2px solid var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 12px rgba(0,0,0,0.2); cursor: pointer; z-index: 50; transition: all 0.2s; }
+    .sk-orientation-btn.north-up { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-lt) 100%); color: white; border-color: var(--primary-dk); }
+    .sk-coord-display { position: absolute; left: 10px; bottom: 10px; background: rgba(255,255,255,0.9); padding: 0.4rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-family: monospace; color: #333; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 50; }
+    .sk-target-info { position: absolute; top: 10px; left: 10px; max-width: calc(100% - 110px); background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 1rem; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 60; }
+    .sk-detail-link { position: absolute; top: 2.5rem; right: 0.8rem; transform: translateY(-50%); width: 36px; height: 36px; background: white; color: #1976d2; border-radius: 6px; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 1.2rem; box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+    .sk-target-name { font-size: 1rem; font-weight: bold; color: #1976d2; margin-bottom: 0.3rem; }
+    .sk-target-id { font-size: 0.8rem; color: #666; font-family: monospace; margin-bottom: 0.8rem; padding-bottom: 0.8rem; border-bottom: 1px solid rgba(0,0,0,0.1); }
+    .sk-info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem; font-size: 0.8rem; }
+    .sk-info-item { display: flex; flex-direction: column; }
+    .sk-info-label { font-weight: 600; color: #555; font-size: 0.7rem; margin-bottom: 0.1rem; }
+    .sk-info-value { color: #333; font-family: monospace; font-size: 0.85rem; }
+    .sk-status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 0.3rem; }
+    .sk-status-dot.active { background: #4caf50; box-shadow: 0 0 6px #4caf50; }
+    .sk-status-dot.inactive { background: #f44336; }
+    /* ====== 設定タブ ====== */
+    .cfg-wrap { background: var(--bg); min-height: calc(100vh - var(--tab-h)); padding-bottom: 1rem; overflow-y: auto; }
+    .cfg-container { max-width: 600px; margin: 0 auto; padding: 1rem; }
+    .cfg-section { background: white; border-radius: 12px; padding: 1.4rem 1.5rem; margin-bottom: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .cfg-section h2 { margin: 0 0 1rem; font-size: 1.08rem; color: #333; border-bottom: 2px solid #f0f0f0; padding-bottom: 0.5rem; }
+    .cfg-item { display: flex; justify-content: space-between; align-items: center; padding: 0.85rem 0; border-bottom: 1px solid #f5f5f5; gap: 0.8rem; }
+    .cfg-item:last-child { border-bottom: none; }
+    .cfg-item-label { font-weight: 600; color: #333; font-size: 0.94rem; }
+    .cfg-item-desc { font-size: 0.81rem; color: #777; margin-top: 0.2rem; line-height: 1.4; }
+    .cfg-btn { flex-shrink: 0; padding: 0.52rem 1.05rem; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s; font-size: 0.87rem; }
+    .cfg-btn-primary { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-lt) 100%); color: white; }
+    .cfg-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(46,125,50,0.3); }
+    .cfg-btn-danger { background: #f44336; color: white; }
+    .cfg-btn-danger:hover { background: #d32f2f; }
+    .cfg-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+    .cfg-file-label { flex-shrink: 0; padding: 0.52rem 1.05rem; background: linear-gradient(135deg, var(--primary) 0%, var(--primary-lt) 100%); color: white; border-radius: 8px; font-weight: bold; cursor: pointer; transition: all 0.2s; font-size: 0.87rem; }
+    .cfg-file-label:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(46,125,50,0.3); }
+    .cfg-toggle { flex-shrink: 0; position: relative; width: 48px; height: 26px; background: #ccc; border-radius: 13px; cursor: pointer; transition: background 0.3s; }
+    .cfg-toggle.active { background: #4caf50; }
+    .cfg-toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 22px; height: 22px; background: white; border-radius: 50%; transition: left 0.3s; }
+    .cfg-toggle.active::after { left: 24px; }
+    .cfg-cache-box { background: #f8f9fa; border-radius: 8px; border: 1px solid #e0e0e0; padding: 0.75rem 0.9rem; font-size: 0.87rem; color: #555; width: 100%; margin-top: 0.4rem; box-sizing: border-box; }
+    .cfg-db-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; margin-top: 0.75rem; }
+    .cfg-stat-item { background: #f8f9fa; border-radius: 8px; border: 1px solid #e0e0e0; padding: 1rem; text-align: center; }
+    .cfg-stat-value { font-size: 1.75rem; font-weight: bold; background: linear-gradient(135deg, var(--primary), var(--primary-lt)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .cfg-stat-label { font-size: 0.81rem; color: #666; margin-top: 0.25rem; }
+    .cfg-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; padding: 0 1.25rem; box-sizing: border-box; }
+    .cfg-overlay.show { display: flex; }
+    .cfg-modal { background: white; border-radius: 12px; padding: 1.5rem; max-width: 420px; width: 100%; box-shadow: 0 4px 24px rgba(0,0,0,0.25); }
+    .cfg-modal-title { font-size: 1.05rem; font-weight: bold; color: #333; margin-bottom: 0.7rem; }
+    .cfg-modal-desc { font-size: 0.88rem; color: #666; margin-bottom: 1rem; line-height: 1.5; }
+    .cfg-modal-btns { display: flex; flex-direction: column; gap: 0.5rem; }
+    .cfg-modal-btn { padding: 0.72rem 1rem; border: none; border-radius: 8px; font-size: 0.92rem; font-weight: 600; cursor: pointer; transition: all 0.18s; }
+    .cfg-modal-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+    .cfg-modal-btn.primary { background: linear-gradient(135deg, var(--primary), var(--primary-lt)); color: white; }
+    .cfg-modal-btn.secondary { background: #f0f0f0; color: #333; }
+    .cfg-modal-btn.danger { background: linear-gradient(135deg, #e53935, #f4511e); color: white; }
+    .cfg-conflict-progress { font-size: 0.82rem; color: #999; text-align: right; margin-bottom: 0.4rem; }
+    .cfg-conflict-base { font-size: 0.9rem; font-weight: 600; color: #333; margin-bottom: 0.75rem; }
+    .cfg-conflict-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; margin-bottom: 1rem; }
+    .cfg-conflict-card { background: #f8f9fa; border-radius: 8px; padding: 0.75rem; border: 2px solid #e0e0e0; font-size: 0.82rem; line-height: 1.55; cursor: pointer; user-select: none; transition: all 0.18s; position: relative; }
+    .cfg-conflict-card:hover { background: #f0f0f0; }
+    .cfg-conflict-card.existing.selected { border-color: var(--primary); background: #f1f8e9; }
+    .cfg-conflict-card.imported.selected { border-color: #56ab2f; background: #f0fff0; }
+    .cfg-conflict-check { display: none; position: absolute; top: 0.4rem; right: 0.4rem; font-size: 1rem; }
+    .cfg-conflict-card.selected .cfg-conflict-check { display: block; }
+    .cfg-conflict-card-label { font-weight: bold; margin-bottom: 0.35rem; font-size: 0.79rem; }
+    .cfg-conflict-card.existing .cfg-conflict-card-label { color: var(--primary); }
+    .cfg-conflict-card.imported .cfg-conflict-card-label { color: #56ab2f; }
+    .cfg-apply-all { display: flex; align-items: center; gap: 0.5rem; font-size: 0.87rem; color: #555; margin-bottom: 0.75rem; cursor: pointer; user-select: none; }
+    .cfg-apply-all input { width: 1.05rem; height: 1.05rem; cursor: pointer; accent-color: var(--primary); }
+    /* ====== 詳細パネル (dt-) ====== */
+    .dt-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 8000; align-items: flex-start; justify-content: center; padding: 0.5rem; overflow-y: auto; }
+    .dt-overlay.show { display: flex; }
+    .dt-modal { background: white; max-width: 600px; width: 100%; max-height: calc(100dvh - 1rem); border-radius: 12px; display: flex; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,0.45); overflow: hidden; margin: auto; flex-shrink: 0; }
+    .dt-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
+    .dt-header-title { font-size: 1rem; font-weight: bold; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .dt-close-btn { background: rgba(255,255,255,0.2); color: white; border: none; border-radius: 8px; width: 36px; height: 36px; font-size: 1.25rem; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; line-height: 1; }
+    .dt-close-btn:hover { background: rgba(255,255,255,0.38); }
+    .dt-body { overflow-y: auto; background: #f4f6f8; -webkit-overflow-scrolling: touch; max-height: calc(100dvh - 1rem - 54px); }
+    .dt-container { max-width: 600px; margin: 0 auto; padding: 0.75rem; }
+    .dt-info-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1rem; padding-right: 60px; border-radius: 8px; margin-bottom: 0.75rem; box-shadow: 0 2px 8px rgba(0,0,0,0.2); position: relative; }
+    .dt-info-card h2 { margin: 0 0 0.3rem; font-size: 1.2rem; }
+    .dt-visit-btn { position: absolute; top: 0.8rem; right: 0.8rem; background: rgba(255,255,255,0.95); color: #667eea; border: 2px solid rgba(255,255,255,0.3); padding: 0.45rem 0.7rem; border-radius: 6px; font-weight: 600; font-size: 0.82rem; box-shadow: 0 2px 8px rgba(0,0,0,0.2); cursor: pointer; white-space: nowrap; transition: all 0.2s; }
+    .dt-visit-btn:hover { background: white; transform: translateY(-1px); }
+    .dt-bm-btn { position: absolute; right: 0.5rem; bottom: 0.5rem; width: 38px; height: 38px; background: white; color: #999; border: none; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.15); transition: all 0.2s; }
+    .dt-bm-btn.active { background: #FFC107; color: white; }
+    .dt-bm-btn .bm-icon { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; transition: fill 0.2s; }
+    .dt-bm-btn.active .bm-icon { fill: currentColor; }
+    .dt-sk-btn { position: absolute; right: calc(0.5rem + 38px + 0.35rem); bottom: 0.5rem; width: 38px; height: 38px; background: white; color: #2e7d32; border: none; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.15); transition: all 0.2s; padding: 0; }
+    .dt-sk-btn:hover { background: #e8f5e9; transform: translateY(-1px); }
+    .dt-sk-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .dt-terras-btn { position: absolute; right: 0.5rem; bottom: 3.4rem; width: 38px; height: 38px; background: white; border: none; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.15); padding: 0; text-decoration: none; }
+    .dt-terras-btn img { width: 24px; height: 24px; object-fit: contain; }
+    .dt-code { font-family: monospace; font-size: 0.8rem; background: rgba(255,255,255,0.2); padding: 0.2rem 0.5rem; border-radius: 4px; display: inline-block; margin-bottom: 0.3rem; }
+    .dt-tabs { display: flex; background: white; border-radius: 8px 8px 0 0; border-bottom: 2px solid #e0e0e0; }
+    .dt-tab-btn { flex: 1; background: none; border: none; padding: 0.6rem 0.3rem; font-size: 0.88rem; font-weight: 600; color: #666; cursor: pointer; border-bottom: 3px solid transparent; position: relative; bottom: -2px; transition: all 0.2s; }
+    .dt-tab-btn:hover { color: #667eea; } .dt-tab-btn.active { color: #667eea; border-bottom-color: #667eea; }
+    .dt-tab-panel { display: none; background: white; border-radius: 0 0 8px 8px; padding: 0.9rem; margin-bottom: 0.75rem; } .dt-tab-panel.active { display: block; }
+    .dt-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+    .dt-detail-item { background: #f8f9fa; padding: 0.6rem; border-radius: 6px; border-left: 4px solid #2196F3; }
+    .dt-detail-label { font-size: 0.78rem; color: #666; margin-bottom: 0.2rem; font-weight: 600; } .dt-detail-value { font-size: 0.88rem; color: #333; }
+    .dt-visit-date { font-size: 0.9rem; color: #666; margin-bottom: 0.7rem; font-weight: 600; }
+    .dt-visit-status { display: inline-block; padding: 0.3rem 0.7rem; border-radius: 6px; font-weight: 600; font-size: 0.85rem; margin-bottom: 0.7rem; }
+    .dt-visit-status.found { background: #e8f5e9; color: #2e7d32; } .dt-visit-status.not-found { background: #ffebee; color: #c62828; }
+    .dt-visit-photos { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; margin: 0.7rem 0; }
+    .dt-visit-photo-label { font-size: 0.8rem; color: #666; margin-bottom: 0.3rem; font-weight: 600; }
+    .dt-visit-photo img { width: 100%; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); cursor: pointer; }
+    .dt-visit-photo-none { background: #f5f5f5; border: 2px dashed #ddd; border-radius: 8px; padding: 1.5rem 0.5rem; color: #999; font-size: 0.82rem; text-align: center; }
+    .dt-visit-memo { background: #f8f9fa; padding: 0.8rem; border-radius: 8px; border-left: 4px solid #667eea; margin-top: 0.7rem; white-space: pre-wrap; word-wrap: break-word; font-size: 0.88rem; }
+    .dt-no-visit { text-align: center; padding: 2.5rem 1rem; color: #999; }
+    #dt-map { width: 100%; height: 350px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); position: relative; }
+    .dt-loc-btn { position: absolute; top: 10px; right: 10px; width: 38px; height: 38px; background: white; border: 2px solid #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.2); z-index: 1000; transition: all 0.2s; }
+    .dt-loc-btn.active { background: #4CAF50; border-color: #4CAF50; color: white; }
+    .dt-photo-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 10000; align-items: center; justify-content: center; padding: 1rem; }
+    .dt-photo-modal.show { display: flex; }
+    .dt-photo-modal-inner { position: relative; display: flex; flex-direction: column; align-items: center; max-width: 90vw; }
+    .dt-photo-modal-inner img { max-width: 100%; max-height: 85vh; border-radius: 8px; }
+    .dt-photo-modal-close { position: absolute; top: -40px; right: 0; background: rgba(255,255,255,0.9); color: #333; border: none; border-radius: 50%; width: 34px; height: 34px; font-size: 1.4rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .dt-photo-modal-label { margin-top: 0.7rem; color: white; font-size: 0.92rem; font-weight: 600; }
+    /* ====== 履歴入力ポップアップ (av-) ====== */
+    .av-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 9000; overflow-y: auto; } .av-overlay.show { display: block; }
+    .av-wrap { min-height: 100%; display: flex; align-items: flex-start; justify-content: center; padding: 1rem; box-sizing: border-box; }
+    .av-modal { background: #f4f6f8; max-width: 600px; width: 100%; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.4); margin: auto; }
+    .av-modal-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1rem 1.2rem; display: flex; justify-content: space-between; align-items: center; }
+    .av-modal-title { font-size: 1.1rem; font-weight: bold; margin: 0; }
+    .av-header-btns { display: flex; gap: 0.5rem; align-items: center; }
+    .av-close-btn { background: rgba(255,255,255,0.2); color: white; border: none; border-radius: 8px; width: 36px; height: 36px; font-size: 1.4rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+    .av-close-btn:hover { background: rgba(255,255,255,0.35); }
+    .av-delete-hdr-btn { background: rgba(244,67,54,0.85); color: white; border: none; border-radius: 8px; padding: 0.4rem 0.75rem; font-size: 0.85rem; font-weight: bold; cursor: pointer; white-space: nowrap; }
+    .av-base-info { background: white; padding: 0.7rem 1.2rem; border-bottom: 1px solid #e0e0e0; }
+    .av-base-rank { font-size: 0.85rem; color: #666; margin-bottom: 0.15rem; } .av-base-name { font-size: 1.05rem; font-weight: bold; color: #333; }
+    .av-body { padding: 1rem; }
+    .av-section { background: white; border-radius: 8px; padding: 1.05rem; margin-bottom: 0.75rem; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+    .av-form-group { margin-bottom: 1.1rem; } .av-form-group:last-child { margin-bottom: 0; }
+    .av-label { display: block; font-weight: bold; color: #333; margin-bottom: 0.4rem; font-size: 0.9rem; }
+    .av-input { width: 100%; padding: 0.7rem; border: 2px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box; font-family: inherit; transition: border-color 0.2s; }
+    .av-input:focus { outline: none; border-color: #667eea; }
+    textarea.av-input { min-height: 100px; resize: vertical; }
+    .av-checkbox-row { display: flex; align-items: center; gap: 0.5rem; }
+    .av-checkbox-row input[type="checkbox"] { width: 22px; height: 22px; cursor: pointer; }
+    .av-checkbox-row label { font-size: 0.95rem; cursor: pointer; user-select: none; }
+    .av-hint { font-size: 0.82rem; color: #888; margin-top: 0.2rem; }
+    .av-photo-section { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem; }
+    .av-photo-item { border: 2px dashed #ddd; border-radius: 8px; padding: 0.75rem; transition: border-color 0.2s; } .av-photo-item.has-photo { border-style: solid; border-color: #4caf50; }
+    .av-photo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem; }
+    .av-photo-label { font-weight: bold; color: #333; font-size: 0.88rem; }
+    .av-photo-btn { padding: 0.4rem 0.8rem; background: #2196f3; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 0.84rem; }
+    .av-photo-preview { display: none; position: relative; margin-top: 0.5rem; } .av-photo-preview.show { display: block; }
+    .av-photo-preview img { width: 100%; max-width: 340px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .av-remove-btn { position: absolute; top: 0.4rem; right: 0.4rem; background: rgba(244,67,54,0.9); color: white; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; }
+    .av-submit-btn { width: 100%; padding: 0.85rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(102,126,234,0.35); transition: transform 0.2s, box-shadow 0.2s; }
+    .av-submit-btn:hover:not(:disabled) { transform: translateY(-2px); } .av-submit-btn:disabled { background: #ccc; cursor: not-allowed; box-shadow: none; }
+    .av-crop-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 9500; padding: 1rem; overflow: auto; }
+    .av-crop-modal.show { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .av-crop-container { position: relative; display: inline-block; max-width: 90vw; max-height: 70vh; background: #000; border-radius: 8px; overflow: hidden; }
+    .av-crop-image { display: block; max-width: 100%; max-height: 70vh; user-select: none; }
+    .av-crop-frame { position: absolute; border: 2px solid #4caf50; box-shadow: 0 0 0 9999px rgba(0,0,0,0.5); cursor: move; pointer-events: auto; }
+    .av-crop-frame::before { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 28px; height: 28px; border: 2px solid #4caf50; border-radius: 50%; pointer-events: none; }
+    .av-crop-handle { position: absolute; width: 18px; height: 18px; background: #4caf50; border: 2px solid white; border-radius: 50%; pointer-events: auto; }
+    .av-crop-handle.nw{top:-9px;left:-9px;cursor:nw-resize} .av-crop-handle.ne{top:-9px;right:-9px;cursor:ne-resize}
+    .av-crop-handle.sw{bottom:-9px;left:-9px;cursor:sw-resize} .av-crop-handle.se{bottom:-9px;right:-9px;cursor:se-resize}
+    .av-crop-controls { display: flex; gap: 1rem; margin-top: 1rem; }
+    .av-crop-controls button { padding: 0.7rem 1.4rem; border: none; border-radius: 6px; font-size: 0.95rem; cursor: pointer; }
+    .av-crop-confirm { background: #4caf50; color: white; } .av-crop-cancel { background: #f44336; color: white; }
+    .av-confirm-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 9600; align-items: center; justify-content: center; }
+    .av-confirm-modal.show { display: flex; }
+    .av-confirm-box { background: white; padding: 1.8rem; border-radius: 12px; max-width: 85%; width: 360px; text-align: center; box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+    .av-confirm-title { font-size: 1.2rem; font-weight: bold; color: #f44336; margin-bottom: 0.8rem; }
+    .av-confirm-msg { font-size: 0.95rem; color: #333; margin-bottom: 1.5rem; }
+    .av-confirm-btns { display: flex; gap: 0.8rem; } .av-confirm-btn { flex: 1; padding: 0.75rem; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer; }
+    .av-confirm-btn.yes { background: #f44336; color: white; } .av-confirm-btn.no { background: #e0e0e0; color: #333; }
   </style>
 </head>
 <body>
-  <!-- ローディングオーバーレイ -->
-  <div id="loading-overlay" class="hidden">
-    <div class="spinner"></div>
+  <div id="loading-overlay" class="hidden"><div class="spinner"></div></div>
+  <div id="update-banner">
+    <span>🆕 アプリが更新されました</span>
+    <button onclick="window.location.reload()">更新する</button>
   </div>
+  <main id="app-main">
 
-  <header>
-    <h1>📍 基準点検索 PWA</h1>
-  </header>
+    <!-- 検索タブ -->
+    <div class="tab-panel active" id="tab-search">
+      <div class="container">
+        <section id="search-section">
+          <div class="form-group">
+            <span class="form-label">基準点種別</span>
+            <div class="checkbox-group">
+              <label><input type="checkbox" class="s-rank-filter" value="EL0"> 電子基準点</label>
+              <label><input type="checkbox" class="s-rank-filter" value="TR1"> 一等三角点</label>
+              <label><input type="checkbox" class="s-rank-filter" value="TR2"> 二等三角点</label>
+              <label><input type="checkbox" class="s-rank-filter" value="TR3"> 三等三角点</label>
+              <label><input type="checkbox" class="s-rank-filter" value="TR4"> 四等三角点</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <span class="form-label">除外オプション</span>
+            <div class="checkbox-group">
+              <label><input type="checkbox" id="s-exclude-school"> 学校用地を除外</label>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="s-pref-select">都道府県</label>
+            <select id="s-pref-select"><option value="">すべて</option></select>
+          </div>
+          <div class="form-group">
+            <label for="s-name-search">点名で検索（漢字・ひらがな）</label>
+            <input type="text" id="s-name-search" placeholder="点名または点名のひらがなを入力">
+          </div>
+          <div class="button-group">
+            <button id="s-nearby-btn"><svg class="ic" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> 近傍20点</button>
+            <button id="s-search-btn"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/></svg> 検索</button>
+            <button id="s-bookmark-list-btn"><svg class="ic" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> ブックマーク</button>
+            <button id="s-clear-btn" class="secondary"><svg class="ic" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> クリア</button>
+          </div>
+          <div id="s-results" style="margin-top:1rem;">
+            <div class="results-header" id="s-results-header" style="display:none;">
+              <span id="s-results-icon"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/></svg></span><span id="s-results-count"></span>
+            </div>
+            <table id="s-results-table" style="display:none;">
+              <thead><tr><th>種別</th><th>点名</th><th>基準点コード</th><th>都道府県</th><th>詳細</th></tr></thead>
+              <tbody id="s-results-tbody"></tbody>
+            </table>
+            <div id="s-no-results" style="text-align:center;padding:1.5rem;color:#888;">
+              検索条件を指定して「検索」を押してください
+            </div>
+          </div>
+          <div class="pagination" id="s-pagination" style="display:none;">
+            <button id="s-prev-btn">← 前</button>
+            <span id="s-page-info"></span>
+            <button id="s-next-btn">次 →</button>
+          </div>
+        </section>
+      </div>
+    </div>
 
-  <main>
-    <div class="container">
-      <section>
-        <div class="status-box">
-          <h3>📋 ステータス</h3>
-          <div id="db-status">
-            <p>初期化中...</p>
+    <!-- 測設タブ（Phase4） -->
+    <div class="tab-panel" id="tab-sokusetsu">
+      <div class="sk-wrap">
+        <!-- 座標入力ポップアップ -->
+        <div id="sk-coord-popup" class="sk-popup hidden">
+          <div class="sk-popup-content">
+            <div class="sk-popup-title"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="3" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="21"/><line x1="3" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="21" y2="12"/></svg> 測設座標を入力</div>
+            <div class="sk-format-toggle">
+              <button id="sk-format-decimal">度小数</button>
+              <button id="sk-format-dms" class="active">度分秒</button>
+            </div>
+            <div id="sk-decimal-inputs" style="display:none;">
+              <div class="sk-input-group"><label>緯度 (Latitude)</label><input type="text" id="sk-lat-decimal" placeholder="35.71772228" inputmode="decimal"><div class="sk-format-hint">例: 35.71772228</div></div>
+              <div class="sk-input-group"><label>経度 (Longitude)</label><input type="text" id="sk-lon-decimal" placeholder="139.48102264" inputmode="decimal"><div class="sk-format-hint">例: 139.48102264</div></div>
+            </div>
+            <div id="sk-dms-inputs">
+              <div class="sk-input-group"><label>緯度 (Latitude)</label><input type="text" id="sk-lat-dms" placeholder="354303.8002" inputmode="decimal"><div class="sk-format-hint">例: 354303.8002 (35度43分03.8002秒)</div></div>
+              <div class="sk-input-group"><label>経度 (Longitude)</label><input type="text" id="sk-lon-dms" placeholder="1392851.6815" inputmode="decimal"><div class="sk-format-hint">例: 1392851.6815 (139度28分51.6815秒)</div></div>
+            </div>
+            <div class="sk-popup-buttons">
+              <button class="sk-btn-cancel" id="sk-coord-cancel">キャンセル</button>
+              <button class="sk-btn-ok" id="sk-coord-ok">測設開始</button>
+            </div>
           </div>
         </div>
-
-        <div class="menu-grid">
-          <a href="search.html" class="menu-card">
-            <span class="menu-icon">🔍</span>
-            基準点検索
-          </a>
-          <a href="visit.html" class="menu-card">
-            <span class="menu-icon">📝</span>
-            訪問履歴
-          </a>
-          <a href="stats.html" class="menu-card">
-            <span class="menu-icon">📊</span>
-            統計情報
-          </a>
-          <a href="sokusetsu.html" class="menu-card">
-            <span class="menu-icon">🎯</span>
-            測設モード
-          </a>
-          <a href="setting.html" class="menu-card">
-            <span class="menu-icon">⚙️</span>
-            設定
-          </a>
+        <!-- 近隣点リストポップアップ -->
+        <div id="sk-nearby-popup" class="sk-popup hidden">
+          <div class="sk-nearby-content">
+            <div class="sk-popup-title"><svg class="ic" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> 近隣の基準点</div>
+            <div id="sk-nearby-loading" style="text-align:center;padding:2rem;"><div class="spinner"></div><p>近隣の基準点を検索中...</p></div>
+            <div id="sk-nearby-list" class="sk-nearby-list" style="display:none;"></div>
+            <button class="sk-btn-cancel" id="sk-nearby-cancel" style="margin-top:1rem;display:none;padding:0.6rem 1.5rem;">キャンセル</button>
+          </div>
         </div>
-      </section>
+        <!-- ターゲット情報 -->
+        <div class="sk-target-info">
+          <a href="#" id="sk-detail-link" class="sk-detail-link" style="display:none;"><svg class="ic" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></a>
+          <div class="sk-target-name" id="sk-target-name">タブを開くと開始します</div>
+          <div class="sk-target-id" id="sk-target-id"></div>
+          <div class="sk-info-grid">
+            <div class="sk-info-item"><div class="sk-info-label"><span class="sk-status-dot inactive" id="sk-gps-status"></span>GPS状態</div><div class="sk-info-value" id="sk-gps-status-text">待機中</div></div>
+            <div class="sk-info-item"><div class="sk-info-label">精度</div><div class="sk-info-value" id="sk-gps-accuracy">--</div></div>
+            <div class="sk-info-item"><div class="sk-info-label">方位</div><div class="sk-info-value" id="sk-bearing">--</div></div>
+            <div class="sk-info-item"><div class="sk-info-label">距離</div><div class="sk-info-value" id="sk-distance">--</div></div>
+          </div>
+        </div>
+        <!-- ツールバー -->
+        <div class="sk-toolbar">
+          <button class="sk-toolbar-btn" id="sk-list-btn" title="近隣点リスト"><svg class="ic" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></button>
+          <button class="sk-toolbar-btn" id="sk-edit-btn" title="座標を入力"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></button>
+        </div>
+        <!-- レーダー -->
+        <div id="sk-radar-container">
+          <canvas id="sk-radar" width="600" height="600"></canvas>
+          <button id="sk-orientation-btn" class="sk-orientation-btn" title="方向モード切替"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg></button>
+          <div class="sk-coord-display" id="sk-current-pos">--</div>
+        </div>
+      </div>
     </div>
+
+    <!-- 統計タブ（Phase2） -->
+    <div class="tab-panel" id="tab-stats">
+      <div class="stats-container">
+        <div id="stats-loading"><p><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="12" width="4" height="9" rx="1"/><rect x="10" y="7" width="4" height="14" rx="1"/><rect x="17" y="3" width="4" height="18" rx="1"/></svg> タブを開くと読み込みます</p></div>
+        <div id="stats-content" style="display:none;">
+          <!-- 基本統計 -->
+          <div class="stats-section">
+            <h2><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="12" width="4" height="9" rx="1"/><rect x="10" y="7" width="4" height="14" rx="1"/><rect x="17" y="3" width="4" height="18" rx="1"/></svg> 基本統計</h2>
+            <div class="stat-grid">
+              <div class="stat-card st-primary"><div class="stat-value" id="st-total-bases">-</div><div class="stat-label">総基準点数</div></div>
+              <div class="stat-card st-success"><div class="stat-value" id="st-total-visits">-</div><div class="stat-label">訪問数</div></div>
+              <div class="stat-card st-warning"><div class="stat-value" id="st-visit-rate">-</div><div class="stat-label">訪問率</div></div>
+            </div>
+          </div>
+          <!-- 種別ごとの統計 -->
+          <div class="stats-section">
+            <h2><svg class="ic" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> 種別ごとの統計</h2>
+            <div class="rank-stats" id="st-rank-stats"></div>
+          </div>
+          <!-- 訪問統計 -->
+          <div class="stats-section">
+            <h2><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> 訪問統計</h2>
+            <div class="stat-grid">
+              <div class="stat-card st-success"><div class="stat-value" id="st-found-count">-</div><div class="stat-label">発見した</div></div>
+              <div class="stat-card st-danger"><div class="stat-value" id="st-not-found-count">-</div><div class="stat-label">発見できなかった</div></div>
+              <div class="stat-card st-primary"><div class="stat-value" id="st-found-rate">-</div><div class="stat-label">発見率</div></div>
+            </div>
+          </div>
+          <!-- 都道府県ごとの統計 -->
+          <div class="stats-section">
+            <h2><svg class="ic" viewBox="0 0 24 24"><polygon points="1,6 1,22 8,18 16,22 23,18 23,2 16,6 8,2"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg> 都道府県ごとの訪問状況</h2>
+            <div class="rank-filter-container">
+              <span class="rank-filter-label">点種別:</span>
+              <div class="rank-checkbox"><input type="checkbox" id="st-filter-el0" value="EL0" checked><label for="st-filter-el0">電子基準点</label></div>
+              <div class="rank-checkbox"><input type="checkbox" id="st-filter-tr1" value="TR1" checked><label for="st-filter-tr1">一等三角点</label></div>
+              <div class="rank-checkbox"><input type="checkbox" id="st-filter-tr2" value="TR2" checked><label for="st-filter-tr2">二等三角点</label></div>
+              <div class="rank-checkbox"><input type="checkbox" id="st-filter-tr3" value="TR3" checked><label for="st-filter-tr3">三等三角点</label></div>
+              <div class="rank-checkbox"><input type="checkbox" id="st-filter-tr4" value="TR4" checked><label for="st-filter-tr4">四等三角点</label></div>
+              <div class="rank-toggle-buttons">
+                <button class="rank-toggle-btn" id="st-rank-all-on">すべてオン</button>
+                <button class="rank-toggle-btn" id="st-rank-all-off">すべてオフ</button>
+              </div>
+            </div>
+            <div class="sort-button-container">
+              <button class="sort-btn active" data-st-sort="rate">訪問率</button>
+              <button class="sort-btn" data-st-sort="visited">訪問数</button>
+              <button class="sort-btn" data-st-sort="total">総点数</button>
+            </div>
+            <div class="pref-stats" id="st-pref-stats"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- セグメント詳細ツールチップ -->
+    <div class="segment-tooltip" id="segment-tooltip"></div>
+
+    <!-- 地図タブ（Phase3） -->
+    <div class="tab-panel" id="tab-map">
+      <div class="vmap-wrap">
+        <div id="visit-map"></div>
+        <button class="map-list-btn" id="vmap-list-btn" title="リスト表示"><svg class="ic" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></button>
+        <div class="vmap-loading" id="vmap-loading"><div class="spinner" style="border:4px solid #f3f3f3;border-top:4px solid var(--primary);border-radius:50%;width:50px;height:50px;animation:spin 1s linear infinite;"></div></div>
+        <div class="vmap-list-panel" id="vmap-list-panel">
+          <div class="vmap-list-header">
+            <h2><svg class="ic" viewBox="0 0 24 24"><polygon points="1,6 1,22 8,18 16,22 23,18 23,2 16,6 8,2"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg> 訪問履歴リスト</h2>
+            <button class="vmap-list-header-close" id="vmap-close-btn">×</button>
+          </div>
+          <div class="vmap-list-controls">
+            <input type="text" class="vmap-search-box" id="vmap-search-box" placeholder="点名で検索...">
+            <select class="vmap-search-box" id="vmap-pref-filter"><option value="">すべての都道府県</option></select>
+            <div class="vmap-sort-buttons">
+              <button class="vmap-sort-btn active" data-vmap-sort="date"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> 探索日順</button>
+              <button class="vmap-sort-btn" data-vmap-sort="rank"><svg class="ic" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg> 点種別順</button>
+            </div>
+          </div>
+          <div class="vmap-list-content" id="vmap-list-content"><div class="vmap-no-results">読み込み中...</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 設定タブ（Phase5） -->
+    <div class="tab-panel" id="tab-settings">
+      <div class="cfg-wrap">
+        <div class="cfg-container">
+          <section class="cfg-section">
+            <h2><svg class="ic" viewBox="0 0 24 24"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg> データ管理</h2>
+            <div class="cfg-item">
+              <div>
+                <div class="cfg-item-label">探索履歴のエクスポート</div>
+                <div class="cfg-item-desc">訪問履歴と写真をまとめて保存</div>
+              </div>
+              <button class="cfg-btn cfg-btn-primary" id="cfg-export-btn">書き出し</button>
+            </div>
+            <div class="cfg-item">
+              <div>
+                <div class="cfg-item-label">探索履歴のインポート</div>
+                <div class="cfg-item-desc">写真を含むバックアップから復元</div>
+              </div>
+              <label class="cfg-file-label" id="cfg-import-label">取り込み</label>
+              <input type="file" id="cfg-import-file" accept=".zip" style="position:absolute;opacity:0;width:0;height:0;pointer-events:none;">
+            </div>
+            <div class="cfg-item" style="flex-direction:column;align-items:flex-start;">
+              <div style="display:flex;justify-content:space-between;align-items:center;width:100%;margin-bottom:0.4rem;">
+                <div>
+                  <div class="cfg-item-label">キャッシュ使用量</div>
+                  <div class="cfg-item-desc">オフライン用のキャッシュサイズ</div>
+                </div>
+                <button class="cfg-btn cfg-btn-primary" id="cfg-refresh-cache-btn" style="padding:0.4rem 0.8rem;font-size:0.8rem;">更新</button>
+              </div>
+              <div class="cfg-cache-box" id="cfg-cache-size"><svg class="ic" viewBox="0 0 24 24"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg> 計算中...</div>
+            </div>
+            <div class="cfg-item">
+              <div>
+                <div class="cfg-item-label">キャッシュのクリア</div>
+                <div class="cfg-item-desc">オフライン用のキャッシュを削除</div>
+              </div>
+              <button class="cfg-btn cfg-btn-danger" id="cfg-clear-cache-btn">クリア</button>
+            </div>
+          </section>
+          <section class="cfg-section">
+            <h2><svg class="ic" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg> 音声設定</h2>
+            <div class="cfg-item">
+              <div>
+                <div class="cfg-item-label">測設時の音声通知</div>
+                <div class="cfg-item-desc">5m以内に到達時の音声</div>
+              </div>
+              <div class="cfg-toggle active" id="cfg-sound-toggle"></div>
+            </div>
+            <div class="cfg-item">
+              <div>
+                <div class="cfg-item-label">測設時の振動通知</div>
+                <div class="cfg-item-desc">5m以内に到達時のバイブレーション（Androidのみ）</div>
+              </div>
+              <div class="cfg-toggle active" id="cfg-vibrate-toggle"></div>
+            </div>
+          </section>
+          <section class="cfg-section">
+            <h2><svg class="ic" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg> データベース状況</h2>
+            <p id="cfg-db-loading" style="color:#999;font-size:0.9rem;margin:0 0 0.5rem;">初期化中...</p>
+            <div class="cfg-db-stats" id="cfg-db-stats" style="display:none">
+              <div class="cfg-stat-item">
+                <div class="cfg-stat-value" id="cfg-stat-bases">-</div>
+                <div class="cfg-stat-label">基準点情報</div>
+              </div>
+              <div class="cfg-stat-item">
+                <div class="cfg-stat-value" id="cfg-stat-visits">-</div>
+                <div class="cfg-stat-label">訪問履歴</div>
+              </div>
+            </div>
+          </section>
+          <section class="cfg-section">
+            <h2><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> このアプリについて</h2>
+            <p style="margin:0 0 1rem;line-height:1.6;">国土地理院が公開する基準点データを使用して、電子基準点・三角点の検索、探索記録が可能です。</p>
+            <ul style="margin:0 0 1rem;padding-left:1.3rem;line-height:1.8;">
+              <li><svg class="ic" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> 全国の基準点情報（電子基準点、一等〜四等三角点）</li>
+              <li><svg class="ic" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> 初回ダウンロード後、オフラインでも使用可能</li>
+              <li><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> 探索履歴と写真を記録</li>
+              <li><svg class="ic" viewBox="0 0 24 24"><polygon points="1,6 1,22 8,18 16,22 23,18 23,2 16,6 8,2"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg> 地理院地図でロケーション確認</li>
+              <li><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="3" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="21"/><line x1="3" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="21" y2="12"/></svg> GPS機能で測設モード対応</li>
+            </ul>
+            <p style="font-size:0.85rem;color:#666;margin:0;line-height:1.5;">出典：国土地理院（基準点成果等閲覧サービス）</p>
+          </section>
+        </div>
+      </div>
+    </div>
+    <!-- 設定：インポートオプションモーダル -->
+    <div class="cfg-overlay" id="cfg-import-options-overlay">
+      <div class="cfg-modal">
+        <div class="cfg-modal-title"><svg class="ic" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> インポート方法の選択</div>
+        <div class="cfg-modal-desc">インポート前に現在の履歴をバックアップしておくことをおすすめします。</div>
+        <div class="cfg-modal-btns">
+          <button class="cfg-modal-btn primary" id="cfg-import-backup-btn"><svg class="ic" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> バックアップを作成してインポート</button>
+          <button class="cfg-modal-btn secondary" id="cfg-import-only-btn">インポートのみ</button>
+          <button class="cfg-modal-btn secondary" id="cfg-import-cancel-btn">キャンセル</button>
+        </div>
+      </div>
+    </div>
+    <!-- 設定：競合解決モーダル -->
+    <div class="cfg-overlay" id="cfg-conflict-overlay">
+      <div class="cfg-modal">
+        <div class="cfg-modal-title"><svg class="ic" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> 履歴の競合があります</div>
+        <div class="cfg-conflict-progress" id="cfg-conflict-progress"></div>
+        <div class="cfg-conflict-base" id="cfg-conflict-base"></div>
+        <div class="cfg-conflict-cards">
+          <div class="cfg-conflict-card existing selected" id="cfg-conflict-existing">
+            <span class="cfg-conflict-check"><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+            <div class="cfg-conflict-card-label"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> 既存の履歴</div>
+            <div id="cfg-conflict-existing-info"></div>
+          </div>
+          <div class="cfg-conflict-card imported" id="cfg-conflict-imported">
+            <span class="cfg-conflict-check"><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+            <div class="cfg-conflict-card-label"><svg class="ic" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> インポートの履歴</div>
+            <div id="cfg-conflict-imported-info"></div>
+          </div>
+        </div>
+        <label class="cfg-apply-all">
+          <input type="checkbox" id="cfg-apply-all-check"> 選択を以降すべてに適用
+        </label>
+        <div class="cfg-modal-btns">
+          <button class="cfg-modal-btn primary" id="cfg-conflict-decide-btn">決定</button>
+        </div>
+      </div>
+    </div>
+
   </main>
 
+  <!-- 詳細パネル (dt-) -->
+  <div class="dt-overlay" id="dt-overlay" onclick="if(event.target===this)dtClose()">
+    <div class="dt-modal">
+      <div class="dt-header">
+        <div class="dt-header-title" id="dt-header-title">基準点詳細</div>
+        <button class="dt-close-btn" onclick="dtClose()">×</button>
+      </div>
+      <div class="dt-body" id="dt-body">
+        <div class="dt-container"><div style="text-align:center;padding:3rem;color:#999;">読み込み中...</div></div>
+      </div>
+    </div>
+  </div>
+  <!-- 写真拡大モーダル -->
+  <div class="dt-photo-modal" id="dt-photo-modal" onclick="if(event.target===this)dtClosePhoto()">
+    <div class="dt-photo-modal-inner">
+      <button class="dt-photo-modal-close" onclick="dtClosePhoto()">×</button>
+      <img id="dt-photo-modal-img" alt="">
+      <div id="dt-photo-modal-label" class="dt-photo-modal-label"></div>
+    </div>
+  </div>
+  <!-- 履歴入力ポップアップ (av-) -->
+  <div class="av-overlay" id="av-overlay">
+    <div class="av-wrap">
+      <div class="av-modal">
+        <div class="av-modal-header">
+          <h2 class="av-modal-title" id="av-title"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> 履歴入力</h2>
+          <div class="av-header-btns">
+            <button class="av-delete-hdr-btn" id="av-delete-hdr-btn" style="display:none" onclick="avShowDelete()"><svg class="ic" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg> 削除</button>
+            <button class="av-close-btn" onclick="avClose()">×</button>
+          </div>
+        </div>
+        <div class="av-base-info">
+          <div class="av-base-rank" id="av-base-rank"></div>
+          <div class="av-base-name" id="av-base-name"></div>
+        </div>
+        <div class="av-body">
+          <form id="av-form">
+            <div class="av-section">
+              <div class="av-form-group">
+                <label class="av-label" for="av-date">探索日</label>
+                <input type="date" id="av-date" class="av-input" required>
+              </div>
+              <div class="av-form-group">
+                <span class="av-label">探索結果</span>
+                <div class="av-checkbox-row">
+                  <input type="checkbox" id="av-found" checked>
+                  <label for="av-found">基準点を発見した</label>
+                </div>
+                <div class="av-hint">※ チェックなし = 見つけられなかった</div>
+              </div>
+            </div>
+            <div class="av-section">
+              <span class="av-label">写真登録</span>
+              <div class="av-photo-section">
+                <div class="av-photo-item" id="av-near-item">
+                  <div class="av-photo-header">
+                    <span class="av-photo-label"><svg class="ic" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 0 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> 近景</span>
+                    <button type="button" class="av-photo-btn" onclick="avSelectPhoto('near')">写真を選択</button>
+                  </div>
+                  <div class="av-hint">縦長 3:4 に自動調整されます</div>
+                  <div class="av-photo-preview" id="av-near-preview">
+                    <img id="av-near-img" alt="近景">
+                    <button type="button" class="av-remove-btn" onclick="avRemovePhoto('near')">×</button>
+                  </div>
+                </div>
+                <div class="av-photo-item" id="av-far-item">
+                  <div class="av-photo-header">
+                    <span class="av-photo-label"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> 遠景</span>
+                    <button type="button" class="av-photo-btn" onclick="avSelectPhoto('far')">写真を選択</button>
+                  </div>
+                  <div class="av-hint">縦長 3:4 に自動調整されます</div>
+                  <div class="av-photo-preview" id="av-far-preview">
+                    <img id="av-far-img" alt="遠景">
+                    <button type="button" class="av-remove-btn" onclick="avRemovePhoto('far')">×</button>
+                  </div>
+                </div>
+              </div>
+              <input type="file" id="av-photo-input" accept="image/*" onchange="avHandlePhotoSelect(event)" style="position:absolute;opacity:0;width:0;height:0;pointer-events:none;">
+            </div>
+            <div class="av-section">
+              <div class="av-form-group">
+                <label class="av-label" for="av-memo">メモ</label>
+                <textarea id="av-memo" class="av-input" placeholder="探索時の状況や気づいたことを記録"></textarea>
+              </div>
+            </div>
+            <button type="submit" class="av-submit-btn" id="av-submit-btn"><svg class="ic" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> 登録する</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- 履歴: トリミングモーダル -->
+  <div class="av-crop-modal" id="av-crop-modal">
+    <div class="av-crop-container">
+      <img id="av-crop-image" class="av-crop-image" alt="">
+      <div style="position:absolute;inset:0;pointer-events:none;">
+        <div class="av-crop-frame" id="av-crop-frame">
+          <div class="av-crop-handle nw"></div><div class="av-crop-handle ne"></div>
+          <div class="av-crop-handle sw"></div><div class="av-crop-handle se"></div>
+        </div>
+      </div>
+    </div>
+    <div class="av-crop-controls">
+      <button type="button" class="av-crop-confirm" onclick="avConfirmCrop()"><svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> 確定</button>
+      <button type="button" class="av-crop-cancel" onclick="avCancelCrop()">× キャンセル</button>
+    </div>
+  </div>
+  <!-- 履歴: 削除確認モーダル -->
+  <div class="av-confirm-modal" id="av-confirm-modal">
+    <div class="av-confirm-box">
+      <div class="av-confirm-title"><svg class="ic" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg> 探索履歴の削除</div>
+      <div class="av-confirm-msg">本当に削除しますか？</div>
+      <div class="av-confirm-btns">
+        <button class="av-confirm-btn yes" onclick="avConfirmDelete()">はい</button>
+        <button class="av-confirm-btn no" onclick="avCloseDelete()">いいえ</button>
+      </div>
+    </div>
+  </div>
+
+  <nav id="bottom-tab">
+    <button class="tab-btn active" data-tab="tab-search"><span class="tab-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/></svg></span><span>検索</span></button>
+    <button class="tab-btn" data-tab="tab-sokusetsu"><span class="tab-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="3" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="21"/><line x1="3" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="21" y2="12"/></svg></span><span>測設</span></button>
+    <button class="tab-btn" data-tab="tab-stats"><span class="tab-icon"><svg viewBox="0 0 24 24"><rect x="3" y="12" width="4" height="9" rx="1"/><rect x="10" y="7" width="4" height="14" rx="1"/><rect x="17" y="3" width="4" height="18" rx="1"/></svg></span><span>統計</span></button>
+    <button class="tab-btn" data-tab="tab-map"><span class="tab-icon"><svg viewBox="0 0 24 24"><polygon points="1,6 1,22 8,18 16,22 23,18 23,2 16,6 8,2"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg></span><span>地図</span></button>
+    <button class="tab-btn" data-tab="tab-settings"><span class="tab-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span>設定</span></button>
+  </nav>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script type="module">
     import KijuntenDB from './src/db.js'
-
+    import { getLabel, ensureMasterDataLoaded } from './src/metadata.js'
     const db = new KijuntenDB()
-    const dbStatus = document.getElementById('db-status')
 
-    // Service Worker の登録
+    // タブ切替
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const t = btn.dataset.tab
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'))
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'))
+        document.getElementById(t).classList.add('active')
+        btn.classList.add('active')
+        if (t === 'tab-stats') initStatsTab()
+        if (t === 'tab-map') { vmapInit(); setTimeout(() => vmapLeaflet && vmapLeaflet.invalidateSize(), 100) }
+        if (t === 'tab-sokusetsu') skInit()
+        if (t === 'tab-settings') initSettingsTab()
+      })
+    })
+
+    // Service Worker
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js')
-        .then(registration => {
-          console.log('Service Worker registered:', registration.scope)
-
-          // 新しいSWが見つかったときに更新バナーを表示
-          registration.addEventListener('updatefound', () => {
-            const newWorker = registration.installing
-            newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                showUpdateBanner()
-              }
-            })
+      navigator.serviceWorker.register('./sw.js').then(reg => {
+        reg.addEventListener('updatefound', () => {
+          const nw = reg.installing
+          nw.addEventListener('statechange', () => {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller)
+              document.getElementById('update-banner').classList.add('show')
           })
         })
-        .catch(err => {
-          console.error('Service Worker registration failed:', err)
-        })
-    }
-
-    function showUpdateBanner() {
-      const banner = document.createElement('div')
-      banner.style.cssText = [
-        'position:fixed', 'bottom:0', 'left:0', 'right:0',
-        'background:#1565c0', 'color:white',
-        'padding:0.9rem 1.2rem',
-        'display:flex', 'align-items:center', 'justify-content:space-between',
-        'z-index:99999', 'font-size:0.9rem',
-        'box-shadow:0 -2px 12px rgba(0,0,0,0.25)'
-      ].join(';')
-      banner.innerHTML = `
-        <span>🆕 アプリが更新されました</span>
-        <button onclick="window.location.reload()" style="
-          background:white;color:#1565c0;border:none;border-radius:6px;
-          padding:0.45rem 1rem;font-weight:bold;font-size:0.9rem;cursor:pointer;
-        ">更新する</button>
-      `
-      document.body.appendChild(banner)
+      })
     }
 
     // DB初期化
     async function initDB() {
       try {
         await db.init()
-        await updateDBStatus()
-        // 初回起動時はローカルの data/points_XX.json を読み込んで IndexedDB に保存
         const size = await db.getSize()
         const initialDone = await db.getMetadata('initial_import_done')
-        if (size.bases === 0 && !initialDone) {
-          // 自動でローカルデータを取り込む
-          await loadLocalData()
-        }
-      } catch (error) {
-        console.error('DB init error:', error)
-        dbStatus.innerHTML = '<p style="color: #f44336;">エラー: IndexedDBの初期化に失敗しました</p>'
+        if (size.bases === 0 && !initialDone) await loadLocalData()
+      } catch(e) {
+        console.error('DB init error:', e)
       }
     }
 
-    // ローカル data/points_01..47.json を順次読み込み DB に登録
     async function loadLocalData() {
-      // オーバーレイを表示
-      const loadingOverlay = document.getElementById('loading-overlay')
-      loadingOverlay.classList.remove('hidden')
-
-      try {
-        // 進捗表示要素を作成（オーバーレイに直接追加）
-        const progressDiv = document.createElement('div')
-        progressDiv.id = 'download-progress'
-        progressDiv.innerHTML = `
-          <p id="progress-text">ローカルデータを読み込み中...</p>
-          <div class="progress-bar">
-            <div class="progress-bar-fill" id="progress-fill" style="width: 0%"></div>
-          </div>
-          <div id="file-list-container">
-            <strong style="font-size:0.95rem;">読み込みファイル:</strong>
-            <ul id="file-list"></ul>
-          </div>
-        `
-        loadingOverlay.appendChild(progressDiv)
-
-        const progressText = document.getElementById('progress-text')
-        const progressFill = document.getElementById('progress-fill')
-        const fileList = document.getElementById('file-list')
-
-        // まずマスタテーブルを読み込み
-        const masterFiles = [
-          'data/pref_ids.json',
-          'data/quality_ids.json',
-          'data/attachment_ids.json',
-          'data/result_status_ids.json',
-          'data/result_division_ids.json',
-          'data/reconstruction_status_ids.json',
-          'data/attr_status_ids.json',
-          'data/land_type_ids.json'
-        ]
-
-        progressText.textContent = 'マスタテーブルを読み込み中...'
-        for (const path of masterFiles) {
-          try {
-            const res = await fetch(path)
-            if (!res.ok) throw new Error(`HTTP ${res.status}`)
-            const data = await res.json()
-            
-            // ファイル名からキーを抽出（例：pref_ids.json → pref_ids）
-            const key = path.split('/').pop().replace('.json', '')
-            await db.setMetadata(key, data)
-            
-            if (fileList) {
-              const li = document.createElement('li')
-              li.textContent = path + ` — ${Object.keys(data).length}件`
-              fileList.appendChild(li)
-            }
-          } catch (err) {
-            console.warn('Failed loading', path, err)
-          }
-        }
-
-        // 基準点データを読み込み
-        const total = 47
-        for (let i = 1; i <= total; i++) {
-          const idx = String(i).padStart(2, '0')
-          const path = `data/points_${idx}.json`
-          progressText.textContent = `読み込み: ${path}`
-          try {
-            const res = await fetch(path)
-            if (!res.ok) throw new Error(`HTTP ${res.status}`)
-            const arr = await res.json()
-            if (Array.isArray(arr) && arr.length > 0) {
-              // bases に追加（ファイル単位で追加）
-              await db.addBases(arr)
-              // 読み込んだファイルをリストに追加して可視化
-              if (fileList) {
-                const li = document.createElement('li')
-                li.textContent = path + ` — ${arr.length.toLocaleString()}件`
-                fileList.appendChild(li)
-              }
-            }
-          } catch (err) {
-            console.warn('Failed loading', path, err)
-          }
-
-          const pct = Math.round((i / total) * 100)
-          progressFill.style.width = pct + '%'
-        }
-
-        // 完了マーク
-        await db.setMetadata('initial_import_done', true)
-        progressText.textContent = '✓ ローカルデータ取り込み完了'
-        progressFill.style.width = '100%'
-        await new Promise(r => setTimeout(r, 800))
-        progressDiv.style.display = 'none'
-        updateDBStatus()
-      } catch (error) {
-        console.error('Local import error:', error)
-        const progressText = document.getElementById('progress-text')
-        if (progressText) {
-          progressText.textContent = '❌ ローカルデータ取り込みエラー'
-        }
-      } finally {
-        // オーバーレイを非表示
-        const loadingOverlay = document.getElementById('loading-overlay')
-        loadingOverlay.classList.add('hidden')
+      const overlay = document.getElementById('loading-overlay')
+      overlay.classList.remove('hidden')
+      overlay.innerHTML += `<p id="progress-text">ローカルデータを読み込み中...</p>
+        <div class="progress-bar"><div class="progress-bar-fill" id="progress-fill" style="width:0%"></div></div>
+        <div id="file-list-container"><strong>読み込みファイル:</strong><ul id="file-list"></ul></div>`
+      const pt = document.getElementById('progress-text')
+      const pf = document.getElementById('progress-fill')
+      const fl = document.getElementById('file-list')
+      const masters = ['data/pref_ids.json','data/quality_ids.json','data/attachment_ids.json',
+        'data/result_status_ids.json','data/result_division_ids.json',
+        'data/reconstruction_status_ids.json','data/attr_status_ids.json','data/land_type_ids.json']
+      pt.textContent = 'マスタテーブルを読み込み中...'
+      for (const path of masters) {
+        try {
+          const res = await fetch(path); if (!res.ok) continue
+          const data = await res.json()
+          await db.setMetadata(path.split('/').pop().replace('.json',''), data)
+          const li = document.createElement('li'); li.textContent = path + ' — ' + Object.keys(data).length + '件'; fl.appendChild(li)
+        } catch(e) {}
       }
+      for (let i = 1; i <= 47; i++) {
+        const idx = String(i).padStart(2,'0'), path = 'data/points_' + idx + '.json'
+        pt.textContent = '読み込み: ' + path
+        try {
+          const res = await fetch(path); if (!res.ok) continue
+          const arr = await res.json()
+          if (Array.isArray(arr) && arr.length > 0) {
+            await db.addBases(arr)
+            const li = document.createElement('li'); li.textContent = path + ' — ' + arr.length.toLocaleString() + '件'; fl.appendChild(li)
+          }
+        } catch(e) {}
+        pf.style.width = Math.round((i/47)*100) + '%'
+      }
+      await db.setMetadata('initial_import_done', true)
+      pt.innerHTML = '<svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> 取り込み完了'; pf.style.width = '100%'
+      await new Promise(r => setTimeout(r, 700))
+      overlay.classList.add('hidden')
+      allBases = await db.getAllBases()
     }
 
-    // DB状況更新
-    async function updateDBStatus() {
+    // ====== 検索タブ ======
+    const PAGE_SIZE = 20
+    let currentPage = 1, searchResults = [], allBases = [], prefNames = {}
+    let searchMode = 'normal', visitedBaseIds = new Set(), bookmarkedBaseIds = new Set()
+
+    async function initSearch() {
+      await loadVisitedBaseIds(); await loadBookmarkedBaseIds()
+      try {
+        const res = await fetch('data/pref_ids.json')
+        if (res.ok) {
+          prefNames = await res.json()
+          const sel = document.getElementById('s-pref-select')
+          Object.keys(prefNames).sort().forEach(id => {
+            const opt = document.createElement('option'); opt.value = id; opt.textContent = prefNames[id]; sel.appendChild(opt)
+          })
+        }
+      } catch(e) {}
+      allBases = await db.getAllBases()
+      if (allBases.length === 0)
+        document.getElementById('s-no-results').innerHTML = '<p style="color:#e65100;"><svg class="ic" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> データがありません。初回起動時に自動ダウンロードされます</p>'
+    }
+
+    async function loadVisitedBaseIds() {
+      try { const v = await getAllVisits(); visitedBaseIds = new Set(v.map(x => x.baseId)) } catch(e) {}
+    }
+    async function loadBookmarkedBaseIds() {
+      try { const b = await getBookmarks(); bookmarkedBaseIds = new Set(b.map(x => x.id)) } catch(e) {}
+    }
+
+    function getAllVisits() {
+      return new Promise((res, rej) => {
+        const req = indexedDB.open('visitHistoryDB')
+        req.onerror = () => rej(new Error())
+        req.onsuccess = e => {
+          const db2 = e.target.result
+          if (!db2.objectStoreNames.contains('visits')) { db2.close(); res([]); return }
+          const gr = db2.transaction(['visits'],'readonly').objectStore('visits').getAll()
+          gr.onsuccess = () => { db2.close(); res(gr.result || []) }
+          gr.onerror = () => { db2.close(); rej() }
+        }
+      })
+    }
+
+    function calcDistance(la1,lo1,la2,lo2){const R=6371,dLa=(la2-la1)*Math.PI/180,dLo=(lo2-lo1)*Math.PI/180,a=Math.sin(dLa/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLo/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))}
+
+    document.getElementById('s-search-btn').addEventListener('click', async () => {
+      searchMode = 'normal'
+      let rankIds = Array.from(document.querySelectorAll('.s-rank-filter')).filter(c=>c.checked).map(c=>c.value)
+      if(rankIds.includes('TR4')&&!rankIds.includes('EK0'))rankIds.push('EK0')
+      if(rankIds.includes('EK0')&&!rankIds.includes('TR4'))rankIds.push('TR4')
+      const q = document.getElementById('s-name-search').value
+      searchResults = await db.searchBases({rankIds, nameQuery:q, nameKanaQuery:q, prefId:document.getElementById('s-pref-select').value})
+      if(document.getElementById('s-exclude-school').checked)
+        searchResults = searchResults.filter(b=>b.land_type_id!=='23'&&b.land_type_id!==23)
+      sortResults(); currentPage=1; displayResults()
+    })
+
+    function sortResults(){
+      const o={EL0:1,TR1:2,TR2:3,TR3:4,TR4:5,EK0:5}
+      searchResults.sort((a,b)=>a.pref_id!==b.pref_id?a.pref_id.localeCompare(b.pref_id):(o[a.rank_id]||99)-(o[b.rank_id]||99))
+    }
+
+    document.getElementById('s-nearby-btn').addEventListener('click', async () => {
+      searchMode='nearby'
+      if(!navigator.geolocation){showToast('位置情報に対応していません','warning');return}
+      const btn=document.getElementById('s-nearby-btn'); btn.disabled=true; btn.innerHTML='<svg class="ic" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>取得中...'
+      navigator.geolocation.getCurrentPosition(pos=>{
+        const {latitude:uL,longitude:uO}=pos.coords
+        let rankIds=Array.from(document.querySelectorAll('.s-rank-filter')).filter(c=>c.checked).map(c=>c.value)
+        if(rankIds.includes('TR4')&&!rankIds.includes('EK0'))rankIds.push('EK0')
+        if(rankIds.includes('EK0')&&!rankIds.includes('TR4'))rankIds.push('TR4')
+        let targets=rankIds.length>0?allBases.filter(b=>rankIds.includes(b.rank_id)):allBases
+        if(document.getElementById('s-exclude-school').checked)targets=targets.filter(b=>b.land_type_id!=='23'&&b.land_type_id!==23)
+        searchResults=targets.map(b=>({...b,distance:calcDistance(uL,uO,b.lat,b.lon)})).sort((a,b)=>a.distance-b.distance).slice(0,20)
+        currentPage=1; displayResults(); btn.disabled=false; btn.innerHTML='<svg class="ic" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> 近傍20点'
+      }, ()=>{showToast('位置情報の取得に失敗しました','error'); btn.disabled=false; btn.innerHTML='<svg class="ic" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> 近傍20点'},
+      {enableHighAccuracy:true,timeout:10000,maximumAge:0})
+    })
+
+    document.getElementById('s-clear-btn').addEventListener('click',()=>{
+      searchMode='normal'
+      document.querySelectorAll('.s-rank-filter').forEach(c=>c.checked=false)
+      document.getElementById('s-exclude-school').checked=false
+      document.getElementById('s-name-search').value=''
+      document.getElementById('s-pref-select').value=''
+      searchResults=[];currentPage=1
+      document.getElementById('s-results-table').style.display='none'
+      document.getElementById('s-results-header').style.display='none'
+      document.getElementById('s-no-results').style.display='block'
+      document.getElementById('s-pagination').style.display='none'
+    })
+
+    document.getElementById('s-prev-btn').addEventListener('click',()=>{if(currentPage>1){currentPage--;displayResults()}})
+    document.getElementById('s-next-btn').addEventListener('click',()=>{if(currentPage<Math.ceil(searchResults.length/PAGE_SIZE)){currentPage++;displayResults()}})
+
+    function displayResults(){
+      const hdr=document.getElementById('s-results-header'),tbl=document.getElementById('s-results-table')
+      const tb=document.getElementById('s-results-tbody'),nr=document.getElementById('s-no-results'),pg=document.getElementById('s-pagination')
+      if(!searchResults.length){tbl.style.display='none';hdr.style.display='none';nr.style.display='block';pg.style.display='none';return}
+      const maxPg=Math.ceil(searchResults.length/PAGE_SIZE)
+      const items=searchResults.slice((currentPage-1)*PAGE_SIZE,currentPage*PAGE_SIZE)
+      if(searchMode==='bookmark'){
+        document.getElementById('s-results-icon').innerHTML='<svg class="ic" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>'
+        document.getElementById('s-results-count').textContent='ブックマーク: '+searchResults.length+'件'
+      }else{
+        document.getElementById('s-results-icon').innerHTML='<svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/></svg>'
+        document.getElementById('s-results-count').textContent='検索結果: '+searchResults.length+'件'
+      }
+      hdr.style.display='flex'
+      const th=tbl.querySelector('thead tr')
+      th.innerHTML=searchMode==='nearby'?'<th>種別</th><th>点名</th><th>距離</th><th>都道府県</th><th>詳細</th>'
+        :'<th>種別</th><th>点名</th><th>基準点コード</th><th>都道府県</th><th>詳細</th>'
+      tb.innerHTML=items.map(b=>{
+        const pn=prefNames[b.pref_id]||'-',rl=getLabel('rank_ids',b.rank_id)
+        let sr=rl
+        if(rl.includes('電子'))sr='電子';else if(rl.includes('一等'))sr='一等';else if(rl.includes('二等'))sr='二等';else if(rl.includes('三等'))sr='三等';else if(rl.includes('四等'))sr='四等'
+        const cls=visitedBaseIds.has(b.id)?' class="visited-row"':bookmarkedBaseIds.has(b.id)?' class="bookmarked-row"':''
+        const c3=searchMode==='nearby'&&b.distance!==undefined?(b.distance<1?Math.round(b.distance*1000)+'m':b.distance.toFixed(2)+'km'):'<code style="font-size:0.75rem;">'+b.id+'</code>'
+        return '<tr'+cls+'><td>'+sr+'</td><td>'+(b.name||'-')+'</td><td>'+c3+'</td><td>'+pn+'</td><td><button onclick="dtOpen(\''+b.id+'\')" class="detail-btn"><svg class="ic" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></td></tr>'
+      }).join('')
+      document.getElementById('s-page-info').textContent=currentPage+'/'+maxPg+'（全'+searchResults.length+'件）'
+      tbl.style.display='table';nr.style.display='none';pg.style.display='flex'
+      document.getElementById('s-prev-btn').disabled=currentPage===1
+      document.getElementById('s-next-btn').disabled=currentPage===maxPg
+    }
+
+    // ブックマーク
+    async function showBookmarksInTable(){
+      await ensureMasterDataLoaded()
+      const bms = await getBookmarks()
+      if(!bms.length){ searchResults=[]; searchMode='bookmark'; currentPage=1; displayResults(); return }
+      const bases = (await Promise.all(bms.map(b=>db.getBase(b.id)))).filter(Boolean)
+      searchResults=bases; searchMode='bookmark'; currentPage=1; displayResults()
+    }
+    document.getElementById('s-bookmark-list-btn').addEventListener('click', showBookmarksInTable)
+
+    function getBookmarks(){return new Promise(res=>{const req=indexedDB.open('bookmarkDB',1);req.onerror=()=>res([]);req.onsuccess=e=>{const db2=e.target.result;if(!db2.objectStoreNames.contains('bookmarks')){db2.close();res([]);return}const gr=db2.transaction(['bookmarks'],'readonly').objectStore('bookmarks').get('list');gr.onsuccess=()=>{db2.close();res(gr.result?.bookmarks||[])};gr.onerror=()=>{db2.close();res([])}};req.onupgradeneeded=e=>{if(!e.target.result.objectStoreNames.contains('bookmarks'))e.target.result.createObjectStore('bookmarks',{keyPath:'key'})}})}
+    function saveBookmarks(bms){return new Promise((res,rej)=>{const req=indexedDB.open('bookmarkDB',1);req.onerror=()=>rej();req.onsuccess=e=>{const db2=e.target.result;const tx=db2.transaction(['bookmarks'],'readwrite');const pr=tx.objectStore('bookmarks').put({key:'list',bookmarks:bms});pr.onsuccess=()=>{db2.close();res()};pr.onerror=()=>{db2.close();rej()}};req.onupgradeneeded=e=>{if(!e.target.result.objectStoreNames.contains('bookmarks'))e.target.result.createObjectStore('bookmarks',{keyPath:'key'})}})}
+
+    // ====== 統計タブ ======
+    let statsLoaded = false
+    let stCurrentSort = 'rate'
+    let stAllBases = []
+
+    async function initStatsTab() {
+      if (statsLoaded) return
+      statsLoaded = true
+      document.getElementById('stats-loading').innerHTML = '<p><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="12" width="4" height="9" rx="1"/><rect x="10" y="7" width="4" height="14" rx="1"/><rect x="17" y="3" width="4" height="18" rx="1"/></svg> 読み込み中...</p>'
       try {
         const size = await db.getSize()
-        
-        if (size.bases === 0) {
-          dbStatus.innerHTML = '<p style="color: #FF9800;">⚠️ データがまだダウンロードされていません</p>'
-        } else {
-          dbStatus.innerHTML = '<p style="color: #4CAF50;">✓ データは利用可能です</p>'
-        }
-      } catch (error) {
-        console.error('Error updating DB status:', error)
+        stAllBases = await db.getAllBases()
+        const visits = await getAllVisits()
+        const uniqueVisited = new Set(visits.map(v => v.baseId))
+
+        document.getElementById('st-total-bases').textContent = size.bases.toLocaleString()
+        document.getElementById('st-total-visits').textContent = visits.length.toLocaleString()
+        const vRate = size.bases > 0 ? ((uniqueVisited.size / size.bases) * 100).toFixed(3) : '0.000'
+        document.getElementById('st-visit-rate').textContent = vRate + '%'
+
+        const foundCount = visits.filter(v => v.found).length
+        const notFoundCount = visits.filter(v => !v.found).length
+        document.getElementById('st-found-count').textContent = foundCount.toLocaleString()
+        document.getElementById('st-not-found-count').textContent = notFoundCount.toLocaleString()
+        const fRate = visits.length > 0 ? ((foundCount / visits.length) * 100).toFixed(1) : 0
+        document.getElementById('st-found-rate').textContent = fRate + '%'
+
+        stRenderRankStats(stAllBases, uniqueVisited)
+        await stRenderPrefStats(stAllBases)
+
+        document.getElementById('stats-loading').style.display = 'none'
+        document.getElementById('stats-content').style.display = 'block'
+
+        // フィルタ・ソートのイベント
+        document.querySelectorAll('#tab-stats .rank-checkbox input[type="checkbox"]').forEach(cb => {
+          cb.addEventListener('change', () => stRenderPrefStats(stAllBases))
+        })
+        document.getElementById('st-rank-all-on').addEventListener('click', () => {
+          document.querySelectorAll('#tab-stats .rank-checkbox input').forEach(c => c.checked = true)
+          stRenderPrefStats(stAllBases)
+        })
+        document.getElementById('st-rank-all-off').addEventListener('click', () => {
+          document.querySelectorAll('#tab-stats .rank-checkbox input').forEach(c => c.checked = false)
+          stRenderPrefStats(stAllBases)
+        })
+        document.querySelectorAll('[data-st-sort]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('[data-st-sort]').forEach(b => b.classList.remove('active'))
+            btn.classList.add('active')
+            stCurrentSort = btn.dataset.stSort
+            stRenderPrefStats(stAllBases)
+          })
+        })
+      } catch(e) {
+        console.error('統計エラー:', e)
+        document.getElementById('stats-loading').innerHTML = '<p style="color:#f44336;">読み込みに失敗しました</p>'
+        statsLoaded = false
       }
     }
 
-    // 初期化
+    function stRenderRankStats(bases, visitedIds) {
+      const rankStats = {}, rankOrder = ['EL0','TR1','TR2','TR3','TR4']
+      bases.forEach(b => {
+        if (!rankStats[b.rank_id]) rankStats[b.rank_id] = { total: 0, visited: 0 }
+        rankStats[b.rank_id].total++
+        if (visitedIds.has(b.id)) rankStats[b.rank_id].visited++
+      })
+      const container = document.getElementById('st-rank-stats')
+      container.innerHTML = ''
+      rankOrder.forEach(rankId => {
+        if (!rankStats[rankId]) return
+        const s = rankStats[rankId]
+        const lbl = getLabel('rank_ids', rankId)
+        const pct = s.total > 0 ? ((s.visited / s.total) * 100).toFixed(3) : '0.000'
+        const div = document.createElement('div')
+        div.className = 'rank-item'
+        div.innerHTML = `<div class="rank-name">${lbl}</div><div class="rank-count">${s.total.toLocaleString()}点</div><div class="rank-visit-detail">訪問: ${s.visited.toLocaleString()}点 (${pct}%)</div>`
+        container.appendChild(div)
+      })
+    }
+
+    function stGetSelectedRanks() {
+      return Array.from(document.querySelectorAll('#tab-stats .rank-checkbox input[type="checkbox"]'))
+        .filter(c => c.checked).map(c => c.value)
+    }
+
+    async function stRenderPrefStats(bases) {
+      let stPrefNames = prefNames
+      if (!Object.keys(stPrefNames).length) {
+        try { const r = await fetch('data/pref_ids.json'); if (r.ok) stPrefNames = await r.json() } catch(e) {}
+      }
+      const visits = await getAllVisits()
+      const visitedIds = new Set(visits.map(v => v.baseId))
+      const selectedRanks = stGetSelectedRanks()
+      const filtered = bases.filter(b => selectedRanks.includes(b.rank_id))
+      const prefSt = {}
+      filtered.forEach(b => {
+        const pid = b.pref_id, rank = b.rank_id || 'unknown'
+        const isV = visitedIds.has(b.id)
+        if (!prefSt[pid]) prefSt[pid] = { total: 0, visited: 0, byRank: {} }
+        prefSt[pid].total++
+        if (isV) prefSt[pid].visited++
+        const key = `${rank}-${isV ? 'visited' : 'unvisited'}`
+        prefSt[pid].byRank[key] = (prefSt[pid].byRank[key] || 0) + 1
+      })
+      const sorted = Object.entries(prefSt).map(([pid, st]) => {
+        const vr = st.total > 0 ? (st.visited / st.total) * 100 : 0
+        return [pid, stPrefNames[pid] || `都道府県${pid}`, st, vr]
+      }).sort((a, b) => {
+        if (stCurrentSort === 'rate') return b[3] - a[3]
+        if (stCurrentSort === 'visited') return b[2].visited - a[2].visited
+        if (stCurrentSort === 'total') return b[2].total - a[2].total
+        return a[1].localeCompare(b[1], 'ja')
+      })
+      const container = document.getElementById('st-pref-stats')
+      container.innerHTML = ''
+      const rankOrder = ['EL0','TR1','TR2','TR3','TR4']
+      sorted.forEach(([pid, pname, st, vr]) => {
+        const vrDisp = vr.toFixed(3)
+        const item = document.createElement('div')
+        item.className = 'pref-item'
+        item.innerHTML = `<div class="pref-header"><div class="pref-name">${pname} (${vrDisp}%)</div><div class="pref-count">${st.visited.toLocaleString()} / ${st.total.toLocaleString()}</div></div><div class="pref-bar-container"><div class="pref-bar"></div></div>`
+        const bar = item.querySelector('.pref-bar')
+        rankOrder.forEach(rank => {
+          if (!selectedRanks.includes(rank)) return
+          const unv = st.byRank[`${rank}-unvisited`] || 0
+          const vis = st.byRank[`${rank}-visited`] || 0
+          ;[{cnt: unv, isV: false}, {cnt: vis, isV: true}].forEach(({cnt, isV}) => {
+            if (!cnt) return
+            const pct = (cnt / st.total) * 100
+            const seg = document.createElement('div')
+            seg.className = `pref-bar-segment rank-${rank.toLowerCase()}-${isV ? 'visited' : 'unvisited'}`
+            seg.style.width = pct + '%'
+            bar.appendChild(seg)
+            const color = window.getComputedStyle(seg).backgroundColor
+            const rankLabels = {EL0:'電子基準点',TR1:'一等三角点',TR2:'二等三角点',TR3:'三等三角点',TR4:'四等三角点'}
+            seg.addEventListener('mouseenter', e => stShowTooltip({rank, isVisited: isV, count: cnt, percentage: pct, color}, e))
+            seg.addEventListener('mousemove', stMoveTooltip)
+            seg.addEventListener('mouseleave', stHideTooltip)
+          })
+        })
+        container.appendChild(item)
+      })
+    }
+
+    function stShowTooltip(d, e) {
+      const tt = document.getElementById('segment-tooltip')
+      const rankLabels = {EL0:'電子基準点',TR1:'一等三角点',TR2:'二等三角点',TR3:'三等三角点',TR4:'四等三角点'}
+      tt.innerHTML = `
+        <div class="segment-tooltip-row"><span class="segment-tooltip-label">点種別</span><span class="segment-tooltip-value">${rankLabels[d.rank]||d.rank}<span class="segment-color-indicator" style="background:${d.color};"></span></span></div>
+        <div class="segment-tooltip-row"><span class="segment-tooltip-label">訪問状態</span><span class="segment-tooltip-value" style="color:${d.isVisited?'#66bb6a':'#999'}">${d.isVisited?'訪問済み':'未訪問'}</span></div>
+        <div class="segment-tooltip-row"><span class="segment-tooltip-label">該当件数</span><span class="segment-tooltip-value">${d.count.toLocaleString()}件</span></div>
+        <div class="segment-tooltip-row"><span class="segment-tooltip-label">割合</span><span class="segment-tooltip-value">${d.percentage.toFixed(1)}%</span></div>`
+      tt.classList.add('show')
+      stMoveTooltip(e)
+    }
+    function stHideTooltip() { document.getElementById('segment-tooltip').classList.remove('show') }
+    function stMoveTooltip(e) {
+      const tt = document.getElementById('segment-tooltip')
+      if (!tt.classList.contains('show')) return
+      let x = e.clientX + 15, y = e.clientY + 15
+      const r = tt.getBoundingClientRect()
+      if (x + r.width > window.innerWidth) x = e.clientX - r.width - 15
+      if (y + r.height > window.innerHeight) y = e.clientY - r.height - 15
+      tt.style.left = x + 'px'; tt.style.top = y + 'px'
+    }
+
+    // ====== 地図タブ ======
+    let vmapLoaded = false, vmapLeaflet = null, vmapMarkers = [], vmapAllVisits = [], vmapCurrentSort = 'date'
+
+    async function vmapInit() {
+      if (vmapLoaded) return
+      vmapLoaded = true
+      try {
+        await ensureMasterDataLoaded()
+        vmapLeaflet = L.map('visit-map', { zoomControl: false }).setView([36.5, 138.0], 6)
+        L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', {
+          attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank">地理院タイル</a>',
+          maxZoom: 18
+        }).addTo(vmapLeaflet)
+        vmapAllVisits = await vmapGetVisitsWithBase()
+        if (vmapAllVisits.length === 0) {
+          document.getElementById('vmap-loading').classList.add('hidden')
+          document.getElementById('vmap-list-content').innerHTML = '<div class="vmap-no-results">訪問履歴がありません</div>'
+          return
+        }
+        vmapAddMarkers(vmapAllVisits)
+        vmapPopulatePrefList()
+        vmapFilterAndSort()
+        if (vmapMarkers.length > 0) vmapLeaflet.fitBounds(L.featureGroup(vmapMarkers).getBounds().pad(0.1))
+        document.getElementById('vmap-loading').classList.add('hidden')
+        // イベントリスナー（1回のみ登録）
+        document.getElementById('vmap-list-btn').addEventListener('click', e => {
+          e.stopPropagation()
+          document.getElementById('vmap-list-panel').classList.toggle('show')
+          document.getElementById('vmap-list-btn').classList.toggle('hidden')
+        })
+        document.getElementById('vmap-close-btn').addEventListener('click', () => {
+          document.getElementById('vmap-list-panel').classList.remove('show')
+          document.getElementById('vmap-list-btn').classList.remove('hidden')
+        })
+        document.getElementById('visit-map').addEventListener('click', () => {
+          document.getElementById('vmap-list-panel').classList.remove('show')
+          document.getElementById('vmap-list-btn').classList.remove('hidden')
+        })
+        document.getElementById('vmap-search-box').addEventListener('input', vmapFilterAndSort)
+        document.getElementById('vmap-pref-filter').addEventListener('change', vmapFilterAndSort)
+        document.querySelectorAll('[data-vmap-sort]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('[data-vmap-sort]').forEach(b => b.classList.remove('active'))
+            btn.classList.add('active')
+            vmapCurrentSort = btn.dataset.vmapSort
+            vmapFilterAndSort()
+          })
+        })
+      } catch(e) {
+        console.error('地図タブエラー:', e)
+        document.getElementById('vmap-loading').innerHTML = '<p style="color:#f44336;">地図の読み込みに失敗しました</p>'
+        vmapLoaded = false
+      }
+    }
+
+    async function vmapGetVisitsWithBase() {
+      const visits = await getAllVisits()
+      return Promise.all(visits.map(async v => {
+        const base = await db.getBase(v.baseId)
+        const pn = base && base.pref_id ? (prefNames[base.pref_id] || '') : ''
+        return { ...v, base: base || { id: v.baseId, name: '不明', lat: 0, lon: 0 }, prefName: pn, prefCode: base ? base.pref_id : '' }
+      }))
+    }
+
+    function vmapPopulatePrefList() {
+      const pm = new Map()
+      vmapAllVisits.forEach(v => { if (v.prefName && v.prefCode) pm.set(v.prefCode, v.prefName) })
+      const sel = document.getElementById('vmap-pref-filter')
+      Array.from(pm.keys()).sort().forEach(code => {
+        const opt = document.createElement('option'); opt.value = pm.get(code); opt.textContent = pm.get(code); sel.appendChild(opt)
+      })
+    }
+
+    function vmapAddMarkers(visits) {
+      vmapMarkers.forEach(m => m.remove()); vmapMarkers = []
+      const bm = new Map()
+      visits.forEach(v => { if (!bm.has(v.baseId) || new Date(v.visitDate) > new Date(bm.get(v.baseId).visitDate)) bm.set(v.baseId, v) })
+      bm.forEach(visit => {
+        const base = visit.base; if (!base.lat || !base.lon) return
+        const rl = getLabel('rank_ids', base.rank_id) || '不明'
+        let iconUrl = 'assets/picture/default.png'
+        if (rl.includes('電子')) iconUrl = 'assets/picture/EL0.png'
+        else if (rl.includes('一等')) iconUrl = 'assets/picture/TR1.png'
+        else if (rl.includes('二等')) iconUrl = 'assets/picture/TR2.png'
+        else if (rl.includes('三等')) iconUrl = 'assets/picture/TR3.png'
+        else if (rl.includes('四等')) iconUrl = 'assets/picture/TR4.png'
+        let sr = rl
+        if (rl.includes('電子')) sr = '電子'; else if (rl.includes('一等')) sr = '一等'; else if (rl.includes('二等')) sr = '二等'; else if (rl.includes('三等')) sr = '三等'; else if (rl.includes('四等')) sr = '四等'
+        const d = new Date(visit.visitDate), ds = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`
+        const marker = L.marker([base.lat, base.lon], {
+          icon: L.icon({ iconUrl, iconSize: [24,24], iconAnchor: [12,12], popupAnchor: [0,-12] })
+        })
+        marker.bindPopup(`<div class="popup-content"><div class="popup-rank">${sr}</div><div class="popup-name">${base.name||'名称不明'}</div><div class="popup-info">最終訪問: ${ds}</div><button onclick="dtOpen('${base.id}','history')" class="popup-btn" style="border:none;cursor:pointer;"><svg class="ic" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> 詳細を見る</button></div>`, { closeButton: false })
+        marker.addTo(vmapLeaflet); vmapMarkers.push(marker)
+      })
+    }
+
+    function vmapFilterAndSort() {
+      const q = document.getElementById('vmap-search-box').value.toLowerCase()
+      const sp = document.getElementById('vmap-pref-filter').value
+      let filtered = vmapAllVisits.filter(v => (v.base.name||'').toLowerCase().includes(q) && (!sp || v.prefName === sp))
+      if (vmapCurrentSort === 'date') {
+        filtered.sort((a, b) => new Date(b.visitDate) - new Date(a.visitDate) || (a.base.rank_id||'').localeCompare(b.base.rank_id||''))
+      } else {
+        filtered.sort((a, b) => (a.base.rank_id||'').localeCompare(b.base.rank_id||'') || new Date(b.visitDate) - new Date(a.visitDate))
+      }
+      vmapUpdateList(filtered)
+    }
+
+    function vmapUpdateList(visits) {
+      const lc = document.getElementById('vmap-list-content')
+      if (!visits.length) { lc.innerHTML = '<div class="vmap-no-results">該当する履歴がありません</div>'; return }
+      lc.innerHTML = visits.map(v => {
+        const rl = getLabel('rank_ids', v.base.rank_id) || '不明'
+        let sr = rl
+        if (rl.includes('電子')) sr = '電子'; else if (rl.includes('一等')) sr = '一等'; else if (rl.includes('二等')) sr = '二等'; else if (rl.includes('三等')) sr = '三等'; else if (rl.includes('四等')) sr = '四等'
+        const d = new Date(v.visitDate), ds = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`
+        return `<div class="vmap-list-item" data-lat="${v.base.lat}" data-lon="${v.base.lon}"><div class="vmap-list-item-header"><div class="vmap-list-item-name">${v.base.name||'名称不明'}</div><div class="vmap-list-item-rank">${sr}</div></div><div class="vmap-list-item-info"><div class="vmap-list-item-date">${ds}</div><div>${v.prefName||''}</div></div></div>`
+      }).join('')
+      lc.querySelectorAll('.vmap-list-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const lat = parseFloat(item.dataset.lat), lon = parseFloat(item.dataset.lon)
+          vmapLeaflet.setView([lat, lon], 15)
+          vmapMarkers.forEach(m => { const ll = m.getLatLng(); if (Math.abs(ll.lat-lat)<0.0001 && Math.abs(ll.lng-lon)<0.0001) m.openPopup() })
+          document.getElementById('vmap-list-panel').classList.remove('show')
+          document.getElementById('vmap-list-btn').classList.remove('hidden')
+        })
+      })
+    }
+
+    // ====== 測設タブ ======
+    let skLoaded = false, skCurrentPos = null, skTargetBase = null, skWatchId = null
+    let skDeviceHeading = 0, skNorthUp = false, sk5mPlayed = false, skAnimId = null
+    const skVisited = new Set()
+    const skSound5m = new Audio('assets/audio/5m.mp3')
+    const skCircles = [5, 25, 50], skMaxR = 50
+
+    function skInit() {
+      if (skLoaded) { if (!skAnimId) skDrawRadar(); return }
+      skLoaded = true
+      document.getElementById('sk-edit-btn').addEventListener('click', skShowCoordPopup)
+      document.getElementById('sk-list-btn').addEventListener('click', skShowNearbyList)
+      document.getElementById('sk-orientation-btn').addEventListener('click', () => { skNorthUp = !skNorthUp; skUpdateOrientationBtn() })
+      document.getElementById('sk-format-decimal').addEventListener('click', () => {
+        document.getElementById('sk-format-decimal').classList.add('active'); document.getElementById('sk-format-dms').classList.remove('active')
+        document.getElementById('sk-decimal-inputs').style.display = 'block'; document.getElementById('sk-dms-inputs').style.display = 'none'
+      })
+      document.getElementById('sk-format-dms').addEventListener('click', () => {
+        document.getElementById('sk-format-dms').classList.add('active'); document.getElementById('sk-format-decimal').classList.remove('active')
+        document.getElementById('sk-decimal-inputs').style.display = 'none'; document.getElementById('sk-dms-inputs').style.display = 'block'
+      })
+      document.getElementById('sk-coord-cancel').addEventListener('click', () => document.getElementById('sk-coord-popup').classList.add('hidden'))
+      document.getElementById('sk-coord-ok').addEventListener('click', skCoordOk)
+      document.getElementById('sk-nearby-cancel').addEventListener('click', () => document.getElementById('sk-nearby-popup').classList.add('hidden'))
+      getAllVisits().then(v => v.forEach(x => skVisited.add(x.baseId))).catch(()=>{})
+      skShowNearbyList()
+      skDrawRadar()
+    }
+
+    async function skShowNearbyList() {
+      const popup = document.getElementById('sk-nearby-popup')
+      const loading = document.getElementById('sk-nearby-loading')
+      const listDiv = document.getElementById('sk-nearby-list')
+      const cancelBtn = document.getElementById('sk-nearby-cancel')
+      popup.classList.remove('hidden')
+      loading.style.display = 'block'; listDiv.style.display = 'none'; cancelBtn.style.display = 'none'
+      try {
+        const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }))
+        const clat = pos.coords.latitude, clon = pos.coords.longitude
+        const bases = await db.getAllBases()
+        const sorted = bases.map(b => ({ ...b, dist: skCalcDist(clat, clon, b.lat, b.lon) })).sort((a, b) => a.dist - b.dist).slice(0, 30)
+        loading.style.display = 'none'; listDiv.style.display = 'block'; cancelBtn.style.display = 'block'
+        listDiv.innerHTML = sorted.map(b => {
+          const rl = getLabel('rank_ids', b.rank_id); let sr = rl
+          if (rl.includes('電子')) sr = '電子'; else if (rl.includes('一等')) sr = '一等'; else if (rl.includes('二等')) sr = '二等'; else if (rl.includes('三等')) sr = '三等'; else if (rl.includes('四等')) sr = '四等'
+          const vc = skVisited.has(b.id) ? ' visited' : ''
+          const dist = b.dist < 1000 ? `${b.dist.toFixed(1)}m` : `${(b.dist/1000).toFixed(2)}km`
+          return `<div class="sk-nearby-item${vc}" data-id="${b.id}"><div class="sk-nearby-item-left"><span class="sk-nearby-item-rank">${sr}</span><span class="sk-nearby-item-name">　${b.name||'名称不明'}</span></div><div class="sk-nearby-item-distance">${dist}</div></div>`
+        }).join('')
+        listDiv.querySelectorAll('.sk-nearby-item').forEach(item => {
+          item.addEventListener('click', async () => {
+            skTargetBase = await db.getBase(item.dataset.id)
+            popup.classList.add('hidden')
+            skStartSokusetsu()
+          })
+        })
+        cancelBtn.onclick = () => popup.classList.add('hidden')
+      } catch(e) {
+        loading.innerHTML = `<p style="color:#f44336;">位置情報の取得に失敗しました</p>`
+        cancelBtn.style.display = 'block'; cancelBtn.onclick = () => popup.classList.add('hidden')
+      }
+    }
+
+    function skShowCoordPopup() { document.getElementById('sk-coord-popup').classList.remove('hidden') }
+
+    function skCoordOk() {
+      const isDec = document.getElementById('sk-format-decimal').classList.contains('active')
+      let lat, lon
+      if (isDec) {
+        lat = parseFloat(document.getElementById('sk-lat-decimal').value)
+        lon = parseFloat(document.getElementById('sk-lon-decimal').value)
+      } else {
+        lat = skDmsToDec(document.getElementById('sk-lat-dms').value)
+        lon = skDmsToDec(document.getElementById('sk-lon-dms').value)
+      }
+      if (isNaN(lat) || isNaN(lon)) { showToast('正しい座標を入力してください', 'warning'); return }
+      skTargetBase = { id: 'custom', name: '入力座標', lat, lon }
+      document.getElementById('sk-coord-popup').classList.add('hidden')
+      skStartSokusetsu()
+    }
+
+    function skDmsToDec(s) {
+      const str = s.replace(/[^0-9.]/g, '')
+      if (str.length < 7) return NaN
+      const dot = str.indexOf('.'), int = dot !== -1 ? str.substring(0, dot) : str, dec = dot !== -1 ? str.substring(dot) : ''
+      const secInt = parseInt(int.substring(int.length - 2))
+      const min = parseInt(int.substring(int.length - 4, int.length - 2))
+      const deg = parseInt(int.substring(0, int.length - 4))
+      return parseFloat((deg + min/60 + parseFloat(secInt + dec)/3600).toFixed(8))
+    }
+
+    function skStartSokusetsu() {
+      sk5mPlayed = false
+      if (skTargetBase) {
+        if (skTargetBase.id === 'custom') {
+          document.getElementById('sk-target-name').textContent = '入力座標'
+          document.getElementById('sk-target-id').textContent = `${skTargetBase.lat.toFixed(8)}, ${skTargetBase.lon.toFixed(8)}`
+          document.getElementById('sk-detail-link').style.display = 'none'
+        } else {
+          document.getElementById('sk-target-name').textContent = skTargetBase.name || '名称不明'
+          document.getElementById('sk-target-id').textContent = skTargetBase.id
+          document.getElementById('sk-detail-link').onclick = (e) => { e.preventDefault(); dtOpen(skTargetBase.id) }
+          document.getElementById('sk-detail-link').style.display = 'flex'
+        }
+      }
+      if (skWatchId !== null) { navigator.geolocation.clearWatch(skWatchId); skWatchId = null }
+      skStartWatch()
+      skUpdateOrientationBtn()
+    }
+
+    function skStartWatch() {
+      if (!navigator.geolocation) { document.getElementById('sk-gps-status-text').textContent = '非対応'; return }
+      skWatchId = navigator.geolocation.watchPosition(pos => {
+        skCurrentPos = { lat: pos.coords.latitude, lon: pos.coords.longitude }
+        if (pos.coords.heading !== null && pos.coords.heading !== undefined) skDeviceHeading = pos.coords.heading
+        document.getElementById('sk-gps-status-text').textContent = '取得中'
+        document.getElementById('sk-gps-status').className = 'sk-status-dot active'
+        document.getElementById('sk-current-pos').textContent = `${skCurrentPos.lat.toFixed(6)}, ${skCurrentPos.lon.toFixed(6)}`
+        if (pos.coords.accuracy) document.getElementById('sk-gps-accuracy').textContent = `±${pos.coords.accuracy.toFixed(1)}m`
+        if (skTargetBase) {
+          const dist = skCalcDist(skCurrentPos.lat, skCurrentPos.lon, skTargetBase.lat, skTargetBase.lon)
+          const bearing = skCalcBearing(skCurrentPos.lat, skCurrentPos.lon, skTargetBase.lat, skTargetBase.lon)
+          document.getElementById('sk-distance').textContent = dist < 1000 ? `${dist.toFixed(1)}m` : `${(dist/1000).toFixed(2)}km`
+          document.getElementById('sk-bearing').textContent = `${bearing.toFixed(1)}°`
+          if (dist <= 5 && !sk5mPlayed) {
+            sk5mPlayed = true
+            if (localStorage.getItem('sokusetsuSoundEnabled') !== 'false') skSound5m.play().catch(()=>{})
+            if (localStorage.getItem('sokusetsuVibrateEnabled') !== 'false' && navigator.vibrate) navigator.vibrate([100,50,200])
+          }
+        }
+      }, () => { document.getElementById('sk-gps-status-text').textContent = 'エラー'; document.getElementById('sk-gps-status').className = 'sk-status-dot inactive' },
+      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 })
+    }
+
+    function skCalcDist(la1, lo1, la2, lo2) {
+      const R=6371000, f1=la1*Math.PI/180, f2=la2*Math.PI/180, df=(la2-la1)*Math.PI/180, dl=(lo2-lo1)*Math.PI/180
+      const a=Math.sin(df/2)**2+Math.cos(f1)*Math.cos(f2)*Math.sin(dl/2)**2
+      return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))
+    }
+
+    function skCalcBearing(la1, lo1, la2, lo2) {
+      const f1=la1*Math.PI/180, f2=la2*Math.PI/180, dl=(lo2-lo1)*Math.PI/180
+      const y=Math.sin(dl)*Math.cos(f2), x=Math.cos(f1)*Math.sin(f2)-Math.sin(f1)*Math.cos(f2)*Math.cos(dl)
+      return (Math.atan2(y,x)*180/Math.PI+360)%360
+    }
+
+    function skUpdateOrientationBtn() {
+      const btn = document.getElementById('sk-orientation-btn')
+      if (skNorthUp) { btn.classList.add('north-up'); btn.innerHTML = '<svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>'; btn.title = 'ノースアップ' }
+      else { btn.classList.remove('north-up'); btn.innerHTML = '<svg class="ic" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>'; btn.title = 'ヘディングアップ' }
+    }
+
+    function skDrawRadar() {
+      const canvas = document.getElementById('sk-radar')
+      if (!canvas) { skAnimId = null; return }
+      const ctx = canvas.getContext('2d')
+      const w=canvas.width, h=canvas.height, cx=w/2, cy=h/2, scale=Math.min(w,h)/2*0.85
+      ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,w,h)
+      ctx.save(); ctx.translate(cx,cy)
+      if (!skNorthUp) ctx.rotate(-skDeviceHeading*Math.PI/180)
+      ctx.translate(-cx,-cy)
+      skCircles.slice().reverse().forEach((r,i) => {
+        const ri=(r/skMaxR)*scale, oi=skCircles.length-1-i
+        ctx.fillStyle=oi%2===0?'#f5f5f5':'#e0e0e0'; ctx.beginPath(); ctx.arc(cx,cy,ri,0,2*Math.PI); ctx.fill()
+        ctx.strokeStyle='#333'; ctx.lineWidth=2; ctx.stroke()
+      })
+      for (let i=0;i<8;i++) {
+        const a=(i*45)*Math.PI/180
+        ctx.strokeStyle='#666'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(cx,cy)
+        ctx.lineTo(cx+Math.cos(a-Math.PI/2)*scale, cy+Math.sin(a-Math.PI/2)*scale); ctx.stroke()
+      }
+      if (skCurrentPos && skTargetBase) {
+        const dist=skCalcDist(skCurrentPos.lat,skCurrentPos.lon,skTargetBase.lat,skTargetBase.lon)
+        const bearing=skCalcBearing(skCurrentPos.lat,skCurrentPos.lon,skTargetBase.lat,skTargetBase.lon)
+        const a=bearing*Math.PI/180
+        if (dist<=skMaxR) {
+          const r=(dist/skMaxR)*scale, x=cx+Math.cos(a-Math.PI/2)*r, y=cy+Math.sin(a-Math.PI/2)*r
+          ctx.fillStyle='#ff5252'; ctx.beginPath(); ctx.arc(x,y,12,0,2*Math.PI); ctx.fill()
+          ctx.strokeStyle='white'; ctx.lineWidth=3; ctx.stroke()
+          const pr=12+Math.sin(Date.now()/200)*5
+          ctx.strokeStyle='rgba(255,82,82,0.5)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(x,y,pr,0,2*Math.PI); ctx.stroke()
+          ctx.strokeStyle='#333'; ctx.lineWidth=2; ctx.setLineDash([5,5]); ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(x,y); ctx.stroke(); ctx.setLineDash([])
+        } else {
+          const ax=cx+Math.cos(a-Math.PI/2)*scale*0.9, ay=cy+Math.sin(a-Math.PI/2)*scale*0.9
+          ctx.fillStyle='#ff5252'; ctx.strokeStyle='white'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(ax,ay)
+          ctx.lineTo(ax-Math.cos(a-Math.PI/2-0.4)*25, ay-Math.sin(a-Math.PI/2-0.4)*25)
+          ctx.lineTo(ax-Math.cos(a-Math.PI/2+0.4)*25, ay-Math.sin(a-Math.PI/2+0.4)*25)
+          ctx.closePath(); ctx.fill(); ctx.stroke()
+        }
+      }
+      ctx.restore()
+      skCircles.forEach(r => {
+        const ri=(r/skMaxR)*scale
+        const la=skNorthUp?-Math.PI/2:(-Math.PI/2-skDeviceHeading*Math.PI/180)
+        ctx.fillStyle='#000'; ctx.font='14px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'
+        ctx.fillText(`${r}m`, cx+Math.cos(la)*ri, cy+Math.sin(la)*ri+20)
+      })
+      const lR=scale+20
+      ;['北','北東','東','南東','南','南西','西','北西'].forEach((d,i) => {
+        const ba=(i*45)*Math.PI/180, la=skNorthUp?ba:ba-skDeviceHeading*Math.PI/180
+        ctx.fillStyle='#000'; ctx.font='bold 16px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'
+        ctx.fillText(d, cx+Math.cos(la-Math.PI/2)*lR, cy+Math.sin(la-Math.PI/2)*lR)
+      })
+      skAnimId = requestAnimationFrame(skDrawRadar)
+    }
+
+    // ====== 設定タブ ======
+    let cfgLoaded = false
+    let cfgDoBackup = false
+
+    async function initSettingsTab() {
+      if (cfgLoaded) return
+      cfgLoaded = true
+      // 音声・振動トグル
+      const soundT = document.getElementById('cfg-sound-toggle')
+      const vibrateT = document.getElementById('cfg-vibrate-toggle')
+      if (localStorage.getItem('sokusetsuSoundEnabled') === 'false') soundT.classList.remove('active')
+      if (localStorage.getItem('sokusetsuVibrateEnabled') === 'false') vibrateT.classList.remove('active')
+      soundT.addEventListener('click', () => {
+        soundT.classList.toggle('active')
+        localStorage.setItem('sokusetsuSoundEnabled', soundT.classList.contains('active'))
+      })
+      vibrateT.addEventListener('click', () => {
+        vibrateT.classList.toggle('active')
+        localStorage.setItem('sokusetsuVibrateEnabled', vibrateT.classList.contains('active'))
+      })
+      // エクスポート
+      document.getElementById('cfg-export-btn').addEventListener('click', cfgExport)
+      // インポートオプション
+      document.getElementById('cfg-import-label').addEventListener('click', e => {
+        e.preventDefault()
+        document.getElementById('cfg-import-options-overlay').classList.add('show')
+      })
+      document.getElementById('cfg-import-cancel-btn').addEventListener('click', () => {
+        document.getElementById('cfg-import-options-overlay').classList.remove('show')
+      })
+      document.getElementById('cfg-import-backup-btn').addEventListener('click', () => {
+        cfgDoBackup = true
+        document.getElementById('cfg-import-options-overlay').classList.remove('show')
+        document.getElementById('cfg-import-file').click()
+      })
+      document.getElementById('cfg-import-only-btn').addEventListener('click', () => {
+        cfgDoBackup = false
+        document.getElementById('cfg-import-options-overlay').classList.remove('show')
+        document.getElementById('cfg-import-file').click()
+      })
+      document.getElementById('cfg-import-file').addEventListener('change', async e => {
+        const file = e.target.files[0]
+        if (!file) return
+        e.target.value = ''
+        await cfgRunImport(file)
+      })
+      // キャッシュ
+      document.getElementById('cfg-refresh-cache-btn').addEventListener('click', async () => {
+        const btn = document.getElementById('cfg-refresh-cache-btn')
+        btn.disabled = true; btn.textContent = '計算中...'
+        await cfgUpdateCacheSize()
+        btn.disabled = false; btn.textContent = '更新'
+      })
+      document.getElementById('cfg-clear-cache-btn').addEventListener('click', async () => {
+        if (!confirm('キャッシュを完全にクリアしますか？\nService Workerも削除されます。')) return
+        const btn = document.getElementById('cfg-clear-cache-btn')
+        btn.disabled = true; btn.textContent = '削除中...'
+        try {
+          if ('caches' in window) {
+            const keys = await caches.keys()
+            await Promise.all(keys.map(k => caches.delete(k)))
+          }
+          if ('serviceWorker' in navigator) {
+            const regs = await navigator.serviceWorker.getRegistrations()
+            for (const r of regs) await r.unregister()
+          }
+          btn.disabled = false; btn.textContent = 'クリア'
+          if (typeof showToast === 'function') showToast('キャッシュをクリアしました。再読み込みします。', 'success', 3000)
+          setTimeout(() => location.reload(true), 1500)
+        } catch(err) {
+          btn.disabled = false; btn.textContent = 'クリア'
+          alert('クリアに失敗しました: ' + err.message)
+        }
+      })
+      // 競合カード
+      document.getElementById('cfg-conflict-existing').addEventListener('click', () => {
+        document.getElementById('cfg-conflict-existing').classList.add('selected')
+        document.getElementById('cfg-conflict-imported').classList.remove('selected')
+      })
+      document.getElementById('cfg-conflict-imported').addEventListener('click', () => {
+        document.getElementById('cfg-conflict-imported').classList.add('selected')
+        document.getElementById('cfg-conflict-existing').classList.remove('selected')
+      })
+      await cfgUpdateDBStatus()
+      await cfgUpdateCacheSize()
+    }
+
+    async function cfgUpdateDBStatus() {
+      try {
+        await ensureMasterDataLoaded()
+        const bases = await db.getAllBases()
+        const visits = await getAllVisits()
+        document.getElementById('cfg-db-loading').style.display = 'none'
+        document.getElementById('cfg-db-stats').style.display = 'grid'
+        document.getElementById('cfg-stat-bases').textContent = bases.length.toLocaleString()
+        document.getElementById('cfg-stat-visits').textContent = visits.length.toLocaleString()
+      } catch(e) {
+        document.getElementById('cfg-db-loading').textContent = 'データの取得に失敗しました'
+        console.error('cfgUpdateDBStatus:', e)
+      }
+    }
+
+    async function cfgUpdateCacheSize() {
+      const el = document.getElementById('cfg-cache-size')
+      try {
+        if (!('caches' in window)) { el.textContent = 'キャッシュAPIが利用できません'; return }
+        const cacheNames = await caches.keys()
+        if (!cacheNames.length) { el.innerHTML = '<svg class="ic" viewBox="0 0 24 24"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg> キャッシュなし (0 KB)'; return }
+        let total = 0
+        const details = []
+        for (const name of cacheNames) {
+          const cache = await caches.open(name)
+          const reqs = await cache.keys()
+          let sz = 0
+          for (const req of reqs) {
+            const resp = await cache.match(req)
+            if (resp) sz += (await resp.blob()).size
+          }
+          total += sz; details.push({ name, sz, count: reqs.length })
+        }
+        const fmt = b => b < 1024 ? b + ' B' : b < 1048576 ? (b/1024).toFixed(1) + ' KB' : (b/1048576).toFixed(2) + ' MB'
+        let html = `<div style="font-weight:bold;margin-bottom:0.4rem;"><svg class="ic" viewBox="0 0 24 24"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg> 合計: ${fmt(total)}</div>`
+        details.forEach(d => {
+          html += `<div style="padding:0.25rem 0;border-top:1px solid #e0e0e0;display:flex;justify-content:space-between;"><span style="color:#666;">${d.name.replace('kijunten-pwa-','')}</span><span style="font-weight:600;">${fmt(d.sz)} (${d.count}件)</span></div>`
+        })
+        el.innerHTML = html
+      } catch(e) { el.textContent = 'エラーが発生しました' }
+    }
+
+    async function cfgExport() {
+      const btn = document.getElementById('cfg-export-btn')
+      btn.disabled = true; btn.textContent = '処理中...'
+      try {
+        const visits = await getAllVisits()
+        if (!visits.length) {
+          if (typeof showToast === 'function') showToast('エクスポートする履歴がありません', 'warning')
+          else alert('エクスポートする履歴がありません')
+          return
+        }
+        const zip = new JSZip()
+        zip.file('visits.json', JSON.stringify(visits, null, 2))
+        const blob = await zip.generateAsync({ type: 'blob' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url; a.download = `kijunten-history-${new Date().toISOString().slice(0,10)}.zip`
+        a.click(); URL.revokeObjectURL(url)
+        if (typeof showToast === 'function') showToast(`エクスポート完了（${visits.length}件）`, 'success', 3000)
+      } catch(e) {
+        alert('エクスポートに失敗しました: ' + e.message)
+      } finally {
+        btn.disabled = false; btn.textContent = '書き出し'
+      }
+    }
+
+    async function cfgRunImport(file) {
+      try {
+        if (cfgDoBackup) {
+          const existing = await getAllVisits()
+          if (existing.length) {
+            const bz = new JSZip()
+            bz.file('visits.json', JSON.stringify(existing, null, 2))
+            const bb = await bz.generateAsync({ type: 'blob' })
+            const ba = document.createElement('a')
+            ba.href = URL.createObjectURL(bb)
+            ba.download = `kijunten-backup-${new Date().toISOString().slice(0,10)}.zip`
+            ba.click()
+          }
+        }
+        const zip2 = new JSZip()
+        const contents = await zip2.loadAsync(file)
+        const jf = contents.file('visits.json')
+        if (!jf) throw new Error('ZIP内にvisits.jsonが見つかりません')
+        const importList = JSON.parse(await jf.async('string'))
+        if (!Array.isArray(importList)) throw new Error('不正なデータ形式です')
+        const existingVisits = await getAllVisits()
+        const existingMap = {}
+        existingVisits.forEach(v => { existingMap[v.baseId] = v })
+        const noConflict = [], conflicts = []
+        importList.forEach(v => {
+          if (existingMap[v.baseId]) conflicts.push({ existing: existingMap[v.baseId], imported: v })
+          else noConflict.push(v)
+        })
+        const toAdd = [...noConflict], toUpdate = []
+        let bulkChoice = null
+        for (let i = 0; i < conflicts.length; i++) {
+          const c = conflicts[i]
+          let choice
+          if (bulkChoice !== null) choice = bulkChoice
+          else {
+            const result = await cfgShowConflictPopup(c.existing, c.imported, i + 1, conflicts.length)
+            choice = result.choice
+            if (result.applyToAll) bulkChoice = choice
+          }
+          if (choice === 'imported') toUpdate.push({ old: c.existing, new: c.imported })
+        }
+        await cfgImportVisits(toAdd, toUpdate)
+        const msg = ['インポート完了！']
+        if (toAdd.length) msg.push(`新規追加: ${toAdd.length}件`)
+        if (toUpdate.length) msg.push(`更新: ${toUpdate.length}件`)
+        const skipped = conflicts.length - toUpdate.length
+        if (skipped) msg.push(`スキップ: ${skipped}件`)
+        if (typeof showToast === 'function') showToast(msg.join('\n'), 'success', 4000)
+        else alert(msg.join('\n'))
+        await cfgUpdateDBStatus()
+      } catch(e) {
+        console.error('Import error:', e)
+        alert('インポートに失敗しました: ' + e.message)
+      }
+    }
+
+    function cfgShowConflictPopup(existing, imported, current, total) {
+      return new Promise(resolve => {
+        const overlay = document.getElementById('cfg-conflict-overlay')
+        document.getElementById('cfg-conflict-progress').textContent = `${current} / ${total} 件目`
+        document.getElementById('cfg-conflict-base').textContent = `基準点ID: ${existing.baseId}`
+        const fmt = v => {
+          const parts = []
+          if (v.visitDate) parts.push(`日付: ${v.visitDate}`)
+          if (v.found !== undefined) parts.push(`発見: ${v.found ? '発見できた' : '発見できなかった'}`)
+          if (v.memo) parts.push(`メモ: ${v.memo.slice(0,30)}${v.memo.length > 30 ? '…' : ''}`)
+          if (v.nearPhoto || v.farPhoto) parts.push('写真: あり')
+          return parts.join('<br>') || 'データなし'
+        }
+        document.getElementById('cfg-conflict-existing-info').innerHTML = fmt(existing)
+        document.getElementById('cfg-conflict-imported-info').innerHTML = fmt(imported)
+        const existCard = document.getElementById('cfg-conflict-existing')
+        const impoCard = document.getElementById('cfg-conflict-imported')
+        const applyAll = document.getElementById('cfg-apply-all-check')
+        existCard.classList.add('selected'); impoCard.classList.remove('selected')
+        applyAll.checked = false
+        let choice = 'existing'
+        overlay.classList.add('show')
+        const onExist = () => { existCard.classList.add('selected'); impoCard.classList.remove('selected'); choice = 'existing' }
+        const onImpo = () => { impoCard.classList.add('selected'); existCard.classList.remove('selected'); choice = 'imported' }
+        const decideBtn = document.getElementById('cfg-conflict-decide-btn')
+        const onDecide = () => {
+          overlay.classList.remove('show')
+          existCard.removeEventListener('click', onExist)
+          impoCard.removeEventListener('click', onImpo)
+          decideBtn.removeEventListener('click', onDecide)
+          resolve({ choice, applyToAll: applyAll.checked })
+        }
+        existCard.addEventListener('click', onExist)
+        impoCard.addEventListener('click', onImpo)
+        decideBtn.addEventListener('click', onDecide)
+      })
+    }
+
+    function cfgImportVisits(toAdd, toUpdate) {
+      return new Promise((resolve, reject) => {
+        const check = indexedDB.open('visitHistoryDB')
+        check.onerror = () => reject(new Error('データベースを開けません'))
+        check.onsuccess = e => {
+          const tmpDb = e.target.result
+          const needsUpgrade = !tmpDb.objectStoreNames.contains('visits')
+          const ver = tmpDb.version
+          tmpDb.close()
+          const req = indexedDB.open('visitHistoryDB', needsUpgrade ? ver + 1 : ver)
+          req.onerror = () => reject(new Error('データベースを開けません'))
+          req.onupgradeneeded = e2 => {
+            const d = e2.target.result
+            if (!d.objectStoreNames.contains('visits')) {
+              const s = d.createObjectStore('visits', { keyPath: 'visitId', autoIncrement: true })
+              s.createIndex('baseId', 'baseId', { unique: false })
+              s.createIndex('visitDate', 'visitDate', { unique: false })
+            }
+          }
+          req.onsuccess = e2 => {
+            const d = e2.target.result
+            const tx = d.transaction(['visits'], 'readwrite')
+            const store = tx.objectStore('visits')
+            toAdd.forEach(v => { const { visitId, ...vd } = v; store.add(vd) })
+            toUpdate.forEach(({ old: ov, new: nv }) => {
+              store.delete(ov.visitId)
+              const { visitId, ...vd } = nv; store.add(vd)
+            })
+            tx.oncomplete = () => { d.close(); resolve() }
+            tx.onerror = () => { d.close(); reject(new Error('インポートに失敗しました')) }
+          }
+        }
+      })
+    }
+
+    // ====== 詳細パネル (dt-) ======
+    let dtMap = null, dtMapLL = null, dtLocMarker = null, dtLocWatchId = null, dtLocOn = false
+    let dtCurrentBaseId_v = null
+    let prefNamesCache = null
+
+    window.dtOpen = async function(baseId, initialTab = 'detail') {
+      dtCurrentBaseId_v = baseId
+      document.getElementById('dt-overlay').classList.add('show')
+      document.body.style.overflow = 'hidden'
+      document.getElementById('dt-body').innerHTML = '<div class="dt-container"><div style="text-align:center;padding:3rem;color:#999;">読み込み中...</div></div>'
+      document.getElementById('dt-header-title').textContent = '基準点詳細'
+      if (dtMap) { dtMap.remove(); dtMap = null; dtMapLL = null }
+      if (dtLocWatchId !== null) { navigator.geolocation.clearWatch(dtLocWatchId); dtLocWatchId = null }
+      dtLocOn = false; dtLocMarker = null
+      try {
+        await ensureMasterDataLoaded()
+        if (!prefNamesCache) {
+          try { const r = await fetch('data/pref_ids.json'); if (r.ok) prefNamesCache = await r.json() } catch(e2) {}
+          if (!prefNamesCache) prefNamesCache = {}
+        }
+        const base = await db.getBase(baseId)
+        if (!base) { document.getElementById('dt-body').innerHTML = '<div class="dt-container"><p style="color:#f44336;padding:2rem;text-align:center;">基準点が見つかりません</p></div>'; return }
+        dtBuildPanel(base, prefNamesCache, initialTab)
+      } catch(e) {
+        console.error('dtOpen:', e)
+        document.getElementById('dt-body').innerHTML = '<div class="dt-container"><p style="color:#f44336;padding:2rem;text-align:center;">読み込みに失敗しました</p></div>'
+      }
+    }
+
+    window.dtClose = function() {
+      document.getElementById('dt-overlay').classList.remove('show')
+      document.body.style.overflow = ''
+      if (dtLocWatchId !== null) { navigator.geolocation.clearWatch(dtLocWatchId); dtLocWatchId = null }
+      if (dtMap) { dtMap.remove(); dtMap = null }
+      dtLocOn = false; dtLocMarker = null
+    }
+
+    window.dtOpenSokusetsu = async function(baseId) {
+      const base = await db.getBase(baseId)
+      if (!base) return
+      skTargetBase = base
+      dtClose()
+      const skBtn = document.querySelector('.tab-btn[data-tab="tab-sokusetsu"]')
+      if (skBtn) skBtn.click()
+    }
+
+    function dtBuildPanel(base, prefNames, initialTab) {
+      const rl = getLabel('rank_ids', base.rank_id)
+      const prefName = prefNames[base.pref_id] || '不明'
+      const resultDivisionLabel = getLabel('result_division_ids', base.result_division_id)
+      const resultStatusLabel = base.result_status_id != null ? getLabel('result_status_ids', base.result_status_id) : null
+      const reconstructionStatusLabel = base.reconstruction_status_id != null ? getLabel('reconstruction_status_ids', base.reconstruction_status_id) : null
+      const landTypeLabel = base.land_type_id != null ? getLabel('land_type_ids', base.land_type_id) : null
+      const attrStatusLabel = base.attr_status_id != null ? getLabel('attr_status_ids', base.attr_status_id) : null
+      let sr = rl
+      if (rl.includes('電子')) sr = '電子基準点'; else if (rl.includes('一等')) sr = '一等三角点'
+      else if (rl.includes('二等')) sr = '二等三角点'; else if (rl.includes('三等')) sr = '三等三角点'; else if (rl.includes('四等')) sr = '四等三角点'
+      let abbr = ''
+      if (base.abbreviate && base.abbreviate.trim() && base.abbreviate.trim() !== ' ') { abbr = base.abbreviate; if (base.no) abbr += `　${base.no}` } else if (base.no) abbr = base.no
+      let nameDisp = base.name || '名称不明'; if (base.name_kana) nameDisp += ` / ${base.name_kana}`
+      document.getElementById('dt-header-title').textContent = base.name || '基準点詳細'
+      dtMapLL = { lat: base.lat, lon: base.lon, name: base.name }
+      const terrasBtnHtml = base.rank_id === 'EL0' && base.no
+        ? `<a href="https://terras.gsi.go.jp/geo_info/genchou/${base.no}/index.html" target="_blank" class="dt-terras-btn" title="TERRAS"><img src="./assets/picture/EL0.png" alt="TERRAS"></a>` : ''
+      const detailItemsHtml = [
+        base.u_code ? `<div class="dt-detail-item" style="grid-column:1/-1;"><div class="dt-detail-label">ICタグ</div><div class="dt-detail-value"><code>${base.u_code}</code></div></div>` : '',
+        base.fig20_name || base.fig5_name ? `<div class="dt-detail-item">${base.fig20_name?`<div class="dt-detail-label">20万分1地勢図</div><div class="dt-detail-value">${base.fig20_name}</div>`:''}</div><div class="dt-detail-item">${base.fig5_name?`<div class="dt-detail-label">5万分1地形図</div><div class="dt-detail-value">${base.fig5_name}</div>`:''}</div>` : '',
+        resultStatusLabel||base.status_date ? `<div class="dt-detail-item"><div class="dt-detail-label">成果状態</div><div class="dt-detail-value">${resultStatusLabel||'-'}</div></div><div class="dt-detail-item"><div class="dt-detail-label">状態日付</div><div class="dt-detail-value">${base.status_date||'-'}</div></div>` : '',
+        reconstructionStatusLabel||base.reconstruction_date ? `<div class="dt-detail-item"><div class="dt-detail-label">作業内容</div><div class="dt-detail-value">${reconstructionStatusLabel||'-'}</div></div><div class="dt-detail-item"><div class="dt-detail-label">作業年月日</div><div class="dt-detail-value">${base.reconstruction_date||'-'}</div></div>` : '',
+        attrStatusLabel||base.date ? `<div class="dt-detail-item"><div class="dt-detail-label">現況状態</div><div class="dt-detail-value">${attrStatusLabel||'-'}</div></div><div class="dt-detail-item"><div class="dt-detail-label">調査年月日</div><div class="dt-detail-value">${base.date||'-'}</div></div>` : '',
+        `<div class="dt-detail-item" style="grid-column:1/-1;"><div class="dt-detail-label">現況地目</div><div class="dt-detail-value">${landTypeLabel||'-'}</div></div>`
+      ].join('')
+      const html = `
+        <div class="dt-info-card">
+          <button id="dt-visit-btn" class="dt-visit-btn"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> 履歴入力</button>
+          ${terrasBtnHtml}
+          <button class="dt-sk-btn" title="測設" onclick="dtOpenSokusetsu('${base.id}')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="3" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="21"/><line x1="3" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="21" y2="12"/></svg></button>
+          <button id="dt-bm-btn" class="dt-bm-btn" title="ブックマーク"><svg class="bm-icon" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
+          <div style="font-size:0.85rem;opacity:0.9;margin-bottom:0.3rem;">${sr} / ${prefName}</div>
+          <div class="dt-code">${base.id}</div>
+          ${abbr ? `<div style="font-size:0.85rem;margin-bottom:0.3rem;">${abbr}</div>` : ''}
+          <h2>${nameDisp}</h2>
+          <div style="font-family:monospace;font-size:0.88rem;margin-bottom:0.3rem;">${base.lat} / ${base.lon}</div>
+          ${resultDivisionLabel ? `<div style="font-size:0.85rem;">${resultDivisionLabel}</div>` : ''}
+        </div>
+        <div class="dt-tabs">
+          <button class="dt-tab-btn active" data-dtab="detail"><svg class="ic" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg> 詳細</button>
+          <button class="dt-tab-btn" data-dtab="history"><svg class="ic" viewBox="0 0 24 24"><polygon points="1,6 1,22 8,18 16,22 23,18 23,2 16,6 8,2"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg> 履歴</button>
+          <button class="dt-tab-btn" data-dtab="map"><svg class="ic" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> 地図</button>
+        </div>
+        <div class="dt-tab-panel active" id="dt-tp-detail">
+          <div class="dt-detail-grid">${detailItemsHtml}</div>
+        </div>
+        <div class="dt-tab-panel" id="dt-tp-history">
+          <div id="dt-hist-container"><div class="dt-no-visit"><p><svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> 探索履歴がありません</p></div></div>
+        </div>
+        <div class="dt-tab-panel" id="dt-tp-map">
+          <div id="dt-map"><button id="dt-loc-btn" class="dt-loc-btn" title="現在地"><svg class="ic" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></button></div>
+        </div>
+      `
+      document.getElementById('dt-body').innerHTML = `<div class="dt-container">${html}</div>`
+      // タブ切替
+      document.querySelectorAll('.dt-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.dt-tab-btn').forEach(b => b.classList.remove('active'))
+          document.querySelectorAll('.dt-tab-panel').forEach(p => p.classList.remove('active'))
+          btn.classList.add('active')
+          document.getElementById(`dt-tp-${btn.dataset.dtab}`).classList.add('active')
+          if (btn.dataset.dtab === 'map' && !dtMap && dtMapLL) dtInitMap(dtMapLL.lat, dtMapLL.lon, dtMapLL.name)
+        })
+      })
+      if (initialTab && initialTab !== 'detail') {
+        const btn = document.querySelector(`.dt-tab-btn[data-dtab="${initialTab}"]`)
+        if (btn) btn.click()
+      }
+      dtCheckVisitHistory(base.id)
+      dtSetupBm(base)
+    }
+
+    async function dtCheckVisitHistory(baseId) {
+      const visitBtn = document.getElementById('dt-visit-btn')
+      if (!visitBtn) return
+      const hc = document.getElementById('dt-hist-container')
+      const SV = '<svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>'
+      if (hc) hc.innerHTML = '<div class="dt-no-visit"><p>' + SV + ' 探索履歴がありません</p></div>'
+      const setBtn = (label, vid) => { visitBtn.innerHTML = label; visitBtn.onclick = () => avOpen(baseId, vid) }
+      const LI = SV + ' 履歴入力', LE = SV + ' 履歴編集'
+      try {
+        const req = indexedDB.open('visitHistoryDB')
+        req.onerror = () => setBtn(LI, null)
+        req.onsuccess = e => {
+          const vdb = e.target.result
+          if (!vdb.objectStoreNames.contains('visits')) { setBtn(LI, null); vdb.close(); return }
+          const gr = vdb.transaction(['visits'], 'readonly').objectStore('visits').index('baseId').getAll(baseId)
+          gr.onsuccess = () => {
+            const vs = gr.result || []
+            if (!vs.length) setBtn(LI, null)
+            else { setBtn(LE, vs[0].visitId); dtShowVisitHistory(vs[0]) }
+            vdb.close()
+          }
+          gr.onerror = () => { setBtn(LI, null); vdb.close() }
+        }
+        req.onupgradeneeded = e => {
+          if (!e.target.result.objectStoreNames.contains('visits')) {
+            const s = e.target.result.createObjectStore('visits', { keyPath: 'visitId', autoIncrement: true })
+            s.createIndex('baseId', 'baseId', { unique: false })
+          }
+        }
+      } catch(e) { setBtn(LI, null) }
+    }
+
+    function dtShowVisitHistory(v) {
+      const c = document.getElementById('dt-hist-container'); if (!c) return
+      const nearH = v.nearPhoto ? `<img src="${v.nearPhoto}" alt="近景" onclick="dtShowPhoto(this.src,'近景')">` : '<div class="dt-visit-photo-none">写真なし</div>'
+      const farH = v.farPhoto ? `<img src="${v.farPhoto}" alt="遠景" onclick="dtShowPhoto(this.src,'遠景')">` : '<div class="dt-visit-photo-none">写真なし</div>'
+      c.innerHTML = `<div class="dt-visit-card"><div class="dt-visit-date"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> 探索日: ${v.visitDate}</div><span class="dt-visit-status ${v.found?'found':'not-found'}">${v.found?'<svg class="ic" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> 発見した':'<svg class="ic" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> 発見できなかった'}</span><div class="dt-visit-photos"><div class="dt-visit-photo"><div class="dt-visit-photo-label"><svg class="ic" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 0 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> 近景</div>${nearH}</div><div class="dt-visit-photo"><div class="dt-visit-photo-label"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> 遠景</div>${farH}</div></div>${v.memo?`<div class="dt-visit-memo">${v.memo}</div>`:''}</div>`
+    }
+
+    function dtSetupBm(base) {
+      const btn = document.getElementById('dt-bm-btn'); if (!btn) return
+      getBookmarks().then(bms => {
+        if (bms.some(b => b.id === base.id)) { btn.classList.add('active') }
+        else { btn.classList.remove('active') }
+      })
+      btn.onclick = async () => {
+        const bms = await getBookmarks()
+        const is = bms.some(b => b.id === base.id)
+        if (is) { await saveBookmarks(bms.filter(b => b.id !== base.id)); btn.classList.remove('active') }
+        else { bms.push({ id: base.id, name: base.name, rank_id: base.rank_id, pref_id: base.pref_id, addedAt: new Date().toISOString() }); await saveBookmarks(bms); btn.classList.add('active'); if (typeof showToast==='function') showToast('ブックマークに追加しました','success',1500) }
+        bookmarkedBaseIds = new Set((await getBookmarks()).map(b => b.id))
+      }
+    }
+
+    function dtInitMap(lat, lon, name) {
+      const el = document.getElementById('dt-map'); if (!el || typeof L === 'undefined') return
+      try {
+        dtMap = L.map('dt-map', { center: [lat, lon], zoom: 15, zoomControl: false })
+        L.tileLayer('https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png', { attribution: '<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank">国土地理院</a>', maxZoom: 18 }).addTo(dtMap)
+        L.marker([lat, lon]).addTo(dtMap).bindPopup(`<b>${name||'基準点'}</b>`).openPopup()
+        document.getElementById('dt-loc-btn').addEventListener('click', () => dtLocOn ? dtDisableLoc() : dtEnableLoc())
+      } catch(e) { console.error('dtInitMap:', e) }
+    }
+
+    function dtEnableLoc() {
+      if (!navigator.geolocation) { if (typeof showToast==='function') showToast('GPS機能が利用できません','warning'); return }
+      document.getElementById('dt-loc-btn').classList.add('active'); dtLocOn = true
+      dtLocWatchId = navigator.geolocation.watchPosition(pos => {
+        const lat = pos.coords.latitude, lon = pos.coords.longitude, acc = pos.coords.accuracy
+        if (dtLocMarker) { dtLocMarker.setLatLng([lat, lon]); if (dtLocMarker.ac) { dtLocMarker.ac.setLatLng([lat, lon]); dtLocMarker.ac.setRadius(acc) } }
+        else { dtLocMarker = L.circleMarker([lat, lon], { radius:8, color:'#000', weight:2, fillColor:'#2196F3', fillOpacity:1 }).addTo(dtMap); dtLocMarker.ac = L.circle([lat, lon], { radius:acc, color:'#2196F3', fillColor:'#2196F3', fillOpacity:0.1, weight:2 }).addTo(dtMap) }
+      }, () => { if (typeof showToast==='function') showToast('GPS取得に失敗しました','error'); dtDisableLoc() }, { enableHighAccuracy:true, timeout:5000, maximumAge:0 })
+    }
+
+    function dtDisableLoc() {
+      const btn = document.getElementById('dt-loc-btn'); if (btn) btn.classList.remove('active'); dtLocOn = false
+      if (dtLocWatchId !== null) { navigator.geolocation.clearWatch(dtLocWatchId); dtLocWatchId = null }
+      if (dtLocMarker) { if (dtLocMarker.ac) dtMap.removeLayer(dtLocMarker.ac); dtMap.removeLayer(dtLocMarker); dtLocMarker = null }
+    }
+
+    window.dtShowPhoto = function(src, label) {
+      document.getElementById('dt-photo-modal-img').src = src
+      document.getElementById('dt-photo-modal-label').textContent = label
+      document.getElementById('dt-photo-modal').classList.add('show')
+    }
+    window.dtClosePhoto = function() { document.getElementById('dt-photo-modal').classList.remove('show') }
+
+    // ====== 履歴入力ポップアップ (av-) ======
+    let avCurBaseId = null, avCurVisitId = null, avIsEdit = false
+    let avNearData = null, avFarData = null
+    let avPhotoType = null, avCurImg = null
+    let avCropRect = { x:0,y:0,width:0,height:0 }
+    let avDragging = false, avResizing = false, avResizeHnd = null
+    let avDragX = 0, avDragY = 0, avOrigRect = null
+    let avCropEventsReady = false
+
+    async function avOpen(bid, vid) {
+      avCurBaseId = bid; avCurVisitId = vid; avIsEdit = vid !== null
+      avNearData = null; avFarData = null
+      const form = document.getElementById('av-form'); if (form) form.reset()
+      document.getElementById('av-found').checked = true
+      document.getElementById('av-date').valueAsDate = new Date()
+      avResetPhoto('near'); avResetPhoto('far')
+      document.getElementById('av-title').innerHTML = avIsEdit ? '<svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> 履歴編集' : '<svg class="ic" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg> 履歴入力'
+      document.getElementById('av-submit-btn').innerHTML = avIsEdit ? '<svg class="ic" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> 更新する' : '<svg class="ic" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> 登録する'
+      document.getElementById('av-delete-hdr-btn').style.display = avIsEdit ? 'block' : 'none'
+      try {
+        const b = await db.getBase(bid)
+        if (b) {
+          const rl2 = getLabel('rank_ids', b.rank_id) || ''; let sr2 = rl2
+          if (rl2.includes('電子')) sr2='電子基準点'; else if (rl2.includes('一等')) sr2='一等三角点'; else if (rl2.includes('二等')) sr2='二等三角点'; else if (rl2.includes('三等')) sr2='三等三角点'; else if (rl2.includes('四等')) sr2='四等三角点'
+          document.getElementById('av-base-rank').textContent = sr2
+          document.getElementById('av-base-name').textContent = b.name || ''
+        }
+      } catch(e3) {}
+      if (avIsEdit) await avLoadData(vid)
+      document.getElementById('av-overlay').classList.add('show')
+      document.body.style.overflow = 'hidden'
+    }
+
+    function avClose() { document.getElementById('av-overlay').classList.remove('show'); document.body.style.overflow = '' }
+
+    async function avLoadData(vid) {
+      try {
+        const v = await avGetById(parseInt(vid)); if (!v) return
+        document.getElementById('av-date').value = v.visitDate || ''
+        document.getElementById('av-found').checked = v.found !== false
+        document.getElementById('av-memo').value = v.memo || ''
+        if (v.nearPhoto) { avNearData = v.nearPhoto; document.getElementById('av-near-img').src = v.nearPhoto; document.getElementById('av-near-preview').classList.add('show'); document.getElementById('av-near-item').classList.add('has-photo') }
+        if (v.farPhoto) { avFarData = v.farPhoto; document.getElementById('av-far-img').src = v.farPhoto; document.getElementById('av-far-preview').classList.add('show'); document.getElementById('av-far-item').classList.add('has-photo') }
+      } catch(e) { console.error('avLoadData:', e) }
+    }
+
+    function avGetById(vid) {
+      return new Promise((res, rej) => {
+        const req = indexedDB.open('visitHistoryDB')
+        req.onerror = () => rej(new Error('DB error'))
+        req.onsuccess = e => { const d = e.target.result; if (!d.objectStoreNames.contains('visits')) { d.close(); res(null); return }; const gr = d.transaction(['visits'],'readonly').objectStore('visits').get(vid); gr.onsuccess = () => { d.close(); res(gr.result) }; gr.onerror = () => { d.close(); rej(new Error('get error')) } }
+      })
+    }
+
+    function avResetPhoto(t) { document.getElementById(`av-${t}-preview`).classList.remove('show'); document.getElementById(`av-${t}-item`).classList.remove('has-photo'); if (t==='near') avNearData=null; else avFarData=null }
+
+    window.avSelectPhoto = function(t) { avPhotoType = t; document.getElementById('av-photo-input').click() }
+    window.avHandlePhotoSelect = function(event) {
+      const file = event.target.files[0]; if (!file) return
+      const reader = new FileReader()
+      reader.onload = e => { const img = new Image(); img.onload = () => { avCurImg = img; avShowCrop() }; img.src = e.target.result }
+      reader.readAsDataURL(file); event.target.value = ''
+    }
+
+    function avShowCrop() {
+      document.getElementById('av-crop-modal').classList.add('show')
+      const ci = document.getElementById('av-crop-image'); ci.src = avCurImg.src; ci.onload = avInitCropFrame
+    }
+    function avInitCropFrame() {
+      const img = document.getElementById('av-crop-image'), dw = img.clientWidth, dh = img.clientHeight, r = 3/4
+      let fw, fh
+      if (dw/dh > r) { fh = dh*0.8; fw = fh*r } else { fw = dw*0.8; fh = fw/r }
+      if (fw > dw) { fw = dw; fh = fw/r } if (fh > dh) { fh = dh; fw = fh*r }
+      avCropRect = { x:(dw-fw)/2, y:(dh-fh)/2, width:fw, height:fh }
+      avUpdateCropFrame()
+      if (!avCropEventsReady) { avSetupCropEvents(); avCropEventsReady = true }
+    }
+    function avUpdateCropFrame() { const f = document.getElementById('av-crop-frame'); f.style.left=avCropRect.x+'px'; f.style.top=avCropRect.y+'px'; f.style.width=avCropRect.width+'px'; f.style.height=avCropRect.height+'px' }
+    function avSetupCropEvents() {
+      const frame = document.getElementById('av-crop-frame')
+      frame.addEventListener('mousedown', avStartDrag); frame.addEventListener('touchstart', avStartDrag, {passive:false})
+      frame.querySelectorAll('.av-crop-handle').forEach(h => { h.addEventListener('mousedown', avStartResize); h.addEventListener('touchstart', avStartResize, {passive:false}) })
+      document.addEventListener('mousemove', avHandleMove); document.addEventListener('mouseup', avEndDR)
+      document.addEventListener('touchmove', avHandleMove, {passive:false}); document.addEventListener('touchend', avEndDR)
+    }
+    function avStartDrag(e) { if (e.target.classList.contains('av-crop-handle')) return; e.preventDefault(); e.stopPropagation(); avDragging=true; const p=avGetPt(e); avDragX=p.x-avCropRect.x; avDragY=p.y-avCropRect.y; avOrigRect={...avCropRect} }
+    function avStartResize(e) { e.preventDefault(); e.stopPropagation(); avResizing=true; avResizeHnd=e.target.classList[1]; const p=avGetPt(e); avDragX=p.x; avDragY=p.y; avOrigRect={...avCropRect} }
+    function avHandleMove(e) {
+      if (!avDragging && !avResizing) return; e.preventDefault()
+      const p=avGetPt(e), img=document.getElementById('av-crop-image'), mw=img.clientWidth, mh=img.clientHeight, ratio=3/4
+      if (avDragging) { avCropRect.x=Math.max(0,Math.min(p.x-avDragX,mw-avCropRect.width)); avCropRect.y=Math.max(0,Math.min(p.y-avDragY,mh-avCropRect.height)) }
+      else { const dx=p.x-avDragX, dy=p.y-avDragY; let nw=avOrigRect.width, nh=avOrigRect.height, nx=avOrigRect.x, ny=avOrigRect.y
+        if (avResizeHnd==='se') { nh=avOrigRect.height+dy; nw=nh*ratio } else if (avResizeHnd==='sw') { nh=avOrigRect.height+dy; nw=nh*ratio; nx=avOrigRect.x-(nw-avOrigRect.width) } else if (avResizeHnd==='ne') { nh=avOrigRect.height-dy; nw=nh*ratio; ny=avOrigRect.y+dy } else if (avResizeHnd==='nw') { nh=avOrigRect.height-dy; nw=nh*ratio; nx=avOrigRect.x-(nw-avOrigRect.width); ny=avOrigRect.y+dy }
+        if (nw<50||nh<50/ratio||nx<0||ny<0||nx+nw>mw||ny+nh>mh) return; avCropRect={x:nx,y:ny,width:nw,height:nh} }
+      avUpdateCropFrame()
+    }
+    function avEndDR() { avDragging=false; avResizing=false; avResizeHnd=null }
+    function avGetPt(e) { const r=document.getElementById('av-crop-image').getBoundingClientRect(); const cx=e.type.startsWith('touch')?e.touches[0].clientX:e.clientX; const cy=e.type.startsWith('touch')?e.touches[0].clientY:e.clientY; return {x:cx-r.left,y:cy-r.top} }
+
+    window.avConfirmCrop = function() {
+      const img=avCurImg, ci=document.getElementById('av-crop-image'), scale=img.width/ci.clientWidth
+      const canvas=document.createElement('canvas'); canvas.width=360; canvas.height=480
+      canvas.getContext('2d').drawImage(img, avCropRect.x*scale, avCropRect.y*scale, avCropRect.width*scale, avCropRect.height*scale, 0,0,360,480)
+      const dataUrl=canvas.toDataURL('image/jpeg',0.85)
+      if (avPhotoType==='near') { avNearData=dataUrl; document.getElementById('av-near-img').src=dataUrl; document.getElementById('av-near-preview').classList.add('show'); document.getElementById('av-near-item').classList.add('has-photo') }
+      else { avFarData=dataUrl; document.getElementById('av-far-img').src=dataUrl; document.getElementById('av-far-preview').classList.add('show'); document.getElementById('av-far-item').classList.add('has-photo') }
+      avCancelCrop()
+    }
+    window.avCancelCrop = function() { document.getElementById('av-crop-modal').classList.remove('show'); avCurImg=null; avPhotoType=null }
+    window.avRemovePhoto = function(t) { document.getElementById(`av-${t}-preview`).classList.remove('show'); document.getElementById(`av-${t}-item`).classList.remove('has-photo'); if (t==='near') avNearData=null; else avFarData=null }
+
+    window.avShowDelete = function() { document.getElementById('av-confirm-modal').classList.add('show') }
+    window.avCloseDelete = function() { document.getElementById('av-confirm-modal').classList.remove('show') }
+    window.avConfirmDelete = async function() {
+      window.avCloseDelete()
+      try {
+        await avDeleteVisit(parseInt(avCurVisitId))
+        if (typeof showToast==='function') showToast('探索履歴を削除しました','success')
+        avClose(); dtCheckVisitHistory(avCurBaseId)
+      } catch(e) { if (typeof showToast==='function') showToast('削除に失敗しました: '+e.message,'error'); else alert('削除に失敗: '+e.message) }
+    }
+    function avDeleteVisit(vid) {
+      return new Promise((res,rej) => { const req=indexedDB.open('visitHistoryDB'); req.onerror=()=>rej(new Error('DB error')); req.onsuccess=e=>{const d=e.target.result;if(!d.objectStoreNames.contains('visits')){d.close();res();return};const dr=d.transaction(['visits'],'readwrite').objectStore('visits').delete(vid);dr.onsuccess=()=>{d.close();res()};dr.onerror=()=>{d.close();rej(new Error('削除失敗'))}} })
+    }
+    window.avClose = avClose
+
+    document.getElementById('av-form').addEventListener('submit', async (e) => {
+      e.preventDefault()
+      const btn = document.getElementById('av-submit-btn'); btn.disabled=true; btn.textContent='保存中...'
+      try {
+        const visitData = {
+          baseId: avCurBaseId,
+          baseName: document.getElementById('av-base-name').textContent,
+          baseRank: document.getElementById('av-base-rank').textContent,
+          visitDate: document.getElementById('av-date').value,
+          found: document.getElementById('av-found').checked,
+          nearPhoto: avNearData, farPhoto: avFarData,
+          memo: document.getElementById('av-memo').value.trim(),
+          createdAt: new Date().toISOString()
+        }
+        if (avIsEdit) visitData.visitId = parseInt(avCurVisitId)
+        await avSaveVisit(visitData, avIsEdit)
+        if (typeof showToast==='function') showToast(avIsEdit?'探索履歴を更新しました':'探索履歴を登録しました','success')
+        avClose(); dtCheckVisitHistory(avCurBaseId)
+        visitedBaseIds.add(avCurBaseId); displayResults()
+      } catch(e) {
+        if (typeof showToast==='function') showToast('保存に失敗しました: '+e.message,'error'); else alert('保存失敗: '+e.message)
+        btn.disabled=false; btn.innerHTML=avIsEdit?'<svg class="ic" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> 更新する':'<svg class="ic" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> 登録する'
+      }
+    })
+
+    function avSaveVisit(visitData, isUpdate) {
+      return new Promise((res,rej) => {
+        const doSave = d => { const sr=isUpdate?d.transaction(['visits'],'readwrite').objectStore('visits').put(visitData):d.transaction(['visits'],'readwrite').objectStore('visits').add(visitData); sr.onsuccess=()=>{d.close();res()};sr.onerror=()=>{d.close();rej(new Error('保存失敗'))} }
+        const upgrade = ver => { const r=indexedDB.open('visitHistoryDB',ver); r.onerror=()=>rej(new Error('DB error')); r.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains('visits')){const s=d.createObjectStore('visits',{keyPath:'visitId',autoIncrement:true});s.createIndex('baseId','baseId',{unique:false});s.createIndex('visitDate','visitDate',{unique:false})}}; r.onsuccess=e=>doSave(e.target.result) }
+        const chk=indexedDB.open('visitHistoryDB'); chk.onerror=()=>upgrade(1)
+        chk.onsuccess=e=>{const tmp=e.target.result,needs=!tmp.objectStoreNames.contains('visits'),ver=tmp.version;tmp.close();if(needs)upgrade(ver+1);else{const r=indexedDB.open('visitHistoryDB',ver);r.onerror=()=>rej(new Error('DB error'));r.onsuccess=e2=>doSave(e2.target.result)}}
+      })
+    }
+
+    // 起動
     await initDB()
+    await initSearch()
   </script>
   <script src="./src/toast.js"></script>
 </body>
+</html>

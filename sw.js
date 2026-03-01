@@ -1,17 +1,11 @@
-const CACHE_NAME = 'kijunten-pwa-v21'
-const RUNTIME_CACHE = 'kijunten-runtime-v21'
+const CACHE_NAME = 'kijunten-pwa-v24'
+const RUNTIME_CACHE = 'kijunten-runtime-v24'
 const RUNTIME_CACHE_MAX_SIZE = 50 // Runtime Cacheの最大アイテム数
 
 // キャッシュするリソース（必要最小限）
 const CACHE_URLS = [
   './',
   './index.html',
-  './search.html',
-  './detail.html',
-  './add-visit.html',
-  './sokusetsu.html',
-  './setting.html',
-  './stats.html',
   './css/style.css',
   './src/db.js',
   './src/metadata.js',
